@@ -149,7 +149,6 @@ class cases(WebHandler):
                         raise ValueError(
                                 'Location "{}" already exists'.format(k))
                     locations[k] = v
-        print(locations)
         return locations
 
     def __repr__(self):

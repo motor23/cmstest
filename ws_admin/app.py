@@ -1,8 +1,9 @@
 import ikcms.ws_apps.composite
+from .components.auth import ws_auth_component
 
 class App(ikcms.ws_apps.composite.App):
 
-    def get_handlers(self):
-        from .handlers import handlers
-        return handlers
+    components = [
+        ws_auth_component(),
+    ]
 
