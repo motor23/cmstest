@@ -25861,9 +25861,24 @@
 	            this.context.router.replace('/dashboard');
 	        }
 	    }, {
-	        key: 'login',
-	        value: function login(event) {
+	        key: 'handleKeyPress',
+	        value: function handleKeyPress(event) {
+	            if (event.charCode === 13) {
+	                event.preventDefault();
+	                event.stopPropagation();
+	                this.login();
+	            }
+	        }
+	    }, {
+	        key: 'handleClick',
+	        value: function handleClick(event) {
 	            event.preventDefault();
+	            event.stopPropagation();
+	            this.login();
+	        }
+	    }, {
+	        key: 'login',
+	        value: function login() {
 	            var login = this.refs.login.value;
 	            var password = this.refs.password.value;
 	            this.context.connection.send('auth.login', { login: login, password: password });
@@ -25894,7 +25909,7 @@
 	                        { className: 'mdl-card__supporting-text' },
 	                        _react2.default.createElement(
 	                            'form',
-	                            null,
+	                            { onKeyPress: this.handleKeyPress.bind(this) },
 	                            _react2.default.createElement(
 	                                'div',
 	                                { className: 'mdl-textfield mdl-js-textfield' },
@@ -25932,7 +25947,7 @@
 	                        { className: 'mdl-card__actions mdl-card--border' },
 	                        _react2.default.createElement(
 	                            'button',
-	                            { className: 'mdl-button mdl-button--colored mdl-js-button', onClick: this.login.bind(this) },
+	                            { className: 'mdl-button mdl-button--colored mdl-js-button', onClick: this.handleClick.bind(this) },
 	                            'Войти'
 	                        )
 	                    )

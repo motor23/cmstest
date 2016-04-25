@@ -33,8 +33,21 @@ class Login extends React.Component {
         this.context.router.replace('/dashboard');
     }
 
-    login(event) {
+    handleKeyPress(event) {
+        if (event.charCode === 13) {
+            event.preventDefault();
+            event.stopPropagation();
+            this.login();
+        }
+    }
+
+    handleClick(event) {
         event.preventDefault();
+        event.stopPropagation();
+        this.login();
+    }
+
+    login() {
         let login = this.refs.login.value;
         let password = this.refs.password.value;
         this.context.connection.send('auth.login', {login, password});
@@ -50,7 +63,7 @@ class Login extends React.Component {
                         <h2 className="mdl-card__title-text">Авторизация</h2>
                     </div>
                     <div className="mdl-card__supporting-text">
-                        <form>
+                        <form onKeyPress={this.handleKeyPress.bind(this)}>
                             <div className="mdl-textfield mdl-js-textfield">
                                 <input className="mdl-textfield__input" type="text" ref="login" id="login"/>
                                 <label className="mdl-textfield__label" for="login">Логин</label>
@@ -64,7 +77,7 @@ class Login extends React.Component {
                         </form>
                     </div>
                     <div className="mdl-card__actions mdl-card--border">
-                        <button className="mdl-button mdl-button--colored mdl-js-button" onClick={this.login.bind(this)}>Войти</button>
+                        <button className="mdl-button mdl-button--colored mdl-js-button" onClick={this.handleClick.bind(this)}>Войти</button>
                     </div>
                 </div>
             </div>
