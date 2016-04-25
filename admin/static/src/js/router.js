@@ -1,4 +1,4 @@
-import {createElement} from 'react';
+import React from 'react';
 import {render} from 'react-dom';
 import {Router, browserHistory} from 'react-router';
 
@@ -42,13 +42,16 @@ let routes = {
 };
 
 
-function run({routes, node}) {
+function run({routes, node, connection}) {
     assert(routes, 'Parameter `routes` is required!');
     assert(node, 'Parameter `node` is required!');
-    return render(
-        createElement(Router, {routes: routes, history: browserHistory}),
-        node
-    );
+    let params = {
+        routes: routes,
+        history: browserHistory,
+        createElement: (Component, props) =>
+            <Component connection={connection} {...props}/>
+    };
+    return render(<Router {...params}/>, node);
 }
 
 
