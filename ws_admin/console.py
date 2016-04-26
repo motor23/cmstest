@@ -13,17 +13,19 @@ class Console:
     def __init__(self, websocket, loop):
         self.websocket = websocket
         self.loop = loop
-        self.namespace = {
-            'send': self.send,
-            'login': self.login,
-            'logout': self.logout,
-        }
+        self.commands = (
+            ('send', self.send),
+            ('login', self.login),
+            ('logout', self.logout),
+            ('cfg', self.cfg),
+        )
+        self.namespace = dict(self.commands)
 
     async def __call__(self):
         self.loop.add_reader(sys.stdin, self.read_command)
         print('===============================')
         print('Commands:')
-        for key, value in self.namespace.items():
+        for key, value in self.commands:
             print("{}({})".format(
                 key,
                 ','.join(inspect.getargs(value.__code__)[0][1:])),
@@ -49,6 +51,9 @@ class Console:
 
     def logout(self):
         self.send({'name':'auth.loginout', 'body': {}})
+
+    def cfg(self):
+        self.send({'name':'cinfo.cfg', 'body': {}})
 
 
 async def console(loop):
