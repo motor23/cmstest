@@ -30,7 +30,7 @@ class Login extends React.Component {
 
     handleSuccess(body) {
         window.loggedIn = true;
-        this.context.router.replace('/dashboard');
+        this.context.router.replace('/');
     }
 
     handleKeyPress(event) {

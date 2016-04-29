@@ -2,15 +2,32 @@ import assert from './util/assert';
 
 
 class Connection {
-    constructor(url) {
-        assert(url, 'Argument `url` is required!');
+    constructor(endpoint) {
+        assert(typeof endpoint === 'string', 'Argument `endpoint` must be a string');
         this.subscriptions = [];
-        this.socket = new WebSocket(url);
-        this.socket.onmessage = this.onmessage.bind(this);
+        this.endpoint = endpoint;
+        this.reconnect();
     }
 
-    close() {
-        this.socket.close();
+    reconnect() {
+        this.socket = new WebSocket(this.endpoint);
+        this.socket.addEventListener('error', this.onError.bind());
+        this.socket.addEventListener('close', this.onClose.bind());
+        this.socket.addEventListener('open', this.onOpen.bind());
+        this.socket.addEventListener('message', this.onMessage.bind());
+    }
+
+    onError(event) {}
+
+    onClose(event) {}
+
+    onOpen(event) {}
+
+    onMessage(event) {
+        let msg = JSON.parse(event.data);
+        this.subscriptions.map(subscription => {
+            msg.name === subscription.name && subscription.callback(msg);
+        });
     }
 
     send(name, body) {
@@ -26,14 +43,6 @@ class Connection {
         this.subscriptions.push(subscription);
         return subscription;
     }
-
-    onmessage(event) {
-        let msg = JSON.parse(event.data);
-        this.subscriptions.map(subscription => {
-            msg.name === subscription.name && subscription.callback(msg);
-        });
-    }
-
 }
 
 

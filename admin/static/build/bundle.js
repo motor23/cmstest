@@ -25756,7 +25756,7 @@
 /* 230 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 	
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
@@ -25786,12 +25786,103 @@
 	    }
 	
 	    _createClass(Dashboard, [{
-	        key: 'render',
+	        key: "render",
 	        value: function render() {
 	            return _react2.default.createElement(
-	                'div',
+	                "div",
 	                null,
-	                'Dashboard'
+	                _react2.default.createElement(
+	                    "div",
+	                    { className: "mdl-card" },
+	                    _react2.default.createElement(
+	                        "div",
+	                        { className: "mdl-card__title" },
+	                        "Главная страница"
+	                    ),
+	                    _react2.default.createElement(
+	                        "div",
+	                        { className: "mdl-card__actions mdl-card--border" },
+	                        _react2.default.createElement(
+	                            "button",
+	                            { className: "mdl-button mdl-js-button" },
+	                            "Ленты"
+	                        ),
+	                        _react2.default.createElement("br", null),
+	                        _react2.default.createElement(
+	                            "button",
+	                            { className: "mdl-button mdl-js-button" },
+	                            "Важное"
+	                        ),
+	                        _react2.default.createElement("br", null),
+	                        _react2.default.createElement(
+	                            "button",
+	                            { className: "mdl-button mdl-js-button" },
+	                            "Слайдер"
+	                        ),
+	                        _react2.default.createElement("br", null),
+	                        _react2.default.createElement(
+	                            "button",
+	                            { className: "mdl-button mdl-js-button" },
+	                            "Хайлайт"
+	                        ),
+	                        _react2.default.createElement("br", null),
+	                        _react2.default.createElement(
+	                            "button",
+	                            { className: "mdl-button mdl-js-button" },
+	                            "Мультимедиа"
+	                        ),
+	                        _react2.default.createElement("br", null),
+	                        _react2.default.createElement(
+	                            "button",
+	                            { className: "mdl-button mdl-js-button" },
+	                            "Баннеры"
+	                        ),
+	                        _react2.default.createElement("br", null)
+	                    )
+	                ),
+	                _react2.default.createElement(
+	                    "div",
+	                    { className: "mdl-card" },
+	                    _react2.default.createElement(
+	                        "div",
+	                        { className: "mdl-card__title" },
+	                        "Материалы"
+	                    ),
+	                    _react2.default.createElement(
+	                        "div",
+	                        { className: "mdl-card__actions mdl-card--border" },
+	                        _react2.default.createElement(
+	                            "button",
+	                            { className: "mdl-button mdl-js-button" },
+	                            "Документы"
+	                        ),
+	                        _react2.default.createElement("br", null),
+	                        _react2.default.createElement(
+	                            "button",
+	                            { className: "mdl-button mdl-js-button" },
+	                            "Глоссарий"
+	                        ),
+	                        _react2.default.createElement("br", null),
+	                        _react2.default.createElement(
+	                            "button",
+	                            { className: "mdl-button mdl-js-button" },
+	                            "Персоны"
+	                        ),
+	                        _react2.default.createElement("br", null),
+	                        _react2.default.createElement(
+	                            "button",
+	                            { className: "mdl-button mdl-js-button" },
+	                            "Институты"
+	                        ),
+	                        _react2.default.createElement("br", null),
+	                        _react2.default.createElement(
+	                            "button",
+	                            { className: "mdl-button mdl-js-button" },
+	                            "pravo.gov.ru"
+	                        ),
+	                        _react2.default.createElement("br", null)
+	                    )
+	                )
 	            );
 	        }
 	    }]);
@@ -25858,7 +25949,7 @@
 	        key: 'handleSuccess',
 	        value: function handleSuccess(body) {
 	            window.loggedIn = true;
-	            this.context.router.replace('/dashboard');
+	            this.context.router.replace('/');
 	        }
 	    }, {
 	        key: 'handleKeyPress',
