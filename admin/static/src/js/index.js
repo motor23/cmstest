@@ -1,12 +1,25 @@
 import React from 'react';
-import Connection from './connection';
-import {run, routes} from './router';
+import {render} from 'react-dom';
+import {Router, browserHistory} from 'react-router';
+import {Provider} from 'react-redux';
+
+import configureStore from './configureStore';
+import configureRoutes from './configureRoutes';
 
 
-let node = document.getElementById('application');
-let connection = new Connection(window.config.ws);
-let router = run({routes: routes, node: node, connection: connection});
+const initialState = {
+    user: null,
+    isConnected: false,
+    isAuthenticated: false
+};
+const store = configureStore(initialState);
+const routes = configureRoutes();
+const routerProps = {routes: routes, history: browserHistory};
+const providerProps = {store: store};
+const router = React.createElement(Router, routerProps);
+const provider = React.createElement(Provider, providerProps, router);
+const root = render(provider, document.getElementById('application'));
 
 
-window.router = router;
-window.React = React;
+window.store = store;
+window.root = root;
