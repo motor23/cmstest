@@ -8,17 +8,17 @@ from ikcms.ws_apps.composite.exc import FieldRequiredError
 class WS_AuthComponent(ikcms.ws_components.auth.base.WS_AuthComponent):
 
     async def h_login(self, env, message):
-        login = message.get('login')
-        if not login:
-            raise FieldRequiredError('login')
-        password = message.get('password')
         key = message.get('key')
-        if password:
-            key = self.auth_by_password(env, login, password)
-        elif key:
-            key = self.auth_by_key(env, login, key)
+        login = message.get('login')
+        password = message.get('password')
+        if key:
+            key = self.auth_by_key(env, key)
         else:
-            raise FieldRequiredError(('password', 'key'))
+            if not login:
+                raise FieldRequiredError('login')
+            if not password:
+                raise FieldRequiredError('password')
+            key = self.auth_by_password(env, login, password)
         if key:
             env.user = {'login': login}
             await env.send('auth.login_ok', {
@@ -42,9 +42,8 @@ class WS_AuthComponent(ikcms.ws_components.auth.base.WS_AuthComponent):
         else:
             return False
 
-    def auth_by_key(self, env, login, key):
-        _key = md5(login.encode('utf8')).hexdigest()
-        if key==_key:
+    def auth_by_key(self, env, key):
+        if key == key:
             return key
         else:
             return False
