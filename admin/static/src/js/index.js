@@ -5,21 +5,17 @@ import {Provider} from 'react-redux';
 
 import configureStore from './configureStore';
 import configureRoutes from './configureRoutes';
+import configureConnection from './configureConnection';
+import {endpoints} from './actions';
 
 
-const initialState = {
-    user: null,
-    isConnected: false,
-    isAuthenticated: false
-};
-const store = configureStore(initialState);
-const routes = configureRoutes();
-const routerProps = {routes: routes, history: browserHistory};
-const providerProps = {store: store};
-const router = React.createElement(Router, routerProps);
-const provider = React.createElement(Provider, providerProps, router);
-const root = render(provider, document.getElementById('application'));
+const store = configureStore();
+const connection = configureConnection(window.config.ws, store.dispatch, endpoints);
 
-
+window.connection = connection;
 window.store = store;
-window.root = root;
+
+const routes = configureRoutes();
+const router = React.createElement(Router, {routes: routes, history: browserHistory});
+const provider = React.createElement(Provider, {store: store}, router);
+const root = render(provider, document.getElementById('application'));

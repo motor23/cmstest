@@ -1,33 +1,30 @@
 import React from 'react';
 import {connect} from 'react-redux';
 
+import {loginWithToken} from '../actions';
+import Login from './login';
+
 
 class Application extends React.Component {
-    static propTypes = {
-        user: React.PropTypes.object,
-        isConnected: React.PropTypes.bool.isRequired,
-        isAuthenticated: React.PropTypes.bool.isRequired
-    };
-
     componentWillMount() {
-    }
-
-    componentWillUpdate(nextProps, nextState) {
+        const token = localStorage.getItem('token');
+        if (token) {
+            this.props.dispatch(loginWithToken(token));
+        }
     }
 
     render() {
+        if (!this.props.isLoggedIn) {
+            return <Login/>;
+        }
         return React.Children.only(this.props.children);
     }
 }
 
 
-function mapStateToProps (state) {
-    return {
-        user: state.user,
-        isConnected: state.isConnected,
-        isAuthenticated: state.isAuthenticated
-    };
-}
+const mapStateToProps = state => ({
+    isLoggedIn: state.user.isLoggedIn
+});
 
 
 export default connect(mapStateToProps)(Application);

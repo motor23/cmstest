@@ -1,33 +1,6 @@
-import {createStore, applyMiddleware} from 'redux';
+import {createStore, applyMiddleware, combineReducers} from 'redux';
 import createLogger from 'redux-logger';
-
-
-const LOGIN_REQUEST = 'LOGIN_REQUEST';
-const LOGIN_SUCCESS = 'LOGIN_SUCCESS';
-const LOGIN_FAILURE = 'LOGIN_FAILURE';
-
-
-function loginRequest(credentials) {
-    return {type: LOGIN_REQUEST, credentials: credentials};
-}
-
-
-function loginSuccess(user) {
-    return {type: LOGIN_SUCCESS, user: user};
-}
-
-
-function loginFailure(message) {
-    return {type: LOGIN_FAILURE, message: message};
-}
-
-
-function reducer(state={}, action={}) {
-    switch (action.type) {
-        default:
-            return state;
-    }
-}
+import {user, config} from './reducers';
 
 
 const thunkMiddleware = store => next => action => {
@@ -46,7 +19,23 @@ const loggerMiddleware = store => next => action => {
 };
 
 
+const connectionMiddleware = store => next => action => {
+    if (typeof action.endpoint === 'string') {
+        window.connection.send({name: action.endpoint, body: action.payload});
+    }
+    return next(action);
+};
+
+
 export default function configureStore(initialState) {
-    const middlewares = applyMiddleware(thunkMiddleware, loggerMiddleware);
-    return createStore(reducer, initialState, middlewares);
-}
+    const reducer = combineReducers({
+        user: user,
+        config: config
+    });
+    const middleware = applyMiddleware(
+        thunkMiddleware,
+        loggerMiddleware,
+        connectionMiddleware
+    );
+    return createStore(reducer, initialState, middleware);
+};

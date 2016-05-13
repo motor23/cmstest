@@ -1,30 +1,26 @@
 import React from 'react';
+import {connect} from 'react-redux';
+import Spinner from './spinner';
 
 
-class Dashboard extends React.Component {
+class MenuItem_Stream extends React.Component {
     render() {
+        const {title} = this.props;
         return (
-            <div>
-                <div className="mdl-card">
-                    <div className="mdl-card__title">Главная страница</div>
-                    <div className="mdl-card__actions mdl-card--border">
-                        <button className="mdl-button mdl-js-button">Ленты</button><br/>
-                        <button className="mdl-button mdl-js-button">Важное</button><br/>
-                        <button className="mdl-button mdl-js-button">Слайдер</button><br/>
-                        <button className="mdl-button mdl-js-button">Хайлайт</button><br/>
-                        <button className="mdl-button mdl-js-button">Мультимедиа</button><br/>
-                        <button className="mdl-button mdl-js-button">Баннеры</button><br/>
-                    </div>
-                </div>
-                <div className="mdl-card">
-                    <div className="mdl-card__title">Материалы</div>
-                    <div className="mdl-card__actions mdl-card--border">
-                        <button className="mdl-button mdl-js-button">Документы</button><br/>
-                        <button className="mdl-button mdl-js-button">Глоссарий</button><br/>
-                        <button className="mdl-button mdl-js-button">Персоны</button><br/>
-                        <button className="mdl-button mdl-js-button">Институты</button><br/>
-                        <button className="mdl-button mdl-js-button">pravo.gov.ru</button><br/>
-                    </div>
+            <button className="mdl-button mdl-js-button">{title}</button>
+        );
+    }
+}
+
+
+class MenuItem extends React.Component {
+    render() {
+        const {title, children} = this.props;
+        return (
+            <div className="mdl-card">
+                <div className="mdl-card__title">{title}</div>
+                <div className="mdl-card__actions mdl-card--border">
+                    {children.map(child => <MenuItem_Stream key={child.title} {...child} />)}
                 </div>
             </div>
         );
@@ -32,4 +28,26 @@ class Dashboard extends React.Component {
 }
 
 
-export default Dashboard;
+class Dashboard extends React.Component {
+    render() {
+        const {dashboard} = this.props;
+
+        if (!dashboard) {
+            return <Spinner/>;
+        }
+
+        return (
+            <div>
+                {dashboard.map(child => <MenuItem key={child.title} {...child} />)}
+            </div>
+        );
+    }
+}
+
+
+const mapStateToProps = state => ({
+    dashboard: state.config.menu.dashboard
+});
+
+
+export default connect(mapStateToProps)(Dashboard);

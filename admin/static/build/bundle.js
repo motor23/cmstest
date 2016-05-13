@@ -64,23 +64,24 @@
 	
 	var _configureRoutes2 = _interopRequireDefault(_configureRoutes);
 	
+	var _configureConnection = __webpack_require__(262);
+	
+	var _configureConnection2 = _interopRequireDefault(_configureConnection);
+	
+	var _actions = __webpack_require__(255);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	var initialState = {
-	    user: null,
-	    isConnected: false,
-	    isAuthenticated: false
-	};
-	var store = (0, _configureStore2.default)(initialState);
-	var routes = (0, _configureRoutes2.default)();
-	var routerProps = { routes: routes, history: _reactRouter.browserHistory };
-	var providerProps = { store: store };
-	var router = _react2.default.createElement(_reactRouter.Router, routerProps);
-	var provider = _react2.default.createElement(_reactRedux.Provider, providerProps, router);
-	var root = (0, _reactDom.render)(provider, document.getElementById('application'));
+	var store = (0, _configureStore2.default)();
+	var connection = (0, _configureConnection2.default)(window.config.ws, store.dispatch, _actions.endpoints);
 	
+	window.connection = connection;
 	window.store = store;
-	window.root = root;
+	
+	var routes = (0, _configureRoutes2.default)();
+	var router = _react2.default.createElement(_reactRouter.Router, { routes: routes, history: _reactRouter.browserHistory });
+	var provider = _react2.default.createElement(_reactRedux.Provider, { store: store }, router);
+	var root = (0, _reactDom.render)(provider, document.getElementById('application'));
 
 /***/ },
 /* 1 */
@@ -27103,57 +27104,58 @@
 	
 	var _redux = __webpack_require__(232);
 	
-	var _reduxThunk = __webpack_require__(251);
-	
-	var _reduxThunk2 = _interopRequireDefault(_reduxThunk);
-	
-	var _reduxLogger = __webpack_require__(252);
+	var _reduxLogger = __webpack_require__(251);
 	
 	var _reduxLogger2 = _interopRequireDefault(_reduxLogger);
 	
+	var _reducers = __webpack_require__(252);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	function reducer() {
-	    var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-	    var action = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	var thunkMiddleware = function thunkMiddleware(store) {
+	    return function (next) {
+	        return function (action) {
+	            if (typeof action === 'function') {
+	                return action(store.dispatch, store.getState);
+	            }
+	            return next(action);
+	        };
+	    };
+	};
 	
-	    switch (action.type) {
-	        default:
-	            return state;
-	    }
-	}
+	var loggerMiddleware = function loggerMiddleware(store) {
+	    return function (next) {
+	        return function (action) {
+	            console.log('dispatching', action);
+	            var result = next(action);
+	            console.log('next state', store.getState());
+	            return result;
+	        };
+	    };
+	};
+	
+	var connectionMiddleware = function connectionMiddleware(store) {
+	    return function (next) {
+	        return function (action) {
+	            if (typeof action.endpoint === 'string') {
+	                window.connection.send({ name: action.endpoint, body: action.payload });
+	            }
+	            return next(action);
+	        };
+	    };
+	};
 	
 	function configureStore(initialState) {
-	    var middlewares = (0, _redux.applyMiddleware)(_reduxThunk2.default, (0, _reduxLogger2.default)());
-	    var store = (0, _redux.createStore)(reducer, initialState, middlewares);
-	    return store;
-	}
+	    var reducer = (0, _redux.combineReducers)({
+	        user: _reducers.user,
+	        config: _reducers.config
+	    });
+	    var middleware = (0, _redux.applyMiddleware)(thunkMiddleware, loggerMiddleware, connectionMiddleware);
+	    return (0, _redux.createStore)(reducer, initialState, middleware);
+	};
 
 /***/ },
 /* 251 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	exports.__esModule = true;
-	exports['default'] = thunkMiddleware;
-	function thunkMiddleware(_ref) {
-	  var dispatch = _ref.dispatch;
-	  var getState = _ref.getState;
-	
-	  return function (next) {
-	    return function (action) {
-	      if (typeof action === 'function') {
-	        return action(dispatch, getState);
-	      }
-	
-	      return next(action);
-	    };
-	  };
-	}
-
-/***/ },
-/* 252 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -27386,6 +27388,73 @@
 	module.exports = createLogger;
 
 /***/ },
+/* 252 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.config = config;
+	exports.user = user;
+	function config(state, action) {
+	    var initialState = {
+	        auth: null,
+	        cinfo: null,
+	        menu: {
+	            dashboard: null,
+	            main: null
+	        }
+	    };
+	
+	    state = state || initialState;
+	    if (action.type === 'CONFIG_UPDATE') {
+	        return Object.assign({}, state, {
+	            auth: action.payload.auth,
+	            cinfo: action.payload.cinfo,
+	            menu: action.payload.menu
+	        });
+	    }
+	    return state;
+	}
+	
+	function user(state, action) {
+	    var initialState = {
+	        isLoggedIn: false,
+	        token: null,
+	        error: null
+	    };
+	
+	    state = state || initialState;
+	
+	    if (action.type === 'LOGIN_SUCCESS') {
+	        return Object.assign({}, state, {
+	            isLoggedIn: true,
+	            token: action.payload.token
+	        });
+	    }
+	
+	    if (action.type === 'LOGIN_FAILURE') {
+	        return Object.assign({}, state, {
+	            isLoggedIn: false,
+	            token: null,
+	            error: action.payload.reason
+	        });
+	    }
+	
+	    if (action.type === 'LOGOUT') {
+	        return Object.assign({}, state, {
+	            isLoggedIn: false,
+	            token: null,
+	            error: null
+	        });
+	    }
+	
+	    return state;
+	}
+
+/***/ },
 /* 253 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -27400,7 +27469,7 @@
 	
 	var _application2 = _interopRequireDefault(_application);
 	
-	var _dashboard = __webpack_require__(255);
+	var _dashboard = __webpack_require__(257);
 	
 	var _dashboard2 = _interopRequireDefault(_dashboard);
 	
@@ -27408,15 +27477,15 @@
 	
 	var _login2 = _interopRequireDefault(_login);
 	
-	var _stream = __webpack_require__(257);
+	var _stream = __webpack_require__(259);
 	
 	var _stream2 = _interopRequireDefault(_stream);
 	
-	var _streamList = __webpack_require__(258);
+	var _streamList = __webpack_require__(260);
 	
 	var _streamList2 = _interopRequireDefault(_streamList);
 	
-	var _streamItem = __webpack_require__(259);
+	var _streamItem = __webpack_require__(261);
 	
 	var _streamItem2 = _interopRequireDefault(_streamItem);
 	
@@ -27457,6 +27526,12 @@
 	
 	var _reactRedux = __webpack_require__(225);
 	
+	var _actions = __webpack_require__(255);
+	
+	var _login = __webpack_require__(256);
+	
+	var _login2 = _interopRequireDefault(_login);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -27475,8 +27550,19 @@
 	    }
 	
 	    _createClass(Application, [{
+	        key: 'componentWillMount',
+	        value: function componentWillMount() {
+	            var token = localStorage.getItem('token');
+	            if (token) {
+	                this.props.dispatch((0, _actions.loginWithToken)(token));
+	            }
+	        }
+	    }, {
 	        key: 'render',
 	        value: function render() {
+	            if (!this.props.isLoggedIn) {
+	                return _react2.default.createElement(_login2.default, null);
+	            }
 	            return _react2.default.Children.only(this.props.children);
 	        }
 	    }]);
@@ -27484,25 +27570,393 @@
 	    return Application;
 	}(_react2.default.Component);
 	
-	Application.propTypes = {
-	    user: _react2.default.PropTypes.object,
-	    isConnected: _react2.default.PropTypes.bool.isRequired,
-	    isAuthenticated: _react2.default.PropTypes.bool.isRequired
-	};
-	
-	
-	function mapStateToProps(state) {
+	var mapStateToProps = function mapStateToProps(state) {
 	    return {
-	        user: state.user,
-	        isConnected: state.isConnected,
-	        isAuthenticated: state.isAuthenticated
+	        isLoggedIn: state.user.isLoggedIn
 	    };
-	}
+	};
 	
 	exports.default = (0, _reactRedux.connect)(mapStateToProps)(Application);
 
 /***/ },
 /* 255 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.config = config;
+	exports.configUpdate = configUpdate;
+	exports.logout = logout;
+	exports.loginSuccess = loginSuccess;
+	exports.loginFailure = loginFailure;
+	exports.loginWithCredentials = loginWithCredentials;
+	exports.loginWithToken = loginWithToken;
+	function config() {
+	    return {
+	        type: 'CONFIG_REQUEST',
+	        endpoint: 'cinfo.cfg'
+	    };
+	}
+	
+	function configUpdate(configuration) {
+	    return {
+	        type: 'CONFIG_UPDATE',
+	        payload: configuration
+	    };
+	}
+	
+	function logout() {
+	    localStorage.removeItem('token');
+	    return {
+	        type: 'LOGOUT'
+	    };
+	}
+	
+	function loginSuccess(token) {
+	    localStorage.setItem('token', token);
+	    return {
+	        type: 'LOGIN_SUCCESS',
+	        payload: {
+	            token: token
+	        }
+	    };
+	}
+	
+	function loginFailure(reason) {
+	    localStorage.removeItem('token');
+	    return {
+	        type: 'LOGIN_FAILURE',
+	        payload: {
+	            reason: reason
+	        }
+	    };
+	}
+	
+	function loginWithCredentials(login, password) {
+	    return {
+	        type: 'LOGIN_REQUEST',
+	        endpoint: 'auth.login',
+	        payload: {
+	            login: login,
+	            password: password
+	        }
+	    };
+	}
+	
+	function loginWithToken(token) {
+	    return {
+	        type: 'LOGIN_REQUEST',
+	        endpoint: 'auth.login',
+	        payload: {
+	            key: token
+	        }
+	    };
+	}
+	
+	var endpoints = exports.endpoints = {
+	    'auth.login_ok': function authLogin_ok(dispatch, body) {
+	        dispatch(loginSuccess(body.key));dispatch(config());
+	    },
+	    'auth.login_error': function authLogin_error(dispatch, body) {
+	        return dispatch(loginFailure(body.reason));
+	    },
+	    'cinfo.cfg_response': function cinfoCfg_response(dispatch, body) {
+	        return dispatch(configUpdate(body));
+	    }
+	};
+
+/***/ },
+/* 256 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _react = __webpack_require__(1);
+	
+	var _react2 = _interopRequireDefault(_react);
+	
+	var _reactRedux = __webpack_require__(225);
+	
+	var _actions = __webpack_require__(255);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Login = function (_React$Component) {
+	    _inherits(Login, _React$Component);
+	
+	    function Login(props, context) {
+	        _classCallCheck(this, Login);
+	
+	        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Login).call(this, props, context));
+	
+	        _this.handleKeyPress = _this.handleKeyPress.bind(_this);
+	        _this.handleClick = _this.handleClick.bind(_this);
+	        return _this;
+	    }
+	
+	    _createClass(Login, [{
+	        key: 'handleKeyPress',
+	        value: function handleKeyPress(event) {
+	            if (event.charCode === 13) {
+	                event.preventDefault();
+	                event.stopPropagation();
+	                this.login();
+	            }
+	        }
+	    }, {
+	        key: 'handleClick',
+	        value: function handleClick(event) {
+	            event.preventDefault();
+	            event.stopPropagation();
+	            this.login();
+	        }
+	    }, {
+	        key: 'login',
+	        value: function login() {
+	            var login = this.refs.login.value;
+	            var password = this.refs.password.value;
+	            this.props.dispatch((0, _actions.loginWithCredentials)(login, password));
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	            var error = this.props.error;
+	
+	            return _react2.default.createElement(
+	                'div',
+	                { className: 'mdl-layout' },
+	                _react2.default.createElement(
+	                    'div',
+	                    { className: 'mdl-layout__content' },
+	                    _react2.default.createElement(
+	                        'div',
+	                        { className: 'mdl-card mdl-shadow--6dp' },
+	                        _react2.default.createElement(
+	                            'div',
+	                            { className: 'mdl-card__title mdl-color--primary mdl-color-text--white' },
+	                            _react2.default.createElement(
+	                                'h2',
+	                                { className: 'mdl-card__title-text' },
+	                                'Авторизация'
+	                            )
+	                        ),
+	                        _react2.default.createElement(
+	                            'div',
+	                            { className: 'mdl-card__supporting-text' },
+	                            _react2.default.createElement(
+	                                'form',
+	                                { onKeyPress: this.handleKeyPress.bind(this) },
+	                                _react2.default.createElement(
+	                                    'div',
+	                                    { className: 'mdl-textfield mdl-js-textfield' },
+	                                    _react2.default.createElement('input', { className: 'mdl-textfield__input', type: 'text', ref: 'login', id: 'login' }),
+	                                    _react2.default.createElement(
+	                                        'label',
+	                                        { className: 'mdl-textfield__label', 'for': 'login' },
+	                                        'Логин'
+	                                    ),
+	                                    error ? _react2.default.createElement(
+	                                        'span',
+	                                        { 'class': 'mdl-textfield__error' },
+	                                        error
+	                                    ) : null
+	                                ),
+	                                _react2.default.createElement(
+	                                    'div',
+	                                    { className: 'mdl-textfield mdl-js-textfield' },
+	                                    _react2.default.createElement('input', { className: 'mdl-textfield__input', type: 'password', ref: 'password', id: 'password' }),
+	                                    _react2.default.createElement(
+	                                        'label',
+	                                        { className: 'mdl-textfield__label', 'for': 'login' },
+	                                        'Пароль'
+	                                    ),
+	                                    error ? _react2.default.createElement(
+	                                        'span',
+	                                        { 'class': 'mdl-textfield__error' },
+	                                        error
+	                                    ) : null
+	                                )
+	                            )
+	                        ),
+	                        _react2.default.createElement(
+	                            'div',
+	                            { className: 'mdl-card__actions mdl-card--border' },
+	                            _react2.default.createElement(
+	                                'button',
+	                                { className: 'mdl-button mdl-button--colored mdl-js-button', onClick: this.handleClick.bind(this) },
+	                                'Войти'
+	                            )
+	                        )
+	                    )
+	                )
+	            );
+	        }
+	    }]);
+	
+	    return Login;
+	}(_react2.default.Component);
+	
+	var mapStateToProps = function mapStateToProps(state) {
+	    return {
+	        error: state.user.error
+	    };
+	};
+	
+	exports.default = (0, _reactRedux.connect)(mapStateToProps)(Login);
+
+/***/ },
+/* 257 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _react = __webpack_require__(1);
+	
+	var _react2 = _interopRequireDefault(_react);
+	
+	var _reactRedux = __webpack_require__(225);
+	
+	var _spinner = __webpack_require__(258);
+	
+	var _spinner2 = _interopRequireDefault(_spinner);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var MenuItem_Stream = function (_React$Component) {
+	    _inherits(MenuItem_Stream, _React$Component);
+	
+	    function MenuItem_Stream() {
+	        _classCallCheck(this, MenuItem_Stream);
+	
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(MenuItem_Stream).apply(this, arguments));
+	    }
+	
+	    _createClass(MenuItem_Stream, [{
+	        key: 'render',
+	        value: function render() {
+	            var title = this.props.title;
+	
+	            return _react2.default.createElement(
+	                'button',
+	                { className: 'mdl-button mdl-js-button' },
+	                title,
+	                _react2.default.createElement('br', null)
+	            );
+	        }
+	    }]);
+	
+	    return MenuItem_Stream;
+	}(_react2.default.Component);
+	
+	var MenuItem = function (_React$Component2) {
+	    _inherits(MenuItem, _React$Component2);
+	
+	    function MenuItem() {
+	        _classCallCheck(this, MenuItem);
+	
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(MenuItem).apply(this, arguments));
+	    }
+	
+	    _createClass(MenuItem, [{
+	        key: 'render',
+	        value: function render() {
+	            var _props = this.props;
+	            var title = _props.title;
+	            var children = _props.children;
+	
+	            return _react2.default.createElement(
+	                'div',
+	                { className: 'mdl-card' },
+	                _react2.default.createElement(
+	                    'div',
+	                    { className: 'mdl-card__title' },
+	                    title
+	                ),
+	                _react2.default.createElement(
+	                    'div',
+	                    { className: 'mdl-card__actions mdl-card--border' },
+	                    children.map(function (child) {
+	                        return _react2.default.createElement(MenuItem_Stream, _extends({ key: child.title }, child));
+	                    })
+	                )
+	            );
+	        }
+	    }]);
+	
+	    return MenuItem;
+	}(_react2.default.Component);
+	
+	var Dashboard = function (_React$Component3) {
+	    _inherits(Dashboard, _React$Component3);
+	
+	    function Dashboard() {
+	        _classCallCheck(this, Dashboard);
+	
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(Dashboard).apply(this, arguments));
+	    }
+	
+	    _createClass(Dashboard, [{
+	        key: 'render',
+	        value: function render() {
+	            var dashboard = this.props.dashboard;
+	
+	
+	            if (!dashboard) {
+	                return _react2.default.createElement(_spinner2.default, null);
+	            }
+	
+	            return _react2.default.createElement(
+	                'div',
+	                null,
+	                dashboard.map(function (child) {
+	                    return _react2.default.createElement(MenuItem, _extends({ key: child.title }, child));
+	                })
+	            );
+	        }
+	    }]);
+	
+	    return Dashboard;
+	}(_react2.default.Component);
+	
+	var mapStateToProps = function mapStateToProps(state) {
+	    return {
+	        dashboard: state.config.menu.dashboard
+	    };
+	};
+	
+	exports.default = (0, _reactRedux.connect)(mapStateToProps)(Dashboard);
+
+/***/ },
+/* 258 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -27525,288 +27979,39 @@
 	
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 	
-	var Dashboard = function (_React$Component) {
-	    _inherits(Dashboard, _React$Component);
+	var Spinner = function (_React$Component) {
+	    _inherits(Spinner, _React$Component);
 	
-	    function Dashboard() {
-	        _classCallCheck(this, Dashboard);
+	    function Spinner() {
+	        _classCallCheck(this, Spinner);
 	
-	        return _possibleConstructorReturn(this, Object.getPrototypeOf(Dashboard).apply(this, arguments));
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(Spinner).apply(this, arguments));
 	    }
 	
-	    _createClass(Dashboard, [{
+	    _createClass(Spinner, [{
+	        key: "componentDidMount",
+	        value: function componentDidMount() {
+	            window.componentHandler.upgradeDom();
+	        }
+	    }, {
+	        key: "componentDidUpdate",
+	        value: function componentDidUpdate() {
+	            window.componentHandler.upgradeDom();
+	        }
+	    }, {
 	        key: "render",
 	        value: function render() {
-	            return _react2.default.createElement(
-	                "div",
-	                null,
-	                _react2.default.createElement(
-	                    "div",
-	                    { className: "mdl-card" },
-	                    _react2.default.createElement(
-	                        "div",
-	                        { className: "mdl-card__title" },
-	                        "Главная страница"
-	                    ),
-	                    _react2.default.createElement(
-	                        "div",
-	                        { className: "mdl-card__actions mdl-card--border" },
-	                        _react2.default.createElement(
-	                            "button",
-	                            { className: "mdl-button mdl-js-button" },
-	                            "Ленты"
-	                        ),
-	                        _react2.default.createElement("br", null),
-	                        _react2.default.createElement(
-	                            "button",
-	                            { className: "mdl-button mdl-js-button" },
-	                            "Важное"
-	                        ),
-	                        _react2.default.createElement("br", null),
-	                        _react2.default.createElement(
-	                            "button",
-	                            { className: "mdl-button mdl-js-button" },
-	                            "Слайдер"
-	                        ),
-	                        _react2.default.createElement("br", null),
-	                        _react2.default.createElement(
-	                            "button",
-	                            { className: "mdl-button mdl-js-button" },
-	                            "Хайлайт"
-	                        ),
-	                        _react2.default.createElement("br", null),
-	                        _react2.default.createElement(
-	                            "button",
-	                            { className: "mdl-button mdl-js-button" },
-	                            "Мультимедиа"
-	                        ),
-	                        _react2.default.createElement("br", null),
-	                        _react2.default.createElement(
-	                            "button",
-	                            { className: "mdl-button mdl-js-button" },
-	                            "Баннеры"
-	                        ),
-	                        _react2.default.createElement("br", null)
-	                    )
-	                ),
-	                _react2.default.createElement(
-	                    "div",
-	                    { className: "mdl-card" },
-	                    _react2.default.createElement(
-	                        "div",
-	                        { className: "mdl-card__title" },
-	                        "Материалы"
-	                    ),
-	                    _react2.default.createElement(
-	                        "div",
-	                        { className: "mdl-card__actions mdl-card--border" },
-	                        _react2.default.createElement(
-	                            "button",
-	                            { className: "mdl-button mdl-js-button" },
-	                            "Документы"
-	                        ),
-	                        _react2.default.createElement("br", null),
-	                        _react2.default.createElement(
-	                            "button",
-	                            { className: "mdl-button mdl-js-button" },
-	                            "Глоссарий"
-	                        ),
-	                        _react2.default.createElement("br", null),
-	                        _react2.default.createElement(
-	                            "button",
-	                            { className: "mdl-button mdl-js-button" },
-	                            "Персоны"
-	                        ),
-	                        _react2.default.createElement("br", null),
-	                        _react2.default.createElement(
-	                            "button",
-	                            { className: "mdl-button mdl-js-button" },
-	                            "Институты"
-	                        ),
-	                        _react2.default.createElement("br", null),
-	                        _react2.default.createElement(
-	                            "button",
-	                            { className: "mdl-button mdl-js-button" },
-	                            "pravo.gov.ru"
-	                        ),
-	                        _react2.default.createElement("br", null)
-	                    )
-	                )
-	            );
+	            return _react2.default.createElement("div", { className: "mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active" });
 	        }
 	    }]);
 	
-	    return Dashboard;
+	    return Spinner;
 	}(_react2.default.Component);
 	
-	exports.default = Dashboard;
+	exports.default = Spinner;
 
 /***/ },
-/* 256 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	var _react = __webpack_require__(1);
-	
-	var _react2 = _interopRequireDefault(_react);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-	
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-	
-	var Login = function (_React$Component) {
-	    _inherits(Login, _React$Component);
-	
-	    function Login(props, context) {
-	        _classCallCheck(this, Login);
-	
-	        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Login).call(this, props, context));
-	
-	        _this.state = { error: '' };
-	        return _this;
-	    }
-	
-	    _createClass(Login, [{
-	        key: 'componentWillMount',
-	        value: function componentWillMount() {
-	            this.subscription_ok = this.context.connection.receive('auth.login_ok', this.handleSuccess.bind(this));
-	            this.subscription_error = this.context.connection.receive('auth.login_error', this.handleError.bind(this));
-	        }
-	    }, {
-	        key: 'componentWillUnmount',
-	        value: function componentWillUnmount() {
-	            this.subscription_ok.unsubscribe();
-	            this.subscription_error.unsubscribe();
-	        }
-	    }, {
-	        key: 'handleError',
-	        value: function handleError(body) {
-	            this.setState({ error: 'Неверный логин или пароль' });
-	        }
-	    }, {
-	        key: 'handleSuccess',
-	        value: function handleSuccess(body) {
-	            window.loggedIn = true;
-	            this.context.router.replace('/');
-	        }
-	    }, {
-	        key: 'handleKeyPress',
-	        value: function handleKeyPress(event) {
-	            if (event.charCode === 13) {
-	                event.preventDefault();
-	                event.stopPropagation();
-	                this.login();
-	            }
-	        }
-	    }, {
-	        key: 'handleClick',
-	        value: function handleClick(event) {
-	            event.preventDefault();
-	            event.stopPropagation();
-	            this.login();
-	        }
-	    }, {
-	        key: 'login',
-	        value: function login() {
-	            var login = this.refs.login.value;
-	            var password = this.refs.password.value;
-	            this.context.connection.send('auth.login', { login: login, password: password });
-	            this.setState({ isLoggingIn: true });
-	        }
-	    }, {
-	        key: 'render',
-	        value: function render() {
-	            var error = this.state.error;
-	
-	            return _react2.default.createElement(
-	                'div',
-	                { className: 'mdl-layout__content' },
-	                _react2.default.createElement(
-	                    'div',
-	                    { className: 'mdl-card mdl-shadow--6dp' },
-	                    _react2.default.createElement(
-	                        'div',
-	                        { className: 'mdl-card__title mdl-color--primary mdl-color-text--white' },
-	                        _react2.default.createElement(
-	                            'h2',
-	                            { className: 'mdl-card__title-text' },
-	                            'Авторизация'
-	                        )
-	                    ),
-	                    _react2.default.createElement(
-	                        'div',
-	                        { className: 'mdl-card__supporting-text' },
-	                        _react2.default.createElement(
-	                            'form',
-	                            { onKeyPress: this.handleKeyPress.bind(this) },
-	                            _react2.default.createElement(
-	                                'div',
-	                                { className: 'mdl-textfield mdl-js-textfield' },
-	                                _react2.default.createElement('input', { className: 'mdl-textfield__input', type: 'text', ref: 'login', id: 'login' }),
-	                                _react2.default.createElement(
-	                                    'label',
-	                                    { className: 'mdl-textfield__label', 'for': 'login' },
-	                                    'Логин'
-	                                ),
-	                                error ? _react2.default.createElement(
-	                                    'span',
-	                                    { 'class': 'mdl-textfield__error' },
-	                                    error
-	                                ) : null
-	                            ),
-	                            _react2.default.createElement(
-	                                'div',
-	                                { className: 'mdl-textfield mdl-js-textfield' },
-	                                _react2.default.createElement('input', { className: 'mdl-textfield__input', type: 'password', ref: 'password', id: 'password' }),
-	                                _react2.default.createElement(
-	                                    'label',
-	                                    { className: 'mdl-textfield__label', 'for': 'login' },
-	                                    'Пароль'
-	                                ),
-	                                error ? _react2.default.createElement(
-	                                    'span',
-	                                    { 'class': 'mdl-textfield__error' },
-	                                    error
-	                                ) : null
-	                            )
-	                        )
-	                    ),
-	                    _react2.default.createElement(
-	                        'div',
-	                        { className: 'mdl-card__actions mdl-card--border' },
-	                        _react2.default.createElement(
-	                            'button',
-	                            { className: 'mdl-button mdl-button--colored mdl-js-button', onClick: this.handleClick.bind(this) },
-	                            'Войти'
-	                        )
-	                    )
-	                )
-	            );
-	        }
-	    }]);
-	
-	    return Login;
-	}(_react2.default.Component);
-	
-	Login.contextTypes = {
-	    connection: _react2.default.PropTypes.object.isRequired,
-	    router: _react2.default.PropTypes.object.isRequired
-	};
-	exports.default = Login;
-
-/***/ },
-/* 257 */
+/* 259 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27861,7 +28066,7 @@
 	exports.default = Stream;
 
 /***/ },
-/* 258 */
+/* 260 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27914,7 +28119,7 @@
 	exports.default = StreamList;
 
 /***/ },
-/* 259 */
+/* 261 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27966,6 +28171,100 @@
 	}(_react2.default.Component);
 	
 	exports.default = StreamItem;
+
+/***/ },
+/* 262 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	exports.default = configureConnection;
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var Connection = function () {
+	    function Connection(url, dispatch, endpoints) {
+	        _classCallCheck(this, Connection);
+	
+	        this.url = url;
+	        this.ready = false;
+	        this.socket = null;
+	        this.reconnects = -1;
+	        this.dispatch = dispatch;
+	        this.endpoints = endpoints;
+	        this.queue = [];
+	        this._open = this._open.bind(this);
+	        this._close = this._close.bind(this);
+	        this._message = this._message.bind(this);
+	        this.connect();
+	    }
+	
+	    _createClass(Connection, [{
+	        key: 'connect',
+	        value: function connect() {
+	            this.socket = new WebSocket(this.url);
+	            this.socket.addEventListener('open', this._open);
+	            this.socket.addEventListener('close', this._close);
+	            this.socket.addEventListener('message', this._message);
+	        }
+	    }, {
+	        key: 'send',
+	        value: function send(message) {
+	            if (this.ready) {
+	                this.socket.send(JSON.stringify(message));
+	                return true;
+	            }
+	            this.queue.push(message);
+	            return false;
+	        }
+	    }, {
+	        key: 'flush',
+	        value: function flush() {
+	            var _this = this;
+	
+	            this.queue = this.queue.filter(function (message) {
+	                return _this.send(message);
+	            });
+	        }
+	    }, {
+	        key: '_open',
+	        value: function _open(event) {
+	            this.ready = true;
+	            this.reconnects = this.reconnects + 1;
+	            this.flush();
+	        }
+	    }, {
+	        key: '_close',
+	        value: function _close(event) {
+	            this.ready = false;
+	            this.connect();
+	        }
+	    }, {
+	        key: '_message',
+	        value: function _message(event) {
+	            var _JSON$parse = JSON.parse(event.data);
+	
+	            var name = _JSON$parse.name;
+	            var body = _JSON$parse.body;
+	
+	            if (this.endpoints[name]) {
+	                this.endpoints[name](this.dispatch, body);
+	            }
+	        }
+	    }]);
+	
+	    return Connection;
+	}();
+	
+	function configureConnection(url, dispatch, endpoints) {
+	    return new Connection(url, dispatch, endpoints);
+	};
 
 /***/ }
 /******/ ]);
