@@ -24,14 +24,14 @@ class WS_Streams(ikcms.ws_components.base.WS_Component):
             raise exc.FieldRequiredError('stream')
         stream = self.streams.get(stream_name)
         if stream:
-            await stream.h_action(env, message)
+            return await stream.h_action(env, message)
         else:
             raise exc.StreamNotFound(stream_name)
 
 
     def handlers(self):
         return {
-            'streams.action': self.h_action,
+            'streams.action.request': self.h_action,
         }
 
 

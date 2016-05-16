@@ -49,19 +49,19 @@ class Console:
         asyncio.ensure_future(self.websocket.send(message))
 
     def login(self, login, password):
-        self.send({'name':'auth.login', 'body': {
+        self.send({'name':'auth.login.request', 'body': {
                 'login': login,
                 'password': password}})
 
     def logout(self):
-        self.send({'name':'auth.loginout', 'body': {}})
+        self.send({'name':'auth.logout.request', 'body': {}})
 
     def cfg(self):
-        self.send({'name':'cinfo.cfg', 'body': {}})
+        self.send({'name':'cinfo.cfg.request', 'body': {}})
 
     def list(self, stream):
         self.send({
-            'name':'streams.action',
+            'name':'streams.action.request',
             'body': {'stream': stream, 'action': 'list'},
         })
 

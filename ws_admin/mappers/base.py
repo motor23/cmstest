@@ -108,6 +108,11 @@ class SelectQuery(Query):
         columns = [func.count(self._mapper.table.c.id)]
         return db.execute(self._query.with_only_columns(columns)).fetchone()[0]
 
+    def set_keys(self, keys):
+        columns = map(lambda x: self._mapper.table.c[x], self._table_keys)
+        query = self._query.with_only_columns(columns)
+        return self.clone(keys=keys, query=query)
+
     def __getitem__(self, key):
         if isinstance(key, slice):
            limit = key.max - key.min

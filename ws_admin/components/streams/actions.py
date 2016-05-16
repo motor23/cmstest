@@ -20,14 +20,14 @@ class List(Base):
     name = 'list'
 
     async def handle(self, env, message):
-        items = await self.stream.get_items(
+        items = await self.stream.get_form_items(
             env,
             self.stream.query(),
             self.stream.list_fields,
         )
-        await env.send('streams.list_response', {
+        return {
             'stream': self.stream.name,
             'action': self.name,
             'items': items,
-        })
+        }
 

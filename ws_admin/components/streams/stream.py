@@ -73,10 +73,11 @@ class Stream(StreamBase):
                                 lambda x: x.get_cfg(env), self.filter_fields)),
         )
 
-    async def get_items(self, env, query, fields):
+    async def get_form_items(self, env, query, fields):
         db_keys = set()
         for field in fields:
             db_keys.update(set(field.db_keys()))
+        query = query.set_keys(db_keys)
         db_items = query.execute(env.db)
         stream_items = []
         for item in db_items:
