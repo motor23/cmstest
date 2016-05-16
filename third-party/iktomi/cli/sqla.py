@@ -118,16 +118,16 @@ class Sqla(Cli):
 
             ./manage.py sqla:drop_tables [meta_name]
         '''
-        answer = raw_input('All data will lost. Are you sure? [y/N] ')
+        answer = input('All data will lost. Are you sure? [y/N] ')
         if answer.strip().lower()!='y':
             sys.exit('Interrupted')
 
         def _drop_metadata_tables(metadata):
-            table = next(metadata.tables.itervalues(), None)
-            if table is None:
+            tables = list(metadata.tables.values())
+            if not len(tables):
                 print('Failed to find engine')
             else:
-                engine = self.session.get_bind(clause=table)
+                engine = self.session.get_bind(clause=tables[0])
                 drop_everything(engine)
                 print('Done')
 

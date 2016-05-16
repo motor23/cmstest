@@ -18,6 +18,7 @@ class Console:
             ('login', self.login),
             ('logout', self.logout),
             ('cfg', self.cfg),
+            ('list', self.list),
         )
         self.namespace = dict(self.commands)
 
@@ -31,6 +32,9 @@ class Console:
                 ','.join(inspect.getargs(value.__code__)[0][1:])),
             )
         print('===============================')
+        if len(sys.argv)>1:
+             self.login(sys.argv[1], sys.argv[1])
+
         while True:
             message = await self.websocket.recv()
             print('< {}'.format(message))
@@ -54,6 +58,12 @@ class Console:
 
     def cfg(self):
         self.send({'name':'cinfo.cfg', 'body': {}})
+
+    def list(self, stream):
+        self.send({
+            'name':'streams.action',
+            'body': {'stream': stream, 'action': 'list'},
+        })
 
 
 async def console(loop):

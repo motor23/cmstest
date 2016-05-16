@@ -9,6 +9,9 @@ from sqlalchemy import (
     Boolean,
     ForeignKey,
 )
+from sqlalchemy.orm import (
+    relation,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from iktomi.db.sqla.declarative import AutoTableNameMeta, TableArgsMeta
 
@@ -29,7 +32,26 @@ Base = declarative_base(
 )
 
 
-class Tags(Base):
+class Tag(Base):
 
     id = Column(Integer, primary_key=True)
     title = Column(String(500), default='')
+
+
+class Doc_Tag(Base):
+    doc_id = Column(Integer,
+                    ForeignKey('Doc.id', ondelete='cascade'),
+                    primary_key=True)
+    tag_id = Column(Integer,
+                    ForeignKey('Tag.id', ondelete='cascade'),
+                    primary_key=True)
+    order = Column(Integer)
+
+
+class Doc(Base):
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String(500), default='')
+    tags = relation(Tag, secondary=Doc_Tag.__table__)
+
+
