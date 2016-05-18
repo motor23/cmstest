@@ -4,7 +4,7 @@ import logging
 
 import cgi
 import re
-import widgets
+from . import widgets
 from . import convs
 from ..utils import cached_property
 from collections import OrderedDict

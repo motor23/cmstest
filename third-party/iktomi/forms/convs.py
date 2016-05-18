@@ -144,7 +144,7 @@ class Converter(object):
 
             if self.required and self._is_empty(value):
                 raise ValidationError(self.error_required)
-        except ValidationError, e:
+        except ValidationError as e:
             if not silent:
                 e.fill_errors(self.field)
             #NOTE: by default value for field is in python_data,
@@ -324,7 +324,7 @@ class Char(CharBased):
     def from_python(self, value):
         if value is None:
             return ''
-        return unicode(value)
+        return str(value)
 
 
 class Int(Converter):

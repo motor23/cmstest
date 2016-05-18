@@ -75,6 +75,8 @@ class Query:
             condition = column <= value
         elif op == 'in':
             condition = column.in_(value)
+        elif op == 'like':
+            condition = column.like("%" + value + "%")
         else:
             raise ValueError('Uncnown operator {}'.format(op))
         return self._add_condition(condition)

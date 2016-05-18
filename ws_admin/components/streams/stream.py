@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from iktomi.utils import cached_property
 from . import actions
 from . import exc
@@ -58,6 +60,17 @@ class Stream(StreamBase):
 #        actions.delete_item,
     ]
 
+    def __init__(self):
+        super().__init__()
+        self.list_fields_dict = OrderedDict(
+                                    [(x.name, x) for x in self.list_fields])
+        self.filter_fields_dict = OrderedDict(
+                                    [(x.name, x) for x in self.filter_fields])
+        self.order_fields_dict = OrderedDict(
+                                    [(x.name, x) for x in self.order_fields])
+        self.item_fields_dict = OrderedDict(
+                                    [(x.name, x) for x in self.item_fields])
+
     def query(self, keys=None):
         return self.mapper.select(keys)
 
@@ -73,17 +86,26 @@ class Stream(StreamBase):
                                 lambda x: x.get_cfg(env), self.filter_fields)),
         )
 
-    async def get_form_items(self, env, query, fields):
-        db_keys = set()
-        for field in fields:
-            db_keys.update(set(field.db_keys()))
-        query = query.set_keys(db_keys)
-        db_items = query.execute(env.db)
-        stream_items = []
-        for item in db_items:
-            stream_item = {'id': item['id']}
-            for field in fields:
-                stream_item.update(field.from_db(env, self, item))
-            stream_items.append(stream_item)
-        return stream_items
+    def fields_from_python(self, env, items, fields_dict):
+        raw_items = []
+        for item in items:
+            raw_item = {'id': item['id']}
+            for field in fields_dict.values():
+                raw_item.update(field.from_python(env, self, item))
+            raw_items.append(raw_item)
+        return raw_items
+
+    def fields_accept(self, env, raw_item, fields_dict):
+        errors = {}
+        values = {}
+        for name in raw_item.keys():
+            field = fields_dict.get(name)
+            if not field:
+                raise FieldNotFound(self, name)
+            value, errors = field.accept(env, self, raw_item)
+            if value:
+                values.update(value)
+            else:
+                errors.update(error)
+        return values, errors
 

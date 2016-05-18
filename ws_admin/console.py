@@ -59,10 +59,15 @@ class Console:
     def cfg(self):
         self.send({'name':'cinfo.cfg.request', 'body': {}})
 
-    def list(self, stream):
+    def list(self, stream, filters={}, limit=30):
         self.send({
             'name':'streams.action.request',
-            'body': {'stream': stream, 'action': 'list'},
+            'body': {
+                'stream': stream,
+                'action': 'list',
+                'filters': filters,
+                'limit': limit,
+            },
         })
 
 
