@@ -1,8 +1,13 @@
 from .base import ReadOnlyField
 
+def simple_order(field, query, value):
+    assert value in ['+', '-']
+    return query.order_by(value + field.name)
+
 
 class ListField(ReadOnlyField):
     widget = "ListField"
+    order = simple_order
 
 
 class LF_Id(ListField):

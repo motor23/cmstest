@@ -97,6 +97,8 @@ class SelectQuery(Query):
             if key.startswith('-'):
                 columns.append(self._mapper.table.c[key[1:]].desc())
             else:
+                if key.startswith('+'):
+                    key = key[1:]
                 columns.append(self._mapper.table.c[key])
         return self.clone(query=self._query.order_by(*columns))
 

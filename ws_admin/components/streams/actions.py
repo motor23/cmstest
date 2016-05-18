@@ -26,9 +26,10 @@ class List(Base):
 
     async def handle(self, env, message):
         filters, filters_errors = self.filters_to_python(env, message)
+        order = self.order_to_python(env, message)
         limit = self.limit_to_python(env, message)
 
-        query = self.query(filters, limit)
+        query = self.query(filters, order, limit)
         count_list_items = query.count(env.db)
         list_items = query.execute(env.db)
 
@@ -47,12 +48,15 @@ class List(Base):
             'filters_errors': filters_errors,
         }
 
-    def query(self, filters, limit):
+    def query(self, filters, order, limit):
         query = self.stream.query(self.stream.list_fields_dict.keys())
 
-        for name, value in filters.items():
-            query = self.stream.filter_fields_dict[name].filter(query, value)
+        for name, field in self.stream.filter_fields_dict.items():
+            query = field.filter(query, filters.get(name))
 
+        for key in order:
+            value, name = key[0], key[1:]
+            query = self.stream.list_fields_dict[name].order(query, value)
         return query.limit(limit)
 
 
@@ -60,11 +64,32 @@ class List(Base):
         raw_filters = message.get('filters', {})
         if not isinstance(raw_filters, dict):
             raise MessageError('body.filters field must be the dict')
+        for key in raw_filters:
+            if key not in self.filter_fields_dict:
+                raise StreamFieldNotFound(self.stream, key)
+
         return self.stream.fields_accept(
             env,
             raw_filters,
             self.stream.filter_fields_dict,
         )
+
+    def order_to_python(self, env, message):
+        raw_order = message.get('order', [])
+        if not isinstance(raw_order, list):
+            raise MessageError('body.order field must be the list')
+        if not raw_order:
+            raw_order = self.stream.default_order
+        for key in raw_order:
+            if not isinstance(key, str):
+                raise MessageError('body.order field items must be the str')
+            if not (key and key[0] in ['+', '-']):
+                raise MessageError(
+                    'body.order field items must starts with + or -')
+                if key[1:] not in self.order_fields_dict:
+                    raise StreamFieldNotFound(self.stream, key)
+        return raw_order
+
 
     def limit_to_python(self, env, message):
         raw_limit = message.get('limit')

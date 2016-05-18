@@ -46,8 +46,9 @@ class Stream(StreamBase):
 
     list_fields = []
     filter_fields = []
-    order_fields = []
+    default_order = ['+id']
     item_fields = []
+
 
     actions = [
         actions.List,
@@ -64,10 +65,10 @@ class Stream(StreamBase):
         super().__init__()
         self.list_fields_dict = OrderedDict(
                                     [(x.name, x) for x in self.list_fields])
+        self.order_fields_dict = OrderedDict(
+                            [(x.name, x) for x in self.list_fields if x.order])
         self.filter_fields_dict = OrderedDict(
                                     [(x.name, x) for x in self.filter_fields])
-        self.order_fields_dict = OrderedDict(
-                                    [(x.name, x) for x in self.order_fields])
         self.item_fields_dict = OrderedDict(
                                     [(x.name, x) for x in self.item_fields])
 
