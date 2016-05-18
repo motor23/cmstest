@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os, sys, time, errno
+import os, sys, time, errno, six, io
 
 
 def is_running(pid):
@@ -8,7 +8,7 @@ def is_running(pid):
     have permission to access process information.'''
     try:
         os.kill(pid, 0)
-    except OSError, exc:
+    except OSError as exc:
         if exc.errno == errno.ESRCH:
             return False
         raise
@@ -22,6 +22,16 @@ def terminate(pid, sig, timeout):
     os.kill(pid, sig)
     start = time.time()
     while True:
+        try:
+            # This is requireed if it's our child to avoid zombie. Also
+            # is_running() returns True for zombie process.
+            _, status = os.waitpid(pid, os.WNOHANG)
+        except OSError as exc:
+            if exc.errno != errno.ECHILD: # pragma: nocover
+                raise
+        else:
+            if status:
+                return True
         if not is_running(pid):
             return True
         if time.time()-start>=timeout:
@@ -36,7 +46,7 @@ def safe_makedirs(*files):
             os.makedirs(dirname)
 
 
-def doublefork(pidfile, logfile, cwd, umask):
+def doublefork(pidfile, logfile, cwd, umask): # pragma: nocover
     '''Daemonize current process.
     After first fork we return to the shell and removing our self from
     controling terminal via `setsid`.
@@ -45,7 +55,7 @@ def doublefork(pidfile, logfile, cwd, umask):
     try:
         if os.fork():
             os._exit(os.EX_OK)
-    except OSError, e:
+    except OSError as e:
         sys.exit('fork #1 failed: ({}) {}'.format(e.errno, e.strerror))
     os.setsid()
     os.chdir(cwd)
@@ -53,11 +63,16 @@ def doublefork(pidfile, logfile, cwd, umask):
     try:
         if os.fork():
             os._exit(os.EX_OK)
-    except OSError, e:
+    except OSError as e:
         sys.exit('fork #2 failed: ({}) {}'.format(e.errno, e.strerror))
     if logfile is not None:
         si = open('/dev/null')
-        so = open(logfile, 'a+', 0)
+        if six.PY2:
+            so = open(logfile, 'a+', 0)
+        else:
+            so = io.open(logfile, 'ab+', 0)
+            so = io.TextIOWrapper(so, write_through=True, encoding="utf-8")
+
         os.dup2(si.fileno(), 0)
         os.dup2(so.fileno(), 1)
         os.dup2(so.fileno(), 2)

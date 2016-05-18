@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from . import cached_property
-import math, itertools
+import math
+import six
+import itertools
+from six.moves import zip
+if six.PY3:
+    range = lambda *x: list(six.moves.range(*x)) # XXX
 from ..web.reverse import URL
 
 
@@ -70,7 +75,8 @@ class ChunkedPageRange(object):
     def paginator_prev_chunk(paginator):
         chunk = (paginator.page-1)//paginator.chunk_size
         if chunk:
-            return paginator._page_url_pair((chunk-1)*paginator.chunk_size + 1)
+            chunk_size = paginator.chunk_size
+            return paginator._page_url_pair((chunk-1)*chunk_size + chunk_size)
         else:
             return paginator._page_url_pair()
     # Due to nature of cached_property we have to explicitly provide name.
@@ -103,6 +109,8 @@ class _PageURL(tuple):
     def __nonzero__(self):
         return self.page is not None
 
+    __bool__ = __nonzero__
+
 
 class Paginator(object):
     '''
@@ -122,6 +130,10 @@ class Paginator(object):
     #: Callable returning the list of pages
     #: to show in paginator.
     impl = staticmethod(full_page_range)
+    #: The limit of items allowed on the last page. 
+    # I.e. if count=23 and orphans=3 with 10 items per page,
+    # there will be 2 pages with 10 and 13 items.
+    orphans = 0
 
     def __init__(self, request, **kwargs):
         self.request = request
@@ -135,8 +147,11 @@ class Paginator(object):
         # shrunk to fit into one page.
         return bool(self.limit) and (self.pages_count>1 or self.page>1)
 
+    __bool__ = __nonzero__
+
     def invalid_page(self):
-        '''This method is called when invalid page is passed in request.
+        '''This method is called when invalid (not positive int)
+        page is passed in request.
         Use "pass" to ignore. Other options are raising exceptions for HTTP
         Not Found or redirects.'''
         pass
@@ -185,6 +200,8 @@ class Paginator(object):
         '''Number of pages.'''
         if not self.limit or self.count<self.limit:
             return 1
+        if self.count % self.limit <= self.orphans:
+            return self.count // self.limit
         return int(math.ceil(float(self.count)/self.limit))
 
     def slice(self, items):
@@ -192,20 +209,26 @@ class Paginator(object):
         if self.limit:
             if self.page>self.pages_count:
                 return []
+            if self.page == self.pages_count:
+                return items[self.limit*(self.page-1):]
             return items[self.limit*(self.page-1):self.limit*self.page]
         else:
             return items[:]
 
     def enumerate(self):
         skipped = (self.page-1)*self.limit
-        return itertools.izip(itertools.count(skipped+1), self.items)
+        return zip(itertools.count(skipped+1), self.items)
 
     @cached_property
     def prev(self):
-        if self.page>1:
+        if self.page>self.pages_count:
+            # if we are on non-existing page which is higher
+            # than current page, return last page, so we can navigate
+            # to it
+            return self.last
+        elif self.page>1:
             return self._page_url_pair(self.page-1)
         else:
-            # XXX why?
             return self._page_url_pair()
 
     @cached_property
@@ -217,17 +240,11 @@ class Paginator(object):
 
     @cached_property
     def first(self):
-        if self.page>1:
-            return self._page_url_pair(1)
-        else:
-            return self._page_url_pair()
+        return self._page_url_pair(1)
 
     @cached_property
     def last(self):
-        if self.page<self.pages_count:
-            return self._page_url_pair(self.pages_count)
-        else:
-            return self._page_url_pair()
+        return self._page_url_pair(self.pages_count)
 
     @cached_property
     def pages(self):
@@ -247,7 +264,7 @@ class Paginator(object):
         # accessed in class.
         if hasattr(prop, '__get__'):
             return prop.__get__(self, type(self))
-        return prop
+        return prop # pragma: no cover
 
 
 class ModelPaginator(Paginator):

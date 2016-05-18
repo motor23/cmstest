@@ -3,10 +3,11 @@ from sqlalchemy.ext.associationproxy import _AssociationCollection
 from iktomi.forms.convs import *
 from iktomi.forms.convs import __all__ as _all1
 
+import six
 import re
-from iktomi.utils import N_
+from iktomi.utils.i18n import N_
 
-_all2 = locals().keys()
+_all2 = set(vars())
 
 
 class Email(Char):
@@ -65,10 +66,10 @@ class ModelDictConv(Converter):
             # Return blank self.model instance as initial/default value 
             # if one does not exist
             return self.model()
-        return [] if self.multiple else None
+        return None
 
 
-class OptionLabel(unicode):
+class OptionLabel(six.text_type):
 
     published = False
 
@@ -115,11 +116,6 @@ class ModelChoice(EnumChoice):
             pass
         return label
 
-    def get_label(self, form_value):
-        obj = self._safe_to_python(form_value)
-        if obj is not None:
-            return self.get_object_label(obj)
-
     def options(self):
         for obj in self.query.all():
             yield self.conv.from_python(obj.id), self.get_object_label(obj)
@@ -128,6 +124,6 @@ class ModelChoice(EnumChoice):
 # Expose all variables defined after imports and all variables imported from
 # parent module
 __all__ = [x for x
-           in set(locals().keys()) - (set(_all2) - set(_all1))
+           in set(vars()) - (_all2 - set(_all1))
            if not x.startswith('_')]
 del _all1, _all2

@@ -4,6 +4,7 @@ Module containing some predefined form converters - objects designed to
 convert and validate form field's data.
 '''
 
+import six
 import re
 from ..utils import weakproxy, replace_nontext
 from datetime import datetime
@@ -14,14 +15,16 @@ try:
     from ..utils.html import Cleaner
     from lxml import html
     from lxml.etree import XMLSyntaxError
-except ImportError:
+except ImportError: # pragma: no cover
     # lxml is required for Html conv, therefore you can use forms without this
     # functionality
     Cleaner = None
 
-from ..utils import N_, M_, cached_property
+from iktomi.utils import cached_property
+from iktomi.utils.i18n import N_, M_
 
-_all2 = locals().keys()
+
+_all2 = set(vars())
 
 
 
@@ -47,8 +50,8 @@ class ValidationError(Exception):
     def translate(self, env, message):
         format_args = self.format_args
         if isinstance(message, M_):
-            trans = env.ngettext(unicode(message.single),
-                                 unicode(message.plural),
+            trans = env.ngettext(message.single,
+                                 message.plural,
                                  message.count)
             format_args = dict(format_args,
                                **message.format_args)
@@ -63,7 +66,7 @@ class ValidationError(Exception):
         for name, message in self.by_field.items():
             if name.startswith('.'):
                 nm, f = name.lstrip('.'), field
-                for i in xrange(len(name) - len(nm) - 1):
+                for i in range(len(name) - len(nm) - 1):
                     f = f.parent
                 rel_field = f.get_field(nm)
                 name = rel_field.input_name
@@ -314,7 +317,7 @@ class Char(CharBased):
         value = self.clean_value(value)
         if value and self.regex:
             regex = self.regex
-            if isinstance(self.regex, basestring):
+            if isinstance(regex, six.string_types):
                 regex = re.compile(self.regex, re.U)
             if not regex.match(value):
                 error = self.error_regex % {'regex': self.regex}
@@ -324,7 +327,9 @@ class Char(CharBased):
     def from_python(self, value):
         if value is None:
             return ''
-        return str(value)
+        if six.PY3 and isinstance(value, bytes):
+            raise TypeError() # pragma: no cover, safety check
+        return six.text_type(value)
 
 
 class Int(Converter):
@@ -347,7 +352,7 @@ class Int(Converter):
     def from_python(self, value):
         if value is None:
             return ''
-        return unicode(value)
+        return six.text_type(value)
 
 
 class Bool(Converter):
@@ -398,14 +403,6 @@ class EnumChoice(Converter):
         conv = self.conv
         for python_value, label in self.choices:
             yield conv.from_python(python_value), label
-
-    def get_label(self, value):
-        '''
-        Returns a label for given value
-        '''
-        # XXX comment needed
-        value = self.conv.accept(value, silent=True)
-        return dict(self.choices).get(value)
 
 
 class BaseDatetime(CharBased):
@@ -628,7 +625,9 @@ class Html(Char):
         value = Char.clean_value(self, value)
         try:
             doc = html.fragment_fromstring(value, create_parent=True)
-        except XMLSyntaxError:
+        except XMLSyntaxError: # pragma: no cover. XXX: seems like this exception is
+                               # unreachable with create_parent=True,
+                               # maybe it should be removed?
             raise ValidationError(N_(u'Error parsing HTML'))
         self.cleaner(doc)
         clean = html.tostring(doc, encoding='utf-8').decode('utf-8')
@@ -664,7 +663,7 @@ class List(Converter):
         return result
 
     def to_python(self, value):
-        return value.values()
+        return list(value.values())
 
 
 class ListOf(Converter):
@@ -733,7 +732,7 @@ class SimpleFile(Converter):
 
 # Expose all variables defined after imports
 __all__ = [x for x
-           in set(locals().keys()) - set(_all2)
+           in set(vars()) - _all2
            if not x.startswith('_')]
 del _all2
 
