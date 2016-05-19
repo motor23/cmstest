@@ -3,6 +3,7 @@ import {connect} from 'react-redux';
 
 import {loginWithToken} from '../actions';
 import Login from './login';
+import Menu from './menu';
 
 
 class Application extends React.Component {
@@ -14,16 +15,26 @@ class Application extends React.Component {
     }
 
     render() {
-        if (!this.props.isLoggedIn) {
-            return <Login/>;
-        }
-        return React.Children.only(this.props.children);
+        const {isLoggedIn, menu, children, user} = this.props;
+        if (!isLoggedIn) { return <Login/>;}
+        return (
+            <div className="mdl-layout mdl-layout--fixed-header">
+                <div className="mdl-layout__header">
+                    <Menu menu={menu}/>
+                </div>
+                <div className="mdl-layout__content mdl-color-text--grey-600">
+                    {React.Children.only(children)}
+                </div>
+            </div>
+        )
     }
 }
 
 
 const mapStateToProps = state => ({
-    isLoggedIn: state.user.isLoggedIn
+    isLoggedIn: state.user.isLoggedIn,
+    menu: state.config.menu.main,
+    user: state.user
 });
 
 

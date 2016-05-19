@@ -33,5 +33,6 @@ var config = {
     },
     devtool: 'source-map'
 };
-console.log(path.join(__dirname, 'src', 'js'));
+
+
 module.exports = config;

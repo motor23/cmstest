@@ -1,9 +1,9 @@
 import Application from './components/application';
 import Dashboard from './components/dashboard';
 import Login from './components/login';
-import Stream from './components/stream';
-import StreamList from './components/stream-list';
-import StreamItem from './components/stream-item';
+import Stream from './components/streams/stream';
+import StreamList from './components/streams/stream-list';
+import StreamItem from './components/streams/stream-item';
 
 
 export default function configureRoutes() {

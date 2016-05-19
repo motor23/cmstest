@@ -64,7 +64,7 @@
 	
 	var _configureRoutes2 = _interopRequireDefault(_configureRoutes);
 	
-	var _configureConnection = __webpack_require__(262);
+	var _configureConnection = __webpack_require__(264);
 	
 	var _configureConnection2 = _interopRequireDefault(_configureConnection);
 	
@@ -27403,8 +27403,8 @@
 	        auth: null,
 	        cinfo: null,
 	        menu: {
-	            dashboard: null,
-	            main: null
+	            dashboard: [],
+	            main: []
 	        }
 	    };
 	
@@ -27423,7 +27423,8 @@
 	    var initialState = {
 	        isLoggedIn: false,
 	        token: null,
-	        error: null
+	        error: null,
+	        name: 'root'
 	    };
 	
 	    state = state || initialState;
@@ -27469,7 +27470,7 @@
 	
 	var _application2 = _interopRequireDefault(_application);
 	
-	var _dashboard = __webpack_require__(257);
+	var _dashboard = __webpack_require__(259);
 	
 	var _dashboard2 = _interopRequireDefault(_dashboard);
 	
@@ -27477,15 +27478,15 @@
 	
 	var _login2 = _interopRequireDefault(_login);
 	
-	var _stream = __webpack_require__(259);
+	var _stream = __webpack_require__(261);
 	
 	var _stream2 = _interopRequireDefault(_stream);
 	
-	var _streamList = __webpack_require__(260);
+	var _streamList = __webpack_require__(262);
 	
 	var _streamList2 = _interopRequireDefault(_streamList);
 	
-	var _streamItem = __webpack_require__(261);
+	var _streamItem = __webpack_require__(263);
 	
 	var _streamItem2 = _interopRequireDefault(_streamItem);
 	
@@ -27532,6 +27533,10 @@
 	
 	var _login2 = _interopRequireDefault(_login);
 	
+	var _menu = __webpack_require__(257);
+	
+	var _menu2 = _interopRequireDefault(_menu);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -27560,10 +27565,29 @@
 	    }, {
 	        key: 'render',
 	        value: function render() {
-	            if (!this.props.isLoggedIn) {
+	            var _props = this.props;
+	            var isLoggedIn = _props.isLoggedIn;
+	            var menu = _props.menu;
+	            var children = _props.children;
+	            var user = _props.user;
+	
+	            if (!isLoggedIn) {
 	                return _react2.default.createElement(_login2.default, null);
 	            }
-	            return _react2.default.Children.only(this.props.children);
+	            return _react2.default.createElement(
+	                'div',
+	                { className: 'mdl-layout mdl-layout--fixed-header' },
+	                _react2.default.createElement(
+	                    'div',
+	                    { className: 'mdl-layout__header' },
+	                    _react2.default.createElement(_menu2.default, { menu: menu })
+	                ),
+	                _react2.default.createElement(
+	                    'div',
+	                    { className: 'mdl-layout__content mdl-color-text--grey-600' },
+	                    _react2.default.Children.only(children)
+	                )
+	            );
 	        }
 	    }]);
 	
@@ -27572,7 +27596,9 @@
 	
 	var mapStateToProps = function mapStateToProps(state) {
 	    return {
-	        isLoggedIn: state.user.isLoggedIn
+	        isLoggedIn: state.user.isLoggedIn,
+	        menu: state.config.menu.main,
+	        user: state.user
 	    };
 	};
 	
@@ -27829,6 +27855,169 @@
 	    value: true
 	});
 	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _react = __webpack_require__(1);
+	
+	var _react2 = _interopRequireDefault(_react);
+	
+	var _reactRouter = __webpack_require__(166);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var MenuStream = function (_React$Component) {
+	    _inherits(MenuStream, _React$Component);
+	
+	    function MenuStream() {
+	        _classCallCheck(this, MenuStream);
+	
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(MenuStream).apply(this, arguments));
+	    }
+	
+	    _createClass(MenuStream, [{
+	        key: 'render',
+	        value: function render() {
+	            var _props = this.props;
+	            var children = _props.children;
+	            var title = _props.title;
+	            var stream = _props.stream;
+	
+	            return _react2.default.createElement(
+	                'div',
+	                { className: 'cms-nav__item' },
+	                _react2.default.createElement(
+	                    'a',
+	                    { href: '/' + stream + '/' },
+	                    title
+	                )
+	            );
+	        }
+	    }]);
+	
+	    return MenuStream;
+	}(_react2.default.Component);
+	
+	MenuStream.propTypes = {
+	    children: _react2.default.PropTypes.arrayOf(_react2.default.PropTypes.object).isRequired,
+	    title: _react2.default.PropTypes.string.isRequired,
+	    stream: _react2.default.PropTypes.string.isRequired
+	};
+	
+	var MenuLink = function (_React$Component2) {
+	    _inherits(MenuLink, _React$Component2);
+	
+	    function MenuLink() {
+	        _classCallCheck(this, MenuLink);
+	
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(MenuLink).apply(this, arguments));
+	    }
+	
+	    _createClass(MenuLink, [{
+	        key: 'render',
+	        value: function render() {
+	            var _props2 = this.props;
+	            var children = _props2.children;
+	            var title = _props2.title;
+	            var url = _props2.url;
+	
+	            return _react2.default.createElement(
+	                'div',
+	                { className: 'cms-nav__item' },
+	                _react2.default.createElement(
+	                    'a',
+	                    { href: url },
+	                    title
+	                )
+	            );
+	        }
+	    }]);
+	
+	    return MenuLink;
+	}(_react2.default.Component);
+	
+	MenuLink.propTypes = {
+	    children: _react2.default.PropTypes.arrayOf(_react2.default.PropTypes.object).isRequired,
+	    title: _react2.default.PropTypes.string.isRequired,
+	    url: _react2.default.PropTypes.string.isRequired
+	};
+	
+	
+	function render(item, registry) {
+	    var element = registry[item.widget];
+	    var instance = _react2.default.createElement(element, {});
+	}
+	
+	var Menu = function (_React$Component3) {
+	    _inherits(Menu, _React$Component3);
+	
+	    function Menu() {
+	        _classCallCheck(this, Menu);
+	
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(Menu).apply(this, arguments));
+	    }
+	
+	    _createClass(Menu, [{
+	        key: 'render',
+	        value: function render() {
+	            return _react2.default.createElement(
+	                'div',
+	                { className: 'cms-nav' },
+	                _react2.default.createElement(
+	                    'div',
+	                    { className: 'cms-nav__item' },
+	                    _react2.default.createElement(
+	                        _reactRouter.Link,
+	                        { to: '/', activeClassName: 'active' },
+	                        'Начало'
+	                    )
+	                ),
+	                _react2.default.createElement(
+	                    'div',
+	                    { className: 'cms-nav__item' },
+	                    _react2.default.createElement(
+	                        _reactRouter.Link,
+	                        { to: '/materials/', activeClassName: 'active' },
+	                        'Материалы'
+	                    )
+	                ),
+	                _react2.default.createElement(
+	                    'div',
+	                    { className: 'cms-nav__item' },
+	                    _react2.default.createElement(
+	                        _reactRouter.Link,
+	                        { to: '/multimedia/', activeClassName: 'active' },
+	                        'Мультимедиа'
+	                    )
+	                )
+	            );
+	        }
+	    }]);
+	
+	    return Menu;
+	}(_react2.default.Component);
+	
+	Menu.propTypes = {
+	    menu: _react2.default.PropTypes.arrayOf(_react2.default.PropTypes.object).isRequired
+	};
+	exports.default = Menu;
+
+/***/ },
+/* 258 */,
+/* 259 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -27837,9 +28026,11 @@
 	
 	var _react2 = _interopRequireDefault(_react);
 	
+	var _reactRouter = __webpack_require__(166);
+	
 	var _reactRedux = __webpack_require__(225);
 	
-	var _spinner = __webpack_require__(258);
+	var _spinner = __webpack_require__(260);
 	
 	var _spinner2 = _interopRequireDefault(_spinner);
 	
@@ -27851,68 +28042,75 @@
 	
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 	
-	var MenuItem_Stream = function (_React$Component) {
-	    _inherits(MenuItem_Stream, _React$Component);
+	var StreamItem = function (_React$Component) {
+	    _inherits(StreamItem, _React$Component);
 	
-	    function MenuItem_Stream() {
-	        _classCallCheck(this, MenuItem_Stream);
+	    function StreamItem() {
+	        _classCallCheck(this, StreamItem);
 	
-	        return _possibleConstructorReturn(this, Object.getPrototypeOf(MenuItem_Stream).apply(this, arguments));
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(StreamItem).apply(this, arguments));
 	    }
 	
-	    _createClass(MenuItem_Stream, [{
-	        key: 'render',
-	        value: function render() {
-	            var title = this.props.title;
-	
-	            return _react2.default.createElement(
-	                'button',
-	                { className: 'mdl-button mdl-js-button' },
-	                title,
-	                _react2.default.createElement('br', null)
-	            );
-	        }
-	    }]);
-	
-	    return MenuItem_Stream;
-	}(_react2.default.Component);
-	
-	var MenuItem = function (_React$Component2) {
-	    _inherits(MenuItem, _React$Component2);
-	
-	    function MenuItem() {
-	        _classCallCheck(this, MenuItem);
-	
-	        return _possibleConstructorReturn(this, Object.getPrototypeOf(MenuItem).apply(this, arguments));
-	    }
-	
-	    _createClass(MenuItem, [{
+	    _createClass(StreamItem, [{
 	        key: 'render',
 	        value: function render() {
 	            var _props = this.props;
 	            var title = _props.title;
-	            var children = _props.children;
+	            var stream = _props.stream;
 	
 	            return _react2.default.createElement(
 	                'div',
-	                { className: 'mdl-card' },
+	                { className: 'cms-card__item' },
 	                _react2.default.createElement(
-	                    'div',
-	                    { className: 'mdl-card__title' },
+	                    _reactRouter.Link,
+	                    { to: '/' + stream + '/' },
 	                    title
-	                ),
-	                _react2.default.createElement(
-	                    'div',
-	                    { className: 'mdl-card__actions mdl-card--border' },
-	                    children.map(function (child) {
-	                        return _react2.default.createElement(MenuItem_Stream, _extends({ key: child.title }, child));
-	                    })
 	                )
 	            );
 	        }
 	    }]);
 	
-	    return MenuItem;
+	    return StreamItem;
+	}(_react2.default.Component);
+	
+	StreamItem.propTypes = {
+	    title: _react2.default.PropTypes.string.isRequired,
+	    stream: _react2.default.PropTypes.string.isRequired
+	};
+	
+	var Card = function (_React$Component2) {
+	    _inherits(Card, _React$Component2);
+	
+	    function Card() {
+	        _classCallCheck(this, Card);
+	
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(Card).apply(this, arguments));
+	    }
+	
+	    _createClass(Card, [{
+	        key: 'render',
+	        value: function render() {
+	            var _props2 = this.props;
+	            var title = _props2.title;
+	            var children = _props2.children;
+	
+	            var content = children.map(function (child) {
+	                return _react2.default.createElement(StreamItem, _extends({ key: child.title }, child));
+	            });
+	            return _react2.default.createElement(
+	                'div',
+	                { className: 'cms-card mdl-shadow--2dp' },
+	                _react2.default.createElement(
+	                    'div',
+	                    { className: 'cms-card__title' },
+	                    title
+	                ),
+	                content
+	            );
+	        }
+	    }]);
+	
+	    return Card;
 	}(_react2.default.Component);
 	
 	var Dashboard = function (_React$Component3) {
@@ -27929,17 +28127,13 @@
 	        value: function render() {
 	            var dashboard = this.props.dashboard;
 	
-	
-	            if (!dashboard) {
-	                return _react2.default.createElement(_spinner2.default, null);
-	            }
-	
+	            var content = dashboard.map(function (child) {
+	                return _react2.default.createElement(Card, _extends({ key: child.title }, child));
+	            });
 	            return _react2.default.createElement(
 	                'div',
-	                null,
-	                dashboard.map(function (child) {
-	                    return _react2.default.createElement(MenuItem, _extends({ key: child.title }, child));
-	                })
+	                { className: 'cms-dashboard' },
+	                content
 	            );
 	        }
 	    }]);
@@ -27956,7 +28150,7 @@
 	exports.default = (0, _reactRedux.connect)(mapStateToProps)(Dashboard);
 
 /***/ },
-/* 258 */
+/* 260 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -28011,7 +28205,7 @@
 	exports.default = Spinner;
 
 /***/ },
-/* 259 */
+/* 261 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -28066,7 +28260,7 @@
 	exports.default = Stream;
 
 /***/ },
-/* 260 */
+/* 262 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -28119,7 +28313,7 @@
 	exports.default = StreamList;
 
 /***/ },
-/* 261 */
+/* 263 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -28173,7 +28367,7 @@
 	exports.default = StreamItem;
 
 /***/ },
-/* 262 */
+/* 264 */
 /***/ function(module, exports) {
 
 	'use strict';

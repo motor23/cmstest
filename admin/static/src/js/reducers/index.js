@@ -3,8 +3,8 @@ export function config(state, action) {
         auth: null,
         cinfo: null,
         menu: {
-            dashboard: null,
-            main: null
+            dashboard: [],
+            main: []
         }
     };
 
@@ -24,7 +24,8 @@ export function user(state, action) {
     const initialState = {
         isLoggedIn: false,
         token: null,
-        error: null
+        error: null,
+        name: 'root'
     };
 
     state = state || initialState;
