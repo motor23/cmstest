@@ -5,7 +5,7 @@ import {user, config} from './reducers';
 
 const thunkMiddleware = store => next => action => {
     if (typeof action === 'function') {
-        return action(store.dispatch, store.getState);
+        return action(store.dispatch, store.getState, window.connection);
     }
     return next(action);
 };

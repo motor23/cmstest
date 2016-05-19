@@ -9,8 +9,8 @@ import configureConnection from './configureConnection';
 import {endpoints} from './actions';
 
 
+const connection = configureConnection(window.config.ws);
 const store = configureStore();
-const connection = configureConnection(window.config.ws, store.dispatch, endpoints);
 
 window.connection = connection;
 window.store = store;

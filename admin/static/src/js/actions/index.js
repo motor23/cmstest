@@ -1,12 +1,11 @@
-export function config() {
+export function configureRequest() {
     return {
-        type: 'CONFIG_REQUEST',
-        endpoint: 'cinfo.cfg'
+        type: 'CONFIG_REQUEST'
     }
 }
 
 
-export function configUpdate(configuration) {
+export function configureUpdate(configuration) {
     return {
         type: 'CONFIG_UPDATE',
         payload: configuration
@@ -18,6 +17,13 @@ export function logout() {
     localStorage.removeItem('token');
     return {
         type: 'LOGOUT'
+    };
+}
+
+
+export function loginRequest() {
+    return {
+        type: 'LOGIN_REQUEST'
     };
 }
 
@@ -44,31 +50,43 @@ export function loginFailure(reason) {
 }
 
 
-export function loginWithCredentials(login, password) {
-    return {
-        type: 'LOGIN_REQUEST',
-        endpoint: 'auth.login',
-        payload: {
-            login: login,
-            password: password
-        }
-    }
-}
-
-
-export function loginWithToken(token) {
-    return {
-        type: 'LOGIN_REQUEST',
-        endpoint: 'auth.login',
-        payload: {
-            key: token
-        }
+export function configure() {
+    return (dispatch, state, connection) => {
+        dispatch(configureRequest());
+        connection.call('cinfo.cfg.request').then(payload => {
+            dispatch(configureUpdate(payload));
+        });
     };
 }
 
 
-export const endpoints = {
-    'auth.login_ok': (dispatch, body) => {dispatch(loginSuccess(body.key)); dispatch(config());},
-    'auth.login_error': (dispatch, body) => dispatch(loginFailure(body.reason)),
-    'cinfo.cfg_response': (dispatch, body) => dispatch(configUpdate(body))
-};
+export function loginWithCredentials(login, password) {
+    return (dispatch, state, connection) => {
+        dispatch(loginRequest());
+        connection.call('auth.login.request', {login, password}).then(payload => {
+            if (payload.status === 'ok') {
+                dispatch(loginSuccess(payload.key));
+                dispatch(configure())
+            }
+            if (payload.status === 'failed') {
+                dispatch(loginFailure(payload.reason));
+            }
+        });
+    };
+}
+
+
+export function loginWithToken(token) {
+    return (dispatch, state, connection) => {
+        dispatch(loginRequest());
+        connection.call('auth.login.request', {key: token}).then(payload => {
+            if (payload.status === 'ok') {
+                dispatch(loginSuccess(payload.key));
+                dispatch(configure())
+            }
+            if (payload.status === 'failed') {
+                dispatch(loginFailure(payload.reason));
+            }
+        });
+    };
+}

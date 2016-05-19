@@ -1,58 +1,59 @@
 class Connection {
-    constructor(url, dispatch, endpoints) {
-        this.url = url;
-        this.ready = false;
-        this.socket = null;
-        this.reconnects = -1;
-        this.dispatch = dispatch;
-        this.endpoints = endpoints;
-        this.queue = [];
-        this._open = this._open.bind(this);
-        this._close = this._close.bind(this);
-        this._message = this._message.bind(this);
-        this.connect();
+    constructor(url) {
+        this._url = url;
+        this._websocket = null;
+        this._calls = {};
+        this._queue = [];
+        this._ready = false;
+        this._connect();
     }
 
-    connect() {
-        this.socket = new WebSocket(this.url);
-        this.socket.addEventListener('open', this._open);
-        this.socket.addEventListener('close', this._close);
-        this.socket.addEventListener('message', this._message);
+    _connect() {
+        //this._websocket && this._websocket.close();
+        this._websocket = new WebSocket(this._url);
+        this._websocket.addEventListener('open', this._open.bind(this));
+        this._websocket.addEventListener('close', this._close.bind(this));
+        this._websocket.addEventListener('message', this._message.bind(this));
     }
 
-    send(message) {
-        if (this.ready) {
-            this.socket.send(JSON.stringify(message));
+    _send(message) {
+        if (this._ready) {
+            this._websocket.send(JSON.stringify(message));
             return true;
         }
-        this.queue.push(message);
+        this._queue.push(message);
         return false;
     }
 
-    flush() {
-        this.queue = this.queue.filter(message => this.send(message));
-    }
-
     _open(event) {
-        this.ready = true;
-        this.reconnects = this.reconnects + 1;
-        this.flush();
+        this._ready = true;
+        this._queue = this._queue.filter(this._send.bind(this));
     }
 
     _close(event) {
-        this.ready = false;
-        this.connect();
+        this._ready = false;
+        this._websocket = null;
+        this._connect();
     }
 
     _message(event) {
-        const {name, body} = JSON.parse(event.data);
-        if (this.endpoints[name]) {
-            this.endpoints[name](this.dispatch, body);
-        }
+        const {request_id, name, body} = JSON.parse(event.data);
+        const call = this._calls[request_id];
+        call && delete this._calls[request_id];
+        call && call.resolve(body);
+    }
+
+    call(method, payload) {
+        return new Promise((resolve, reject) => {
+            const requestId = Math.floor(Math.random() * 10e12);
+            this._calls[requestId] = {resolve, reject};
+            this._send({request_id: requestId, name: method, body: payload});
+        });
     }
 }
 
 
-export default function configureConnection(url, dispatch, endpoints) {
-    return new Connection(url, dispatch, endpoints);
+
+export default function configureConnection(url) {
+    return new Connection(url);
 };

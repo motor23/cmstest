@@ -64,7 +64,7 @@
 	
 	var _configureRoutes2 = _interopRequireDefault(_configureRoutes);
 	
-	var _configureConnection = __webpack_require__(264);
+	var _configureConnection = __webpack_require__(263);
 	
 	var _configureConnection2 = _interopRequireDefault(_configureConnection);
 	
@@ -72,8 +72,8 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	var connection = (0, _configureConnection2.default)(window.config.ws);
 	var store = (0, _configureStore2.default)();
-	var connection = (0, _configureConnection2.default)(window.config.ws, store.dispatch, _actions.endpoints);
 	
 	window.connection = connection;
 	window.store = store;
@@ -27116,7 +27116,7 @@
 	    return function (next) {
 	        return function (action) {
 	            if (typeof action === 'function') {
-	                return action(store.dispatch, store.getState);
+	                return action(store.dispatch, store.getState, window.connection);
 	            }
 	            return next(action);
 	        };
@@ -27470,7 +27470,7 @@
 	
 	var _application2 = _interopRequireDefault(_application);
 	
-	var _dashboard = __webpack_require__(259);
+	var _dashboard = __webpack_require__(258);
 	
 	var _dashboard2 = _interopRequireDefault(_dashboard);
 	
@@ -27478,15 +27478,15 @@
 	
 	var _login2 = _interopRequireDefault(_login);
 	
-	var _stream = __webpack_require__(261);
+	var _stream = __webpack_require__(260);
 	
 	var _stream2 = _interopRequireDefault(_stream);
 	
-	var _streamList = __webpack_require__(262);
+	var _streamList = __webpack_require__(261);
 	
 	var _streamList2 = _interopRequireDefault(_streamList);
 	
-	var _streamItem = __webpack_require__(263);
+	var _streamItem = __webpack_require__(262);
 	
 	var _streamItem2 = _interopRequireDefault(_streamItem);
 	
@@ -27613,21 +27613,22 @@
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	exports.config = config;
-	exports.configUpdate = configUpdate;
+	exports.configureRequest = configureRequest;
+	exports.configureUpdate = configureUpdate;
 	exports.logout = logout;
+	exports.loginRequest = loginRequest;
 	exports.loginSuccess = loginSuccess;
 	exports.loginFailure = loginFailure;
+	exports.configure = configure;
 	exports.loginWithCredentials = loginWithCredentials;
 	exports.loginWithToken = loginWithToken;
-	function config() {
+	function configureRequest() {
 	    return {
-	        type: 'CONFIG_REQUEST',
-	        endpoint: 'cinfo.cfg'
+	        type: 'CONFIG_REQUEST'
 	    };
 	}
 	
-	function configUpdate(configuration) {
+	function configureUpdate(configuration) {
 	    return {
 	        type: 'CONFIG_UPDATE',
 	        payload: configuration
@@ -27638,6 +27639,12 @@
 	    localStorage.removeItem('token');
 	    return {
 	        type: 'LOGOUT'
+	    };
+	}
+	
+	function loginRequest() {
+	    return {
+	        type: 'LOGIN_REQUEST'
 	    };
 	}
 	
@@ -27661,38 +27668,44 @@
 	    };
 	}
 	
+	function configure() {
+	    return function (dispatch, state, connection) {
+	        dispatch(configureRequest());
+	        connection.call('cinfo.cfg.request').then(function (payload) {
+	            dispatch(configureUpdate(payload));
+	        });
+	    };
+	}
+	
 	function loginWithCredentials(login, password) {
-	    return {
-	        type: 'LOGIN_REQUEST',
-	        endpoint: 'auth.login',
-	        payload: {
-	            login: login,
-	            password: password
-	        }
+	    return function (dispatch, state, connection) {
+	        dispatch(loginRequest());
+	        connection.call('auth.login.request', { login: login, password: password }).then(function (payload) {
+	            if (payload.status === 'ok') {
+	                dispatch(loginSuccess(payload.key));
+	                dispatch(configure());
+	            }
+	            if (payload.status === 'failed') {
+	                dispatch(loginFailure(payload.reason));
+	            }
+	        });
 	    };
 	}
 	
 	function loginWithToken(token) {
-	    return {
-	        type: 'LOGIN_REQUEST',
-	        endpoint: 'auth.login',
-	        payload: {
-	            key: token
-	        }
+	    return function (dispatch, state, connection) {
+	        dispatch(loginRequest());
+	        connection.call('auth.login.request', { key: token }).then(function (payload) {
+	            if (payload.status === 'ok') {
+	                dispatch(loginSuccess(payload.key));
+	                dispatch(configure());
+	            }
+	            if (payload.status === 'failed') {
+	                dispatch(loginFailure(payload.reason));
+	            }
+	        });
 	    };
 	}
-	
-	var endpoints = exports.endpoints = {
-	    'auth.login_ok': function authLogin_ok(dispatch, body) {
-	        dispatch(loginSuccess(body.key));dispatch(config());
-	    },
-	    'auth.login_error': function authLogin_error(dispatch, body) {
-	        return dispatch(loginFailure(body.reason));
-	    },
-	    'cinfo.cfg_response': function cinfoCfg_response(dispatch, body) {
-	        return dispatch(configUpdate(body));
-	    }
-	};
 
 /***/ },
 /* 256 */
@@ -28008,8 +28021,7 @@
 	exports.default = Menu;
 
 /***/ },
-/* 258 */,
-/* 259 */
+/* 258 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -28030,7 +28042,7 @@
 	
 	var _reactRedux = __webpack_require__(225);
 	
-	var _spinner = __webpack_require__(260);
+	var _spinner = __webpack_require__(259);
 	
 	var _spinner2 = _interopRequireDefault(_spinner);
 	
@@ -28150,7 +28162,7 @@
 	exports.default = (0, _reactRedux.connect)(mapStateToProps)(Dashboard);
 
 /***/ },
-/* 260 */
+/* 259 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -28205,7 +28217,7 @@
 	exports.default = Spinner;
 
 /***/ },
-/* 261 */
+/* 260 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -28260,7 +28272,7 @@
 	exports.default = Stream;
 
 /***/ },
-/* 262 */
+/* 261 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -28313,7 +28325,7 @@
 	exports.default = StreamList;
 
 /***/ },
-/* 263 */
+/* 262 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -28367,7 +28379,7 @@
 	exports.default = StreamItem;
 
 /***/ },
-/* 264 */
+/* 263 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -28383,81 +28395,80 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	var Connection = function () {
-	    function Connection(url, dispatch, endpoints) {
+	    function Connection(url) {
 	        _classCallCheck(this, Connection);
 	
-	        this.url = url;
-	        this.ready = false;
-	        this.socket = null;
-	        this.reconnects = -1;
-	        this.dispatch = dispatch;
-	        this.endpoints = endpoints;
-	        this.queue = [];
-	        this._open = this._open.bind(this);
-	        this._close = this._close.bind(this);
-	        this._message = this._message.bind(this);
-	        this.connect();
+	        this._url = url;
+	        this._websocket = null;
+	        this._calls = {};
+	        this._queue = [];
+	        this._ready = false;
+	        this._connect();
 	    }
 	
 	    _createClass(Connection, [{
-	        key: 'connect',
-	        value: function connect() {
-	            this.socket = new WebSocket(this.url);
-	            this.socket.addEventListener('open', this._open);
-	            this.socket.addEventListener('close', this._close);
-	            this.socket.addEventListener('message', this._message);
+	        key: '_connect',
+	        value: function _connect() {
+	            //this._websocket && this._websocket.close();
+	            this._websocket = new WebSocket(this._url);
+	            this._websocket.addEventListener('open', this._open.bind(this));
+	            this._websocket.addEventListener('close', this._close.bind(this));
+	            this._websocket.addEventListener('message', this._message.bind(this));
 	        }
 	    }, {
-	        key: 'send',
-	        value: function send(message) {
-	            if (this.ready) {
-	                this.socket.send(JSON.stringify(message));
+	        key: '_send',
+	        value: function _send(message) {
+	            if (this._ready) {
+	                this._websocket.send(JSON.stringify(message));
 	                return true;
 	            }
-	            this.queue.push(message);
+	            this._queue.push(message);
 	            return false;
-	        }
-	    }, {
-	        key: 'flush',
-	        value: function flush() {
-	            var _this = this;
-	
-	            this.queue = this.queue.filter(function (message) {
-	                return _this.send(message);
-	            });
 	        }
 	    }, {
 	        key: '_open',
 	        value: function _open(event) {
-	            this.ready = true;
-	            this.reconnects = this.reconnects + 1;
-	            this.flush();
+	            this._ready = true;
+	            this._queue = this._queue.filter(this._send.bind(this));
 	        }
 	    }, {
 	        key: '_close',
 	        value: function _close(event) {
-	            this.ready = false;
-	            this.connect();
+	            this._ready = false;
+	            this._websocket = null;
+	            this._connect();
 	        }
 	    }, {
 	        key: '_message',
 	        value: function _message(event) {
 	            var _JSON$parse = JSON.parse(event.data);
 	
+	            var request_id = _JSON$parse.request_id;
 	            var name = _JSON$parse.name;
 	            var body = _JSON$parse.body;
 	
-	            if (this.endpoints[name]) {
-	                this.endpoints[name](this.dispatch, body);
-	            }
+	            var call = this._calls[request_id];
+	            call && delete this._calls[request_id];
+	            call && call.resolve(body);
+	        }
+	    }, {
+	        key: 'call',
+	        value: function call(method, payload) {
+	            var _this = this;
+	
+	            return new Promise(function (resolve, reject) {
+	                var requestId = Math.floor(Math.random() * 10e12);
+	                _this._calls[requestId] = { resolve: resolve, reject: reject };
+	                _this._send({ request_id: requestId, name: method, body: payload });
+	            });
 	        }
 	    }]);
 	
 	    return Connection;
 	}();
 	
-	function configureConnection(url, dispatch, endpoints) {
-	    return new Connection(url, dispatch, endpoints);
+	function configureConnection(url) {
+	    return new Connection(url);
 	};
 
 /***/ }
