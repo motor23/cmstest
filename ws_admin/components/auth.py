@@ -21,19 +21,22 @@ class WS_AuthComponent(ikcms.ws_components.auth.base.WS_AuthComponent):
             key = self.auth_by_password(env, login, password)
         if key:
             env.user = {'login': login}
-            await env.send('auth.login_ok', {
+            return {
+                'status': 'ok',
                 'login': login,
                 'key': key,
                 'session_id': env.session_id,
-            })
+            }
         else:
-            await env.send('auth.login_error',
-                {'reason': 'Wrong login or password'})
+            return {
+                'status': 'failed',
+                'reason': 'Wrong login or password',
+            }
 
     @user_required
     async def h_logout(self, env, message):
         env.user = None
-        await env.send('auth.logout_ok', {})
+        return {'status': 'ok'}
 
     def auth_by_password(self, env, login, password):
         key = md5(login.encode('utf8')).hexdigest()

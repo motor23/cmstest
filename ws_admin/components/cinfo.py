@@ -12,12 +12,12 @@ class WS_CInfoComponent(ikcms.ws_components.base.WS_Component):
         names = message.get('components', comp_names)
         components = map(lambda x: self.app.get_component(x), names)
         cfg = self._get_components_cfg(env, components)
-        await env.send('cinfo.cfg_response', cfg)
+        return {'cfg': cfg}
 
     @user_required
     async def h_list(self, env, message):
         comp_names = self._get_components_names(self.app.components)
-        await env.send('cinfo.list_response', {'list': comp_names})
+        return {'list': comp_names}
 
     def _get_components_names(self, components):
         return map(lambda x: x.name, components)
@@ -32,8 +32,8 @@ class WS_CInfoComponent(ikcms.ws_components.base.WS_Component):
 
     def handlers(self):
         return {
-            'cinfo.cfg': self.h_cfg,
-            'cinfo.list': self.h_list,
+            'cinfo.cfg.request': self.h_cfg,
+            'cinfo.list.request': self.h_list,
         }
 
 ws_cinfo_component = WS_CInfoComponent.create

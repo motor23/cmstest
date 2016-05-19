@@ -1,3 +1,4 @@
+import six
 from sqlalchemy.types import TypeDecorator, String, Text
 
 
@@ -11,7 +12,7 @@ class StringList(TypeDecorator):
 
     def process_result_value(self, value, dialect):
         if value is not None:
-            return filter(None, value.split(','))
+            return [x for x in value.split(',') if x]
 
 
 class IntegerList(TypeDecorator):
@@ -29,7 +30,7 @@ class IntegerList(TypeDecorator):
 
 try:
     from jinja2 import Markup
-except ImportError:
+except ImportError: # pragma: no cover
     Markup = None
 
 
@@ -44,7 +45,7 @@ class HtmlBase(TypeDecorator):
 
     def process_bind_param(self, value, dialect):
         if value is not None:
-            return unicode(value)
+            return six.text_type(value)
 
 
 class Html(HtmlBase):
@@ -56,6 +57,8 @@ class Html(HtmlBase):
     '''
 
     def __init__(self, _impl, markup_class=None):
+        # Callable is useful to be able to pass type classes as well as
+        # type objects, for example Html(String) and Html(String(100))
         if callable(_impl):
             _impl = _impl()
         self.impl = _impl

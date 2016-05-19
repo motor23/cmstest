@@ -24,8 +24,6 @@ class TemplateEngine(object):
         self.extensions = extensions or []
         self.env = self._make_env(paths)
 
-    def render(self, template_name, **kw):
-        return self.env.get_template(template_name).render(**kw)
 
     def _make_env(self, paths):
         # XXX make an interface method
@@ -35,4 +33,6 @@ class TemplateEngine(object):
             extensions=self.extensions
         )
 
-
+    def render(self, template_name, **kw):
+        'Interface method called from `Template.render`'
+        return self.env.get_template(template_name).render(**kw)

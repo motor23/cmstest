@@ -10,6 +10,9 @@ import errno
 import mimetypes
 from shutil import copyfileobj
 from ...utils import cached_property
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class BaseFile(object):
@@ -39,7 +42,7 @@ class BaseFile(object):
         # are derived from EnvironmentError having errno property.
         except EnvironmentError as exc:
             if exc.errno!=errno.ENOENT:
-                raise
+                raise # pragma: no cover
 
     @property
     def file_name(self):
@@ -71,18 +74,10 @@ class PersistentFile(BaseFile):
         return self.manager.get_persistent_url(self)
 
 
-class _AttrDict(object):
-
-    def __init__(self, inst):
-        self.__inst = inst
-
-    def __getitem__(self, key):
-        return getattr(self.__inst, key)
-
 def random_name(length=32):
     # altchars - do not use "-" and "_" in file names
-    name = base64.b64encode(os.urandom(length), altchars="AA").rstrip('=')
-    return name[:length]
+    name = base64.b64encode(os.urandom(length), altchars=b"AA").rstrip(b'=')
+    return name[:length].decode('utf-8')
 
 
 class BaseFileManager(object):
@@ -92,7 +87,8 @@ class BaseFileManager(object):
         self.persistent_url = persistent_url
 
     def get_persistent(self, name, cls=PersistentFile):
-        assert name and not ('..' in name or name[0] in '~/'), name
+        if not name or '..' in name or name[0] in '~/':
+            raise ValueError('Unsecure file path')
         persistent = cls(self.persistent_root, name, self)
         return persistent
 
@@ -122,14 +118,16 @@ class FileManager(BaseFileManager):
         self.persistent_length = persistent_length or self.persistent_length
 
     def delete(self, file_obj):
-        # XXX Is this right place again?
-        #     BC "delete file if exist and ignore errors" would be used in many
-        #     places, I think...
         if os.path.isfile(file_obj.path):
             try:
                 os.unlink(file_obj.path)
-            except OSError:
-                pass
+            except OSError as exc:
+                msg = 'ERROR: {} while deleting file {}'.format(str(exc), file_obj.path)
+                logger.error(msg)
+                raise
+        else:
+            msg = 'file {} was not found while deleting'.format(file_obj.path)
+            logger.warning(msg)
 
     def _copy_file(self, inp, path, length=None):
         # works for ajax file upload
@@ -178,7 +176,7 @@ class FileManager(BaseFileManager):
 
     def store(self, transient_file, persistent_file):
         '''Makes PersistentFile from TransientFile'''
-        #for i in xrange(5):
+        #for i in range(5):
         #    persistent_file = PersistentFile(self.persistent_root,
         #                                     persistent_name, self)
         #    if not os.path.exists(persistent_file.path):
@@ -197,14 +195,14 @@ class FileManager(BaseFileManager):
     def new_file_name(self, name_template, inst, ext, old_name):
         assert '{random}' in name_template, \
                'Non-random name templates are not supported yet'
-        for i in xrange(5):
+        for i in range(5):
             name = name_template.format(item=inst,
                     random=random_name(self.persistent_length))
             name = name + ext
             # XXX Must differ from old value[s].
             if name != old_name or not '{random}' in name_template:
                 return name
-        raise Exception('Unable to find new file name')
+        raise Exception('Unable to find new file name') # pragma: no cover, very rare case
 
     def create_symlink(self, source_file, target_file):
         source_path = os.path.normpath(source_file.path)

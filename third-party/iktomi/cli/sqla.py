@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 import sys
-from sqlalchemy import create_engine
+import six
 from sqlalchemy.types import SchemaType
 from sqlalchemy.engine import reflection
 from sqlalchemy.schema import (
@@ -53,7 +53,7 @@ def drop_everything(engine):
         for custom_type in types:
             custom_type.drop(conn)
         trans.commit()
-    except:
+    except: # pragma: no cover
         trans.rollback()
         raise
 
@@ -81,7 +81,7 @@ class Sqla(Cli):
     def _schema(self, table):
         from sqlalchemy.schema import CreateTable
         engine = self.session.get_bind(clause=table)
-        return str(CreateTable(table, bind=engine))
+        return six.text_type(CreateTable(table, bind=engine))
 
     def command_create_tables(self, meta_name=None, verbose=False):
         '''
@@ -118,12 +118,13 @@ class Sqla(Cli):
 
             ./manage.py sqla:drop_tables [meta_name]
         '''
-        answer = raw_input('All data will lost. Are you sure? [y/N] ')
+        answer = six.moves.input(u'All data will lost. Are you sure? [y/N] ')
+
         if answer.strip().lower()!='y':
             sys.exit('Interrupted')
 
         def _drop_metadata_tables(metadata):
-            table = next(metadata.tables.itervalues(), None)
+            table = next(six.itervalues(metadata.tables), None)
             if table is None:
                 print('Failed to find engine')
             else:
@@ -170,7 +171,7 @@ class Sqla(Cli):
         meta_name = table_name = None
         if name:
             if isinstance(self.metadata, MetaData):
-                model_name = name
+                table_name = name
             elif '.' in name:
                 meta_name, table_name = name.split('.', 1)
             else:
@@ -208,7 +209,7 @@ class Sqla(Cli):
             ./manage.py sqla:gen docs:10
         '''
         if not names:
-            raise Exception('Please provide generator names')
+            sys.exit('Please provide generator names')
         for name in names:
             name, count = name, 0
             if ':' in name:

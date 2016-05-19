@@ -18,6 +18,7 @@ class Console:
             ('login', self.login),
             ('logout', self.logout),
             ('cfg', self.cfg),
+            ('list', self.list),
         )
         self.namespace = dict(self.commands)
 
@@ -31,6 +32,9 @@ class Console:
                 ','.join(inspect.getargs(value.__code__)[0][1:])),
             )
         print('===============================')
+        if len(sys.argv)>1:
+             self.login(sys.argv[1], sys.argv[1])
+
         while True:
             message = await self.websocket.recv()
             print('< {}'.format(message))
@@ -45,15 +49,27 @@ class Console:
         asyncio.ensure_future(self.websocket.send(message))
 
     def login(self, login, password):
-        self.send({'name':'auth.login', 'body': {
+        self.send({'name':'auth.login.request', 'body': {
                 'login': login,
                 'password': password}})
 
     def logout(self):
-        self.send({'name':'auth.loginout', 'body': {}})
+        self.send({'name':'auth.logout.request', 'body': {}})
 
     def cfg(self):
-        self.send({'name':'cinfo.cfg', 'body': {}})
+        self.send({'name':'cinfo.cfg.request', 'body': {}})
+
+    def list(self, stream, filters={}, order=[], limit=30):
+        self.send({
+            'name':'streams.action.request',
+            'body': {
+                'stream': stream,
+                'action': 'list',
+                'filters': filters,
+                'order': order,
+                'limit': limit,
+            },
+        })
 
 
 async def console(loop):

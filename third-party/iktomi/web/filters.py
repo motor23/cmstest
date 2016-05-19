@@ -3,17 +3,18 @@
 __all__ = ['match', 'method', 'static_files', 'prefix', 
            'subdomain', 'namespace', 'by_method']
 
+import six
 import logging
 import os
 from os import path
-import posixpath
-from urllib.parse import unquote
+from six.moves.urllib.parse import unquote
 from webob.exc import HTTPMethodNotAllowed, HTTPNotFound
 from webob.static import FileApp
 from .core import WebHandler, cases
 from . import Response
 from .url_templates import UrlTemplate
 from .reverse import Location
+from iktomi.utils.deprecation import deprecated
 
 
 logger = logging.getLogger(__name__)
@@ -213,7 +214,7 @@ class by_method(cases):
     def __init__(self, handlers_dict, default_handler=None):
         handlers = []
         for methods, handler in handlers_dict.items():
-            if isinstance(methods, basestring):
+            if isinstance(methods, six.string_types):
                 methods = (methods,)
             handlers.append(method(*methods, strict=False) | handler)
         if default_handler is not None:
@@ -249,9 +250,7 @@ class subdomain(WebHandler):
     '''
 
     def __init__(self, *subdomains, **kwargs):
-        # XXX is this convert to unicode actually needed?
-        self.subdomains = [unicode(x) if x is not None else None
-                           for x in subdomains]
+        self.subdomains = subdomains
 
         # this attribute is used for ducktyping in Location, be careful
         self.primary = kwargs.pop('primary', self.subdomains[0])
@@ -262,7 +261,7 @@ class subdomain(WebHandler):
             # A shortcut for subdomain(..) | namespace(name)
             self._next_handler = namespace(name)
 
-        if kwargs:
+        if kwargs: # pragma: no cover
             raise TypeError("subdomain.__init__ got an unexpected keyword "
                             "arguments {}".format(",".join(kwargs)))
 
@@ -309,12 +308,14 @@ class static_files(WebHandler):
         self.location = location
         self.url = url
 
-    def construct_reverse(self):
-        def url_for_static(part):
-            while part.startswith('/'):
-                part = part[1:]
-            return path.join(self.url, part)
-        return url_for_static
+    def url_for_static(self, part):
+        while part.startswith('/'):
+            part = part[1:]
+        return path.join(self.url, part)
+
+    @deprecated("Use static.url_for_static instead")
+    def construct_reverse(self): # pragma: no cover
+        return self.url_for_static
 
     def translate_path(self, pth):
         """Translate a /-separated PATH to the local filename syntax."""
