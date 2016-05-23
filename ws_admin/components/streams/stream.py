@@ -81,8 +81,6 @@ class Stream(StreamBase):
             widget = self.widget,
             limits = self.limits,
             list_fields = list(map(lambda x: x.get_cfg(env), self.list_fields)),
-            order_fields = list(map(
-                                lambda x: x.get_cfg(env), self.order_fields)),
             filter_fields = list(map(
                                 lambda x: x.get_cfg(env), self.filter_fields)),
         )
