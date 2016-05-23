@@ -1,0 +1,31 @@
+[Master]
+profile = no
+jobs=2
+
+init-hook=""
+
+[Messages Control]
+# W0612: Unused variable
+# W0613: Unused argument
+# W0511: TODOs in code comments are fine.
+# W0142: *args and **kwargs are fine.
+# W0622: Redefining id is fine.
+# C0111: Missing module docstring
+# C0103: Invalid variable name
+# R0201: Method could be a function
+# R0903: Too few public methods
+# E0213: Method should have "self" as first argument
+# E0202: An attribute defined in iktomi.web.app line 69 hides this method
+# E1121: Too many positional arguments for constructor call
+disable=W0612,W0613,W0511,W0142,W0622,C0111,C0103,R0201,R0903,E0213,E0202,E1121
+
+[Reports]
+output-format=colorized
+reports=yes
+msg-template={msg_id} {path}:{line} [{symbol}, {obj}] {msg}
+
+[Basic]
+good-names=i,j,k,_,dt,q,id
+
+[Design]
+max-args=6
