@@ -1,5 +1,6 @@
 import {createElement} from 'react';
 import {Router, browserHistory} from 'react-router';
+import {syncHistoryWithStore} from 'react-router-redux';
 import {Provider} from 'react-redux';
 
 
@@ -12,6 +13,7 @@ import StreamItem from './components/streams/stream-item';
 
 
 export default function configureRouter(store) {
+    const history = syncHistoryWithStore(browserHistory, store);
     const routes = {
         path: '/',
         component: Application,
@@ -30,6 +32,5 @@ export default function configureRouter(store) {
             }
         ]
     };
-    return createElement(Provider, {store: store},
-        createElement(Router, {routes: routes, history: browserHistory}));
+    return createElement(Provider, {store}, createElement(Router, {routes, history}));
 }

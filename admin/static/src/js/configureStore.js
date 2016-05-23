@@ -1,6 +1,7 @@
+import {routerReducer} from 'react-router-redux'
 import {createStore, applyMiddleware, combineReducers} from 'redux';
 import createLogger from 'redux-logger';
-import {user, config} from './reducers';
+import {user, config, stream} from './reducers';
 
 
 const thunkMiddleware = store => next => action => {
@@ -30,7 +31,9 @@ const connectionMiddleware = store => next => action => {
 export default function configureStore(initialState) {
     const reducer = combineReducers({
         user: user,
-        config: config
+        config: config,
+        stream: stream,
+        routing: routerReducer
     });
     const middleware = applyMiddleware(
         thunkMiddleware,

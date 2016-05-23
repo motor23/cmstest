@@ -54,7 +54,7 @@ export function configure() {
     return (dispatch, state, connection) => {
         dispatch(configureRequest());
         connection.call('cinfo.cfg.request').then(payload => {
-            dispatch(configureUpdate(payload));
+            dispatch(configureUpdate(payload.cfg));
         });
     };
 }
@@ -88,5 +88,41 @@ export function loginWithToken(token) {
                 dispatch(loginFailure(payload.reason));
             }
         });
+    };
+}
+
+
+export function updateStreamListRequest(stream) {
+    return {
+        type: 'STREAM_UPDATE_REQUEST'
+    };
+}
+
+
+export function updateStreamListSuccess(data) {
+    return {
+        type: 'STREAM_UPDATE_SUCCESS',
+        payload: data
+    };
+}
+
+
+export function updateStreamListFailure(reason) {
+    return {
+        type: 'STREAM_UPDATE_FAILURE',
+        payload: {
+            reason: reason
+        }
+    }
+}
+
+
+export function updateStreamList(stream, limit) {
+    return (dispatch, state, connection) => {
+        dispatch(updateStreamListRequest());
+        connection.call('streams.action.request', {stream, limit, action: 'list'}).then(payload => {
+            console.log(payload);
+            dispatch(updateStreamListSuccess(payload));
+        })
     };
 }

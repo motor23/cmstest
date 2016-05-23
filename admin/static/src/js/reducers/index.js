@@ -55,3 +55,47 @@ export function user(state, action) {
 
     return state;
 }
+
+
+export function stream(state, action) {
+    const initialState = {
+        isLoading: true,
+        stream: null,
+        items: [],
+        filters: {},
+        errors: {},
+        total: 0,
+        limit: 20,
+        offset: 0
+    };
+
+    state = state || initialState;
+
+    if (action.type === 'STREAM_UPDATE_REQUEST') {
+        return Object.assign({}, state, {
+            isLoading: true,
+            stream: null,
+            items: [],
+            filters: {},
+            errors: {},
+            total: 0,
+            limit: 20,
+            offset: 0
+        });
+    }
+
+    if (action.type === 'STREAM_UPDATE_SUCCESS') {
+        return Object.assign({}, state, {
+            isLoading: false,
+            stream: action.payload.stream,
+            items: action.payload.list_items,
+            filters: action.payload.filters,
+            errors: action.payload.filter_errors,
+            total: action.payload.total,
+            limit: action.payload.limit,
+            offset: action.payload.offset
+        });
+    }
+
+    return state;
+}
