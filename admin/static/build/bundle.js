@@ -46,42 +46,30 @@
 
 	'use strict';
 	
-	var _react = __webpack_require__(1);
-	
-	var _react2 = _interopRequireDefault(_react);
-	
 	var _reactDom = __webpack_require__(32);
-	
-	var _reactRouter = __webpack_require__(166);
-	
-	var _reactRedux = __webpack_require__(225);
 	
 	var _configureStore = __webpack_require__(250);
 	
 	var _configureStore2 = _interopRequireDefault(_configureStore);
 	
-	var _configureRoutes = __webpack_require__(253);
+	var _configureRouter = __webpack_require__(264);
 	
-	var _configureRoutes2 = _interopRequireDefault(_configureRoutes);
+	var _configureRouter2 = _interopRequireDefault(_configureRouter);
 	
 	var _configureConnection = __webpack_require__(263);
 	
 	var _configureConnection2 = _interopRequireDefault(_configureConnection);
 	
-	var _actions = __webpack_require__(255);
-	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	var connection = (0, _configureConnection2.default)(window.config.ws);
 	var store = (0, _configureStore2.default)();
+	var router = (0, _configureRouter2.default)(store);
 	
 	window.connection = connection;
 	window.store = store;
 	
-	var routes = (0, _configureRoutes2.default)();
-	var router = _react2.default.createElement(_reactRouter.Router, { routes: routes, history: _reactRouter.browserHistory });
-	var provider = _react2.default.createElement(_reactRedux.Provider, { store: store }, router);
-	var root = (0, _reactDom.render)(provider, document.getElementById('application'));
+	(0, _reactDom.render)(router, document.getElementById('application'));
 
 /***/ },
 /* 1 */
@@ -27126,9 +27114,9 @@
 	var loggerMiddleware = function loggerMiddleware(store) {
 	    return function (next) {
 	        return function (action) {
-	            console.log('dispatching', action);
+	            console.log('[dispatching]', action);
 	            var result = next(action);
-	            console.log('next state', store.getState());
+	            console.log('[next state]', store.getState());
 	            return result;
 	        };
 	    };
@@ -27456,60 +27444,7 @@
 	}
 
 /***/ },
-/* 253 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.default = configureRoutes;
-	
-	var _application = __webpack_require__(254);
-	
-	var _application2 = _interopRequireDefault(_application);
-	
-	var _dashboard = __webpack_require__(258);
-	
-	var _dashboard2 = _interopRequireDefault(_dashboard);
-	
-	var _login = __webpack_require__(256);
-	
-	var _login2 = _interopRequireDefault(_login);
-	
-	var _stream = __webpack_require__(260);
-	
-	var _stream2 = _interopRequireDefault(_stream);
-	
-	var _streamList = __webpack_require__(261);
-	
-	var _streamList2 = _interopRequireDefault(_streamList);
-	
-	var _streamItem = __webpack_require__(262);
-	
-	var _streamItem2 = _interopRequireDefault(_streamItem);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	function configureRoutes() {
-	    return {
-	        path: '/',
-	        component: _application2.default,
-	        indexRoute: { component: _dashboard2.default },
-	        childRoutes: [{
-	            path: ':stream',
-	            component: _stream2.default,
-	            indexRoute: { component: _streamList2.default },
-	            childRoutes: [{
-	                path: ':id',
-	                component: _streamItem2.default
-	            }]
-	        }]
-	    };
-	}
-
-/***/ },
+/* 253 */,
 /* 254 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -27986,7 +27921,7 @@
 	                    { className: 'cms-nav__item' },
 	                    _react2.default.createElement(
 	                        _reactRouter.Link,
-	                        { to: '/', activeClassName: 'active' },
+	                        { to: '/', activeClassName: 'active', onlyActiveOnIndex: true },
 	                        'Начало'
 	                    )
 	                ),
@@ -28470,6 +28405,67 @@
 	function configureConnection(url) {
 	    return new Connection(url);
 	};
+
+/***/ },
+/* 264 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.default = configureRouter;
+	
+	var _react = __webpack_require__(1);
+	
+	var _reactRouter = __webpack_require__(166);
+	
+	var _reactRedux = __webpack_require__(225);
+	
+	var _application = __webpack_require__(254);
+	
+	var _application2 = _interopRequireDefault(_application);
+	
+	var _dashboard = __webpack_require__(258);
+	
+	var _dashboard2 = _interopRequireDefault(_dashboard);
+	
+	var _login = __webpack_require__(256);
+	
+	var _login2 = _interopRequireDefault(_login);
+	
+	var _stream = __webpack_require__(260);
+	
+	var _stream2 = _interopRequireDefault(_stream);
+	
+	var _streamList = __webpack_require__(261);
+	
+	var _streamList2 = _interopRequireDefault(_streamList);
+	
+	var _streamItem = __webpack_require__(262);
+	
+	var _streamItem2 = _interopRequireDefault(_streamItem);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function configureRouter(store) {
+	    var routes = {
+	        path: '/',
+	        component: _application2.default,
+	        indexRoute: { component: _dashboard2.default },
+	        childRoutes: [{
+	            path: ':stream',
+	            component: _stream2.default,
+	            indexRoute: { component: _streamList2.default },
+	            childRoutes: [{
+	                path: ':id',
+	                component: _streamItem2.default
+	            }]
+	        }]
+	    };
+	    return (0, _react.createElement)(_reactRedux.Provider, { store: store }, (0, _react.createElement)(_reactRouter.Router, { routes: routes, history: _reactRouter.browserHistory }));
+	}
 
 /***/ }
 /******/ ]);
