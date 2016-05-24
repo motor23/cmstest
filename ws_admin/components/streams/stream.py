@@ -1,8 +1,7 @@
 from collections import OrderedDict
-
-from iktomi.utils import cached_property
-from . import actions
-from . import exc
+from .actions import List
+from .exc import ActionNotFound
+from .exc import FieldNotFoundError
 
 
 class StreamBase:
@@ -23,7 +22,7 @@ class StreamBase:
         if action:
             return action.handle(env, message)
         else:
-            raise exc.ActionNotFound(self.stream, action_name)
+            raise ActionNotFound(self.name, action_name)
 
     def get_action(self, name):
         for action in self.actions:
@@ -34,9 +33,8 @@ class StreamBase:
         return {
             'name': self.name,
             'title': self.title,
-            'actions': list(map(lambda x: x.get_cfg(env), self.actions)),
+            'actions': [action.get_cfg(env) for action in  self.actions],
         }
-
 
 
 class Stream(StreamBase):
@@ -49,28 +47,20 @@ class Stream(StreamBase):
     default_order = ['+id']
     item_fields = []
 
-
     actions = [
-        actions.List,
-#        actions.create_draft,
-#        actions.delete_draft,
-#        actions.create_new_item,
-#        actions.edit_item,
-#        actions.get_field_block,
-#        actions.set_field_value,
-#        actions.delete_item,
+        List,
     ]
 
     def __init__(self):
         super().__init__()
         self.list_fields_dict = OrderedDict(
-                                    [(x.name, x) for x in self.list_fields])
+            [(x.name, x) for x in self.list_fields])
         self.order_fields_dict = OrderedDict(
-                            [(x.name, x) for x in self.list_fields if x.order])
+            [(x.name, x) for x in self.list_fields if x.order])
         self.filter_fields_dict = OrderedDict(
-                                    [(x.name, x) for x in self.filter_fields])
+            [(x.name, x) for x in self.filter_fields])
         self.item_fields_dict = OrderedDict(
-                                    [(x.name, x) for x in self.item_fields])
+            [(x.name, x) for x in self.item_fields])
 
     def query(self, keys=None):
         return self.mapper.select(keys)
@@ -78,11 +68,10 @@ class Stream(StreamBase):
     def get_cfg(self, env):
         return dict(
             super().get_cfg(env),
-            widget = self.widget,
-            limits = self.limits,
-            list_fields = list(map(lambda x: x.get_cfg(env), self.list_fields)),
-            filter_fields = list(map(
-                                lambda x: x.get_cfg(env), self.filter_fields)),
+            widget=self.widget,
+            limits=self.limits,
+            list_fields=[field.get_cfg(env) for field in  self.list_fields],
+            filter_fields=[field.get_cfg(env) for field in self.filter_fields],
         )
 
     def fields_from_python(self, env, items, fields_dict):
@@ -100,11 +89,13 @@ class Stream(StreamBase):
         for name in raw_item.keys():
             field = fields_dict.get(name)
             if not field:
-                raise FieldNotFound(self, name)
+                # XXX: no such exception
+                raise FieldNotFoundError(self, name)
             value, errors = field.accept(env, self, raw_item)
             if value:
                 values.update(value)
             else:
+                # XXX: unbound local variable `error`
                 errors.update(error)
         return values, errors
 

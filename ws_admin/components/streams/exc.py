@@ -1,11 +1,11 @@
-from ikcms.ws_apps.composite.exc import (
-    BaseError,
-    FieldRequiredError,
-    MessageError,
-)
+from ikcms.ws_apps.composite.exc import BaseError
+from ikcms.ws_apps.composite.exc import MessageError
+from ikcms.ws_apps.composite.exc import FieldRequiredError
+from ikcms.ws_apps.composite.exc import FieldNotFoundError
 
 
-class StreamBaseError(BaseError): pass
+class StreamBaseError(BaseError):
+    pass
 
 
 class StreamNotFound(StreamBaseError):
@@ -18,7 +18,7 @@ class StreamNotFound(StreamBaseError):
         return '{}: stream_name={}'.format(
             self.message,
             self.stream_name,
-    )
+        )
 
 
 class ActionNotFound(StreamBaseError):
@@ -33,7 +33,7 @@ class ActionNotFound(StreamBaseError):
             self.message,
             self.stream.name,
             self.action_name,
-    )
+        )
 
 
 class StreamFieldNotFound(StreamBaseError):
@@ -49,7 +49,8 @@ class StreamFieldNotFound(StreamBaseError):
             self.message,
             self.stream.name,
             self.field_name,
-    )
+        )
+
 
 class StreamLimitError(StreamBaseError):
 
@@ -65,6 +66,4 @@ class StreamLimitError(StreamBaseError):
             self.stream.name,
             self.stream.limits,
             self.limit,
-    )
-
-
+        )

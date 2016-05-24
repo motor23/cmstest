@@ -1,4 +1,3 @@
-from iktomi.utils import cached_property
 from ws_admin.components.streams import Stream
 from ws_admin.components.streams.fields import (
     lf_id,

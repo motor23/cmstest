@@ -1,11 +1,10 @@
 from hashlib import md5
-
-import ikcms.ws_components.auth.base
+from ikcms.ws_components.auth.base import WS_AuthComponent as WS_AuthComponentBase
 from ikcms.ws_components.auth.base import user_required
 from ikcms.ws_apps.composite.exc import FieldRequiredError
 
 
-class WS_AuthComponent(ikcms.ws_components.auth.base.WS_AuthComponent):
+class WS_AuthComponent(WS_AuthComponentBase):
 
     async def h_login(self, env, message):
         key = message.get('key')
@@ -40,7 +39,7 @@ class WS_AuthComponent(ikcms.ws_components.auth.base.WS_AuthComponent):
 
     def auth_by_password(self, env, login, password):
         key = md5(login.encode('utf8')).hexdigest()
-        if login==password:
+        if login == password:
             return key
         else:
             return False

@@ -1,8 +1,7 @@
-from .exc import (
-    StreamLimitError,
-    StreamFieldNotFound,
-    MessageError,
-)
+from .exc import StreamLimitError
+from .exc import StreamFieldNotFound
+from .exc import MessageError
+
 
 class Base:
     name = None
@@ -11,7 +10,8 @@ class Base:
         assert self.name is not None
         self.stream = stream
 
-    async def handle(self, env): raise NotImplementedError
+    async def handle(self, env):
+        raise NotImplementedError
 
     def get_cfg(self, env):
         return {
@@ -21,7 +21,6 @@ class Base:
 
 
 class List(Base):
-
     name = 'list'
 
     async def handle(self, env, message):
@@ -65,7 +64,7 @@ class List(Base):
         if not isinstance(raw_filters, dict):
             raise MessageError('body.filters field must be the dict')
         for key in raw_filters:
-            if key not in self.filter_fields_dict:
+            if key not in self.stream.filter_fields_dict:
                 raise StreamFieldNotFound(self.stream, key)
 
         return self.stream.fields_accept(
@@ -86,8 +85,6 @@ class List(Base):
             if not (key and key[0] in ['+', '-']):
                 raise MessageError(
                     'body.order field items must starts with + or -')
-                if key[1:] not in self.order_fields_dict:
-                    raise StreamFieldNotFound(self.stream, key)
         return raw_order
 
 

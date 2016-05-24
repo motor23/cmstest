@@ -1,8 +1,7 @@
 [Master]
+init-hook="import os; import sys; sys.path.append(os.path.dirname(os.path.abspath(__file__)))"
 profile = no
 jobs=2
-
-init-hook=""
 
 [Messages Control]
 # W0612: Unused variable
@@ -17,7 +16,8 @@ init-hook=""
 # E0213: Method should have "self" as first argument
 # E0202: An attribute defined in iktomi.web.app line 69 hides this method
 # E1121: Too many positional arguments for constructor call
-disable=W0612,W0613,W0511,W0142,W0622,C0111,C0103,R0201,R0903,E0213,E0202,E1121
+# E0401
+disable=W0612,W0613,W0511,W0142,W0622,C0111,C0103,R0201,R0903,E0213,E0202,E1121,E0401
 
 [Reports]
 output-format=colorized

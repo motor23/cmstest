@@ -1,5 +1,6 @@
-import ikcms.ws_components.base
-from . import exc
+from ikcms.ws_components.base import WS_Component as WS_ComponentBase
+from .exc import FieldRequiredError
+from .exc import StreamNotFound
 from .stream import Stream
 
 __all__ = (
@@ -7,27 +8,25 @@ __all__ = (
     'Stream',
 )
 
-class WS_Streams(ikcms.ws_components.base.WS_Component):
-    
+
+class WS_Streams(WS_ComponentBase):
     name = 'streams'
     streams = {}
 
     def get_cfg(self, env):
         return {
-            'streams': list(map(
-                            lambda x: x.get_cfg(env), self.streams.values())),
+            'streams': [s.get_cfg(env) for s in self.streams.values()],
         }
 
     async def h_action(self, env, message):
         stream_name = message.get('stream')
         if not stream_name:
-            raise exc.FieldRequiredError('stream')
+            raise FieldRequiredError('stream')
         stream = self.streams.get(stream_name)
         if stream:
             return await stream.h_action(env, message)
         else:
-            raise exc.StreamNotFound(stream_name)
-
+            raise StreamNotFound(stream_name)
 
     def handlers(self):
         return {
