@@ -5,7 +5,7 @@ import configureConnection from './configureConnection';
 
 
 const connection = configureConnection(window.config.ws);
-const store = configureStore();
+const store = configureStore(undefined, {logging: true, connection: connection});
 const router = configureRouter(store);
 
 

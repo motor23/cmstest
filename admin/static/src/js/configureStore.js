@@ -4,31 +4,31 @@ import createLogger from 'redux-logger';
 import {user, config, stream} from './reducers';
 
 
-const thunkMiddleware = store => next => action => {
-    if (typeof action === 'function') {
-        return action(store.dispatch, store.getState, window.connection);
-    }
-    return next(action);
-};
+function createThunkMiddleware(connection) {
+    return store => next => action => {
+        if (typeof action === 'function') {
+            return action(store.dispatch, store.getState, connection);
+        }
+        return next(action);
+    };
+}
 
 
-const loggerMiddleware = store => next => action => {
-    console.log('[dispatching]', action);
-    const result = next(action);
-    console.log('[next state]', store.getState());
-    return result;
-};
+function createLoggerMiddleware(logging) {
+    return store => next => action => {
+        if (logging) {
+            console.log('[dispatching]', action);
+        }
+        const result = next(action);
+        if (logging) {
+            console.log('[next state]', store.getState());
+        }
+        return result;
+    };
+}
 
 
-const connectionMiddleware = store => next => action => {
-    if (typeof action.endpoint === 'string') {
-        window.connection.send({name: action.endpoint, body: action.payload});
-    }
-    return next(action);
-};
-
-
-export default function configureStore(initialState) {
+export default function configureStore(initialState, {logging, connection}) {
     const reducer = combineReducers({
         user: user,
         config: config,
@@ -36,9 +36,8 @@ export default function configureStore(initialState) {
         routing: routerReducer
     });
     const middleware = applyMiddleware(
-        thunkMiddleware,
-        loggerMiddleware,
-        connectionMiddleware
+        createThunkMiddleware(connection),
+        createLoggerMiddleware(logging)
     );
     return createStore(reducer, initialState, middleware);
 };

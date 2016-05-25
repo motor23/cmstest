@@ -63,7 +63,7 @@
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	var connection = (0, _configureConnection2.default)(window.config.ws);
-	var store = (0, _configureStore2.default)();
+	var store = (0, _configureStore2.default)(undefined, { logging: true, connection: connection });
 	var router = (0, _configureRouter2.default)(store);
 	
 	window.connection = connection;
@@ -19384,47 +19384,47 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	var thunkMiddleware = function thunkMiddleware(store) {
-	    return function (next) {
-	        return function (action) {
-	            if (typeof action === 'function') {
-	                return action(store.dispatch, store.getState, window.connection);
-	            }
-	            return next(action);
+	function createThunkMiddleware(connection) {
+	    return function (store) {
+	        return function (next) {
+	            return function (action) {
+	                if (typeof action === 'function') {
+	                    return action(store.dispatch, store.getState, connection);
+	                }
+	                return next(action);
+	            };
 	        };
 	    };
-	};
+	}
 	
-	var loggerMiddleware = function loggerMiddleware(store) {
-	    return function (next) {
-	        return function (action) {
-	            console.log('[dispatching]', action);
-	            var result = next(action);
-	            console.log('[next state]', store.getState());
-	            return result;
+	function createLoggerMiddleware(logging) {
+	    return function (store) {
+	        return function (next) {
+	            return function (action) {
+	                if (logging) {
+	                    console.log('[dispatching]', action);
+	                }
+	                var result = next(action);
+	                if (logging) {
+	                    console.log('[next state]', store.getState());
+	                }
+	                return result;
+	            };
 	        };
 	    };
-	};
+	}
 	
-	var connectionMiddleware = function connectionMiddleware(store) {
-	    return function (next) {
-	        return function (action) {
-	            if (typeof action.endpoint === 'string') {
-	                window.connection.send({ name: action.endpoint, body: action.payload });
-	            }
-	            return next(action);
-	        };
-	    };
-	};
+	function configureStore(initialState, _ref) {
+	    var logging = _ref.logging;
+	    var connection = _ref.connection;
 	
-	function configureStore(initialState) {
 	    var reducer = (0, _redux.combineReducers)({
 	        user: _reducers.user,
 	        config: _reducers.config,
 	        stream: _reducers.stream,
 	        routing: _reactRouterRedux.routerReducer
 	    });
-	    var middleware = (0, _redux.applyMiddleware)(thunkMiddleware, loggerMiddleware, connectionMiddleware);
+	    var middleware = (0, _redux.applyMiddleware)(createThunkMiddleware(connection), createLoggerMiddleware(logging));
 	    return (0, _redux.createStore)(reducer, initialState, middleware);
 	};
 
@@ -28740,8 +28740,8 @@
 	
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 	
-	var Paginator = function (_React$PropTypes) {
-	    _inherits(Paginator, _React$PropTypes);
+	var Paginator = function (_React$Component) {
+	    _inherits(Paginator, _React$Component);
 	
 	    function Paginator() {
 	        _classCallCheck(this, Paginator);
@@ -28757,7 +28757,7 @@
 	    }]);
 	
 	    return Paginator;
-	}(_react2.default.PropTypes);
+	}(_react2.default.Component);
 	
 	Paginator.propTypes = {
 	    total: _react2.default.PropTypes.number.isRequired,
@@ -28765,8 +28765,8 @@
 	    offset: _react2.default.PropTypes.number.isRequired
 	};
 	
-	var StreamListRow = function (_React$Component) {
-	    _inherits(StreamListRow, _React$Component);
+	var StreamListRow = function (_React$Component2) {
+	    _inherits(StreamListRow, _React$Component2);
 	
 	    function StreamListRow() {
 	        _classCallCheck(this, StreamListRow);
@@ -28799,8 +28799,8 @@
 	    return StreamListRow;
 	}(_react2.default.Component);
 	
-	var StreamList = function (_React$Component2) {
-	    _inherits(StreamList, _React$Component2);
+	var StreamList = function (_React$Component3) {
+	    _inherits(StreamList, _React$Component3);
 	
 	    function StreamList() {
 	        _classCallCheck(this, StreamList);

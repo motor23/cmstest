@@ -4,7 +4,7 @@ import {updateStreamList} from '../../actions';
 import Spinner from '../spinner';
 
 
-class Paginator extends React.PropTypes {
+class Paginator extends React.Component {
     static propTypes = {
         total: React.PropTypes.number.isRequired,
         limit: React.PropTypes.number.isRequired,
