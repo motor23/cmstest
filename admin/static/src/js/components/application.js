@@ -31,11 +31,14 @@ class Application extends React.Component {
 }
 
 
-const mapStateToProps = state => ({
-    isLoggedIn: state.user.isLoggedIn,
-    menu: state.config.menu.main,
-    user: state.user
-});
+function mapStateToProps(state, props) {
+    console.log(props);
+    return {
+        isLoggedIn: state.user.isLoggedIn,
+        menu: state.config.menu.main,
+        user: state.user
+    };
+}
 
 
 export default connect(mapStateToProps)(Application);

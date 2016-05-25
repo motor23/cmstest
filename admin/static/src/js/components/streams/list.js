@@ -4,6 +4,22 @@ import {updateStreamList} from '../../actions';
 import Spinner from '../spinner';
 
 
+class Paginator extends React.PropTypes {
+    static propTypes = {
+        total: React.PropTypes.number.isRequired,
+        limit: React.PropTypes.number.isRequired,
+        offset: React.PropTypes.number.isRequired
+    };
+
+    render() {
+        return (
+            <div className="cms-paginator">
+            </div>
+        );
+    }
+}
+
+
 class StreamListRow extends React.Component {
     render() {
         const {item} = this.props;
@@ -18,6 +34,17 @@ class StreamListRow extends React.Component {
 
 
 class StreamList extends React.Component {
+    static propTypes = {
+        isLoading: React.PropTypes.bool.isRequired,
+        widgets: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
+        filters: React.PropTypes.object.isRequired,
+        errors: React.PropTypes.object.isRequired,
+        items: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
+        total: React.PropTypes.number.isRequired,
+        limit: React.PropTypes.number.isRequired,
+        offset: React.PropTypes.number.isRequired
+    };
+
     componentWillMount() {
         this.props.dispatch(updateStreamList('docs', 30));
     }
@@ -45,15 +72,17 @@ class StreamList extends React.Component {
 }
 
 
-const mapStateToProps = state => ({
-    isLoading: state.stream.isLoading,
-    items: state.stream.items,
-    filters: state.stream.filters,
-    errors: state.stream.errors,
-    total: state.stream.total,
-    limit: state.stream.limit,
-    offset: state.stream.offset
-});
+function mapStateToProps(state, props) {
+    return {
+        isLoading: state.stream.isLoading,
+        items: state.stream.items,
+        filters: state.stream.filters,
+        errors: state.stream.errors,
+        total: state.stream.total,
+        limit: state.stream.limit,
+        offset: state.stream.offset
+    };
+}
 
 
 export default connect(mapStateToProps)(StreamList);

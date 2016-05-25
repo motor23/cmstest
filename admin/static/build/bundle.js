@@ -21004,17 +21004,17 @@
 	
 	var _login2 = _interopRequireDefault(_login);
 	
-	var _stream = __webpack_require__(265);
+	var _index = __webpack_require__(265);
 	
-	var _stream2 = _interopRequireDefault(_stream);
+	var _index2 = _interopRequireDefault(_index);
 	
-	var _streamList = __webpack_require__(266);
+	var _list = __webpack_require__(266);
 	
-	var _streamList2 = _interopRequireDefault(_streamList);
+	var _list2 = _interopRequireDefault(_list);
 	
-	var _streamItem = __webpack_require__(267);
+	var _item = __webpack_require__(267);
 	
-	var _streamItem2 = _interopRequireDefault(_streamItem);
+	var _item2 = _interopRequireDefault(_item);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -21026,11 +21026,11 @@
 	        indexRoute: { component: _dashboard2.default },
 	        childRoutes: [{
 	            path: ':stream',
-	            component: _stream2.default,
-	            indexRoute: { component: _streamList2.default },
+	            component: _index2.default,
+	            indexRoute: { component: _list2.default },
 	            childRoutes: [{
 	                path: ':id',
-	                component: _streamItem2.default
+	                component: _item2.default
 	            }]
 	        }]
 	    };
@@ -28000,13 +28000,14 @@
 	    return Application;
 	}(_react2.default.Component);
 	
-	var mapStateToProps = function mapStateToProps(state) {
+	function mapStateToProps(state, props) {
+	    console.log(props);
 	    return {
 	        isLoggedIn: state.user.isLoggedIn,
 	        menu: state.config.menu.main,
 	        user: state.user
 	    };
-	};
+	}
 	
 	exports.default = (0, _reactRedux.connect)(mapStateToProps)(Application);
 
@@ -28595,11 +28596,11 @@
 	    return Dashboard;
 	}(_react2.default.Component);
 	
-	var mapStateToProps = function mapStateToProps(state) {
+	function mapStateToProps(state, props) {
 	    return {
 	        dashboard: state.config.menu.dashboard
 	    };
-	};
+	}
 	
 	exports.default = (0, _reactRedux.connect)(mapStateToProps)(Dashboard);
 
@@ -28739,6 +28740,31 @@
 	
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 	
+	var Paginator = function (_React$PropTypes) {
+	    _inherits(Paginator, _React$PropTypes);
+	
+	    function Paginator() {
+	        _classCallCheck(this, Paginator);
+	
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(Paginator).apply(this, arguments));
+	    }
+	
+	    _createClass(Paginator, [{
+	        key: 'render',
+	        value: function render() {
+	            return _react2.default.createElement('div', { className: 'cms-paginator' });
+	        }
+	    }]);
+	
+	    return Paginator;
+	}(_react2.default.PropTypes);
+	
+	Paginator.propTypes = {
+	    total: _react2.default.PropTypes.number.isRequired,
+	    limit: _react2.default.PropTypes.number.isRequired,
+	    offset: _react2.default.PropTypes.number.isRequired
+	};
+	
 	var StreamListRow = function (_React$Component) {
 	    _inherits(StreamListRow, _React$Component);
 	
@@ -28833,7 +28859,19 @@
 	    return StreamList;
 	}(_react2.default.Component);
 	
-	var mapStateToProps = function mapStateToProps(state) {
+	StreamList.propTypes = {
+	    isLoading: _react2.default.PropTypes.bool.isRequired,
+	    widgets: _react2.default.PropTypes.arrayOf(_react2.default.PropTypes.object).isRequired,
+	    filters: _react2.default.PropTypes.object.isRequired,
+	    errors: _react2.default.PropTypes.object.isRequired,
+	    items: _react2.default.PropTypes.arrayOf(_react2.default.PropTypes.object).isRequired,
+	    total: _react2.default.PropTypes.number.isRequired,
+	    limit: _react2.default.PropTypes.number.isRequired,
+	    offset: _react2.default.PropTypes.number.isRequired
+	};
+	
+	
+	function mapStateToProps(state, props) {
 	    return {
 	        isLoading: state.stream.isLoading,
 	        items: state.stream.items,
@@ -28843,7 +28881,7 @@
 	        limit: state.stream.limit,
 	        offset: state.stream.offset
 	    };
-	};
+	}
 	
 	exports.default = (0, _reactRedux.connect)(mapStateToProps)(StreamList);
 
