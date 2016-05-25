@@ -1,4 +1,4 @@
-function assert(condition, format) {
+export default function assert(condition, format) {
     if (format === undefined) {
         throw new Error('assert requires an error message argument');
     }
@@ -9,6 +9,3 @@ function assert(condition, format) {
         throw new Error(message);
     }
 }
-
-
-export default assert;
