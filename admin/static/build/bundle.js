@@ -20961,9 +20961,9 @@
 	        return Object.assign({}, state, {
 	            isLoading: false,
 	            stream: action.payload.stream,
-	            items: action.payload.list_items,
+	            items: action.payload.items,
 	            filters: action.payload.filters,
-	            errors: action.payload.filter_errors,
+	            errors: action.payload.errors,
 	            total: action.payload.total,
 	            limit: action.payload.limit,
 	            offset: action.payload.offset
@@ -27986,7 +27986,11 @@
 	                _react2.default.createElement(
 	                    'div',
 	                    { className: 'mdl-layout__header' },
-	                    _react2.default.createElement(_menu2.default, { menu: menu })
+	                    _react2.default.createElement(
+	                        'div',
+	                        { className: 'mdl-layout__header-row' },
+	                        _react2.default.createElement(_menu2.default, { menu: menu })
+	                    )
 	                ),
 	                _react2.default.createElement(
 	                    'div',
@@ -28001,7 +28005,6 @@
 	}(_react2.default.Component);
 	
 	function mapStateToProps(state, props) {
-	    console.log(props);
 	    return {
 	        isLoggedIn: state.user.isLoggedIn,
 	        menu: state.config.menu.main,
@@ -28140,10 +28143,16 @@
 	    };
 	}
 	
-	function updateStreamList(stream, limit) {
+	function updateStreamList(stream, limit, offset) {
 	    return function (dispatch, state, connection) {
+	        var payload = {
+	            stream: stream,
+	            limit: limit,
+	            offset: offset,
+	            action: 'list'
+	        };
 	        dispatch(updateStreamListRequest());
-	        connection.call('streams.action.request', { stream: stream, limit: limit, action: 'list' }).then(function (payload) {
+	        connection.call('streams.action.request', payload).then(function (payload) {
 	            console.log(payload);
 	            dispatch(updateStreamListSuccess(payload));
 	        });
@@ -28728,6 +28737,10 @@
 	
 	var _actions = __webpack_require__(260);
 	
+	var _paginate = __webpack_require__(269);
+	
+	var _paginate2 = _interopRequireDefault(_paginate);
+	
 	var _spinner = __webpack_require__(264);
 	
 	var _spinner2 = _interopRequireDefault(_spinner);
@@ -28750,9 +28763,37 @@
 	    }
 	
 	    _createClass(Paginator, [{
+	        key: 'renderItem',
+	        value: function renderItem(page) {
+	            var _props = this.props;
+	            var total = _props.total;
+	            var limit = _props.limit;
+	            var offset = _props.offset;
+	            var change = _props.change;
+	
+	            return _react2.default.createElement(
+	                'span',
+	                { className: 'cms-paginator__item', onClick: function onClick() {
+	                        return change(page);
+	                    } },
+	                page ? page : '...'
+	            );
+	        }
+	    }, {
 	        key: 'render',
 	        value: function render() {
-	            return _react2.default.createElement('div', { className: 'cms-paginator' });
+	            var _props2 = this.props;
+	            var total = _props2.total;
+	            var limit = _props2.limit;
+	            var offset = _props2.offset;
+	
+	            var page = Math.ceil(offset / limit + 1);
+	            var pages = (0, _paginate2.default)(total, limit, page, 1, 3);
+	            return _react2.default.createElement(
+	                'div',
+	                { className: 'cms-paginator' },
+	                pages.map(this.renderItem.bind(this))
+	            );
 	        }
 	    }]);
 	
@@ -28762,7 +28803,8 @@
 	Paginator.propTypes = {
 	    total: _react2.default.PropTypes.number.isRequired,
 	    limit: _react2.default.PropTypes.number.isRequired,
-	    offset: _react2.default.PropTypes.number.isRequired
+	    offset: _react2.default.PropTypes.number.isRequired,
+	    change: _react2.default.PropTypes.func.isRequired
 	};
 	
 	var StreamListRow = function (_React$Component2) {
@@ -28790,7 +28832,7 @@
 	                _react2.default.createElement(
 	                    'td',
 	                    null,
-	                    item.title
+	                    item.title.substring(0, 100)
 	                )
 	            );
 	        }
@@ -28811,14 +28853,25 @@
 	    _createClass(StreamList, [{
 	        key: 'componentWillMount',
 	        value: function componentWillMount() {
-	            this.props.dispatch((0, _actions.updateStreamList)('docs', 30));
+	            this.props.dispatch((0, _actions.updateStreamList)('docs', 10));
+	        }
+	    }, {
+	        key: 'changePage',
+	        value: function changePage(page) {
+	            var limit = this.props.limit;
+	
+	            var offset = (page - 1) * limit;
+	            this.props.dispatch((0, _actions.updateStreamList)('docs', limit, offset));
 	        }
 	    }, {
 	        key: 'render',
 	        value: function render() {
-	            var _props = this.props;
-	            var isLoading = _props.isLoading;
-	            var items = _props.items;
+	            var _props3 = this.props;
+	            var isLoading = _props3.isLoading;
+	            var items = _props3.items;
+	            var total = _props3.total;
+	            var limit = _props3.limit;
+	            var offset = _props3.offset;
 	
 	            var content = items.map(function (item) {
 	                return _react2.default.createElement(StreamListRow, { key: item.id, item: item });
@@ -28827,31 +28880,37 @@
 	                return _react2.default.createElement(_spinner2.default, null);
 	            }
 	            return _react2.default.createElement(
-	                'table',
-	                { className: 'mdl-data-table' },
+	                'div',
+	                null,
+	                _react2.default.createElement(Paginator, { total: total, limit: limit, offset: offset, change: this.changePage.bind(this) }),
 	                _react2.default.createElement(
-	                    'thead',
-	                    null,
+	                    'table',
+	                    { className: 'mdl-data-table' },
 	                    _react2.default.createElement(
-	                        'tr',
+	                        'thead',
 	                        null,
 	                        _react2.default.createElement(
-	                            'th',
+	                            'tr',
 	                            null,
-	                            'ID'
-	                        ),
-	                        _react2.default.createElement(
-	                            'th',
-	                            null,
-	                            'Заголовок'
+	                            _react2.default.createElement(
+	                                'th',
+	                                null,
+	                                'ID'
+	                            ),
+	                            _react2.default.createElement(
+	                                'th',
+	                                null,
+	                                'Заголовок'
+	                            )
 	                        )
+	                    ),
+	                    _react2.default.createElement(
+	                        'tbody',
+	                        null,
+	                        content
 	                    )
 	                ),
-	                _react2.default.createElement(
-	                    'tbody',
-	                    null,
-	                    content
-	                )
+	                _react2.default.createElement(Paginator, { total: total, limit: limit, offset: offset, change: this.changePage.bind(this) })
 	            );
 	        }
 	    }]);
@@ -29031,6 +29090,60 @@
 	function configureConnection(url) {
 	    return new Connection(url);
 	};
+
+/***/ },
+/* 269 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.default = paginate;
+	function paginate(total, limit, page) {
+	    var edge = arguments.length <= 3 || arguments[3] === undefined ? 3 : arguments[3];
+	    var surround = arguments.length <= 4 || arguments[4] === undefined ? 5 : arguments[4];
+	
+	    var totalPages = Math.ceil(total / limit);
+	    var currentPage = page;
+	    var leftEnd = Math.min(edge, totalPages);
+	    var surroundStart = Math.min(Math.max(1, currentPage - surround), totalPages + 1);
+	    var surroundEnd = Math.min(currentPage + surround, totalPages);
+	    var rightStart = Math.min(Math.max(1, totalPages - edge + 1), totalPages + 1);
+	    var ranges = [];
+	    ranges.push([1, leftEnd + 1]);
+	    if (surroundEnd >= surroundStart) {
+	        ranges.push([surroundStart, surroundEnd + 1]);
+	    }
+	    if (totalPages >= rightStart) {
+	        ranges.push([rightStart, totalPages + 1]);
+	    }
+	    ranges.sort();
+	    var pages = [];
+	    for (var i = ranges[0][0]; i < ranges[0][1]; i++) {
+	        pages.push(i);
+	    }
+	    for (var _i = 1; _i < ranges.length; _i++) {
+	        var last = pages[pages.length - 1];
+	        var start = ranges[_i][0];
+	        var end = ranges[_i][1];
+	        if (end <= last) {
+	            continue;
+	        }
+	        if (start <= last + 2) {
+	            for (var j = last + 1; j < end; j++) {
+	                pages.push(j);
+	            }
+	        } else {
+	            pages.push(null);
+	            for (var _j = start; _j < end; _j++) {
+	                pages.push(_j);
+	            }
+	        }
+	    }
+	    return pages;
+	}
 
 /***/ }
 /******/ ]);

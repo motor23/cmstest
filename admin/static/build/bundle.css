@@ -75,3 +75,22 @@
     color: #00bcd4;
     text-decoration: none;
 }
+
+
+.cms-paginator {
+    margin: 5px 0;
+}
+
+
+.cms-paginator__item {
+    margin: 0 5px;
+    padding: 2px;
+    border-radius: 2px;
+    background: #cfd7e6;
+    color: #ffffff;
+}
+
+.cms-paginator__item:hover {
+    cursor: pointer;
+    color: #ffffff;
+}

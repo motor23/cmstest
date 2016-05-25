@@ -27,10 +27,11 @@ class List(Base):
         filters, filters_errors = self.filters_to_python(env, message)
         order = self.order_to_python(env, message)
         limit = self.limit_to_python(env, message)
+        offset = self.offset_to_python(env, message)
 
         query = self.query(filters, order, limit)
-        count_list_items = query.count(env.db)
-        list_items = query.execute(env.db)
+        total = query.count(env.db)
+        list_items = query.offset(offset).execute(env.db)
 
         raw_list_items = self.stream.fields_from_python(
             env,
@@ -41,13 +42,15 @@ class List(Base):
         return {
             'stream': self.stream.name,
             'action': self.name,
-            'list_items': raw_list_items,
-            'count_list_items': count_list_items,
+            'items': raw_list_items,
+            'total': total,
+            'limit': limit,
+            'offset': offset,
             'filters': message.get('filters', {}),
-            'filters_errors': filters_errors,
+            'errors': filters_errors,
         }
 
-    def query(self, filters, order, limit):
+    def query(self, filters, order, limit, offset=0):
         query = self.stream.query(self.stream.list_fields_dict.keys())
 
         for name, field in self.stream.filter_fields_dict.items():
@@ -56,8 +59,11 @@ class List(Base):
         for key in order:
             value, name = key[0], key[1:]
             query = self.stream.list_fields_dict[name].order(query, value)
-        return query.limit(limit)
 
+        if offset > 0:
+            query = query.offset(offset)
+
+        return query.limit(limit)
 
     def filters_to_python(self, env, message):
         raw_filters = message.get('filters', {})
@@ -94,3 +100,6 @@ class List(Base):
             raise StreamLimitError(self.stream, raw_limit)
         return raw_limit
 
+    def offset_to_python(self, env, message):
+        raw_offset = message.get('offset', 0)
+        return raw_offset

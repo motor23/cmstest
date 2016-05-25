@@ -40,7 +40,7 @@ class StreamBase:
 class Stream(StreamBase):
     mapper = None
     widget = 'Stream'
-    limits = [30, 50, 100]
+    limits = [10, 20, 30, 50, 100]
 
     list_fields = []
     filter_fields = []

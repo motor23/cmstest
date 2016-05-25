@@ -20,7 +20,9 @@ class Application extends React.Component {
         return (
             <div className="mdl-layout mdl-layout--fixed-header">
                 <div className="mdl-layout__header">
-                    <Menu menu={menu}/>
+                    <div className="mdl-layout__header-row">
+                        <Menu menu={menu}/>
+                    </div>
                 </div>
                 <div className="mdl-layout__content mdl-color-text--grey-600">
                     {React.Children.only(children)}
@@ -32,7 +34,6 @@ class Application extends React.Component {
 
 
 function mapStateToProps(state, props) {
-    console.log(props);
     return {
         isLoggedIn: state.user.isLoggedIn,
         menu: state.config.menu.main,

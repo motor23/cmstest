@@ -1,6 +1,7 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import {updateStreamList} from '../../actions';
+import paginate from '../../util/paginate';
 import Spinner from '../spinner';
 
 
@@ -8,12 +9,26 @@ class Paginator extends React.Component {
     static propTypes = {
         total: React.PropTypes.number.isRequired,
         limit: React.PropTypes.number.isRequired,
-        offset: React.PropTypes.number.isRequired
+        offset: React.PropTypes.number.isRequired,
+        change: React.PropTypes.func.isRequired
     };
 
+    renderItem(page) {
+        const {total, limit, offset, change} = this.props;
+        return (
+            <span className="cms-paginator__item" onClick={() => change(page)}>
+                {page ? page : '...'}
+            </span>
+        );
+    }
+
     render() {
+        const {total, limit, offset} = this.props;
+        const page = Math.ceil(offset / limit + 1);
+        const pages = paginate(total, limit, page, 1, 3);
         return (
             <div className="cms-paginator">
+                {pages.map(this.renderItem.bind(this))}
             </div>
         );
     }
@@ -26,7 +41,7 @@ class StreamListRow extends React.Component {
         return (
             <tr>
                 <td>{item.id}</td>
-                <td>{item.title}</td>
+                <td>{item.title.substring(0, 100)}</td>
             </tr>
         );
     }
@@ -46,27 +61,37 @@ class StreamList extends React.Component {
     };
 
     componentWillMount() {
-        this.props.dispatch(updateStreamList('docs', 30));
+        this.props.dispatch(updateStreamList('docs', 10));
+    }
+
+    changePage(page) {
+        const {limit} = this.props;
+        const offset = (page - 1) * limit;
+        this.props.dispatch(updateStreamList('docs', limit, offset));
     }
 
     render() {
-        const {isLoading, items} = this.props;
+        const {isLoading, items, total, limit, offset} = this.props;
         const content = items.map(item => <StreamListRow key={item.id} item={item}/>);
         if (isLoading) {
             return <Spinner/>;
         }
         return (
-            <table className="mdl-data-table">
-                <thead>
+            <div>
+                <Paginator total={total} limit={limit} offset={offset} change={this.changePage.bind(this)}/>
+                <table className="mdl-data-table">
+                    <thead>
                     <tr>
                         <th>ID</th>
                         <th>Заголовок</th>
                     </tr>
-                </thead>
-                <tbody>
+                    </thead>
+                    <tbody>
                     {content}
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+                <Paginator total={total} limit={limit} offset={offset} change={this.changePage.bind(this)}/>
+            </div>
         );
     }
 }

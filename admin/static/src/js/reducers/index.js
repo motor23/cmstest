@@ -88,9 +88,9 @@ export function stream(state, action) {
         return Object.assign({}, state, {
             isLoading: false,
             stream: action.payload.stream,
-            items: action.payload.list_items,
+            items: action.payload.items,
             filters: action.payload.filters,
-            errors: action.payload.filter_errors,
+            errors: action.payload.errors,
             total: action.payload.total,
             limit: action.payload.limit,
             offset: action.payload.offset

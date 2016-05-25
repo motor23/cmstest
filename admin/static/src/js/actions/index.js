@@ -117,10 +117,16 @@ export function updateStreamListFailure(reason) {
 }
 
 
-export function updateStreamList(stream, limit) {
+export function updateStreamList(stream, limit, offset) {
     return (dispatch, state, connection) => {
+        const payload = {
+            stream: stream,
+            limit: limit,
+            offset: offset,
+            action: 'list'
+        };
         dispatch(updateStreamListRequest());
-        connection.call('streams.action.request', {stream, limit, action: 'list'}).then(payload => {
+        connection.call('streams.action.request', payload).then(payload => {
             console.log(payload);
             dispatch(updateStreamListSuccess(payload));
         })

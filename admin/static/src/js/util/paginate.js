@@ -1,6 +1,6 @@
 export default function paginate(total, limit, page, edge=3, surround=5) {
     const totalPages = Math.ceil(total / limit);
-    const currentPage = page; //Math.floor(offset / limit + 1);
+    const currentPage = page;
     const leftEnd = Math.min(edge, totalPages);
     const surroundStart = Math.min(Math.max(1, currentPage - surround), totalPages + 1);
     const surroundEnd = Math.min(currentPage + surround, totalPages);

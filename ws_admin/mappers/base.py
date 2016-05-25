@@ -113,7 +113,7 @@ class SelectQuery(Query):
         return self.clone(query=self._query.limit(value))
 
     def offset(self, value):
-        return self.offset(query=self._query.offset(value))
+        return self.clone(query=self._query.offset(value))
 
     def count(self, db):
         columns = [func.count(self._mapper.table.c.id)]
