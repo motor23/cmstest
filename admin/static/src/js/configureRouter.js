@@ -7,7 +7,6 @@ import {Provider} from 'react-redux';
 import Application from './components/application';
 import Dashboard from './components/dashboard';
 import Login from './components/login';
-import Stream from './components/streams/index';
 import StreamList from './components/streams/list';
 import StreamItem from './components/streams/item';
 
@@ -20,15 +19,12 @@ export default function configureRouter(store) {
         indexRoute: {component: Dashboard},
         childRoutes: [
             {
+                path: ':stream/:id',
+                component: StreamItem
+            },
+            {
                 path: ':stream',
-                component: Stream,
-                indexRoute: {component: StreamList},
-                childRoutes: [
-                    {
-                        path: ':id',
-                        component: StreamItem
-                    }
-                ]
+                component: StreamList
             }
         ]
     };

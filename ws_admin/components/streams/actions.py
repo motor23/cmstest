@@ -41,6 +41,7 @@ class List(Base):
 
         return {
             'stream': self.stream.name,
+            'title': self.stream.title,
             'action': self.name,
             'items': raw_list_items,
             'total': total,

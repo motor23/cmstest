@@ -86,20 +86,22 @@ class StreamList extends React.Component {
     }
 
     render() {
-        const {isLoading, items, total, limit, offset} = this.props;
+        const {isLoading, title, items, total, limit, offset} = this.props;
         const content = items.map(item => <StreamListRow key={item.id} item={item}/>);
         if (isLoading) {
             return <Spinner/>;
         }
         return (
-            <div>
-                <Paginator total={total} limit={limit} offset={offset} change={this.changePage.bind(this)}/>
-                <table className="mdl-data-table">
+            <div className="cms-stream">
+                <div className="slds-page-header">
+                    <div className="slds-page-header__title">{title}</div>
+                </div>
+                <table className="slds-table slds-table--bordered">
                     <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Заголовок</th>
-                    </tr>
+                        <tr className="slds-text-heading--label">
+                            <th>ID</th>
+                            <th>Заголовок</th>
+                        </tr>
                     </thead>
                     <tbody>
                     {content}
@@ -115,6 +117,7 @@ class StreamList extends React.Component {
 function mapStateToProps(state, props) {
     return {
         isLoading: state.stream.isLoading,
+        title: state.stream.title,
         items: state.stream.items,
         filters: state.stream.filters,
         errors: state.stream.errors,

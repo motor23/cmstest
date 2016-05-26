@@ -60,6 +60,7 @@ export function user(state, action) {
 export function stream(state, action) {
     const initialState = {
         isLoading: true,
+        title: null,
         stream: null,
         items: [],
         filters: {},
@@ -87,6 +88,7 @@ export function stream(state, action) {
     if (action.type === 'STREAM_UPDATE_SUCCESS') {
         return Object.assign({}, state, {
             isLoading: false,
+            title: action.payload.title,
             stream: action.payload.stream,
             items: action.payload.items,
             filters: action.payload.filters,

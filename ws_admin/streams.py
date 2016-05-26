@@ -12,6 +12,7 @@ streams = {}
 
 class Docs(Stream):
     name = 'docs'
+    title = 'Документы'
     mapper = docs_mapper
     list_fields = [
         lf_id,
