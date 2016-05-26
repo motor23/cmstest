@@ -15,6 +15,7 @@ class Paginator extends React.Component {
 
     renderItem(page) {
         const {total, limit, offset, change} = this.props;
+        const page = Math.ceil(offset / limit + 1);
         return (
             <span className="cms-paginator__item" onClick={() => change(page)}>
                 {page ? page : '...'}

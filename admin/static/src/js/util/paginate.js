@@ -13,7 +13,13 @@ export default function paginate(total, limit, page, edge=3, surround=5) {
     if (totalPages >= rightStart) {
         ranges.push([rightStart, totalPages + 1]);
     }
-    ranges.sort();
+    ranges.sort(([a1, a2], [b1, b2]) => {
+        if (a1 > b1) return 1;
+        if (a1 < b1) return -1;
+        if (b1 > b2) return 1;
+        if (b1 < b2) return -1;
+        return 0;
+    });
     let pages = [];
     for (let i = ranges[0][0]; i < ranges[0][1]; i++) {
         pages.push(i);
