@@ -1,3 +1,5 @@
+import '../css/index.css';
+
 import {render} from 'react-dom';
 import configureStore from './configureStore';
 import configureRouter from './configureRouter';

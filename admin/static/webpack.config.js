@@ -27,6 +27,10 @@ var config = {
                     path.join(__dirname, 'node_modules')
                 ],
                 exclude: /node_modules/
+            },
+            {
+                test: /\.css/,
+                loader: 'style-loader!css-loader!postcss-loader'
             }
         ],
         noParse: /\.min\.js/
