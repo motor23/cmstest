@@ -31,7 +31,7 @@ class WS_Streams(ikcms.ws_components.base.WS_Component):
 
     def handlers(self):
         return {
-            'streams.action.request': self.h_action,
+            'streams.action': self.h_action,
         }
 
 

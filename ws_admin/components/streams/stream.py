@@ -1,6 +1,6 @@
-from collections import OrderedDict
-
 from iktomi.utils import cached_property
+
+from .forms import StreamForm
 from . import actions
 from . import exc
 
@@ -23,7 +23,7 @@ class StreamBase:
         if action:
             return action.handle(env, message)
         else:
-            raise exc.ActionNotFound(self.stream, action_name)
+            raise exc.ActionNotFound(self, action_name)
 
     def get_action(self, name):
         for action in self.actions:
@@ -42,7 +42,7 @@ class StreamBase:
 class Stream(StreamBase):
     mapper = None
     widget = 'Stream'
-    limits = [30, 50, 100]
+    max_limit = 100
 
     list_fields = []
     filter_fields = []
@@ -52,6 +52,7 @@ class Stream(StreamBase):
 
     actions = [
         actions.List,
+        actions.GetItem,
 #        actions.create_draft,
 #        actions.delete_draft,
 #        actions.create_new_item,
@@ -61,50 +62,29 @@ class Stream(StreamBase):
 #        actions.delete_item,
     ]
 
-    def __init__(self):
-        super().__init__()
-        self.list_fields_dict = OrderedDict(
-                                    [(x.name, x) for x in self.list_fields])
-        self.order_fields_dict = OrderedDict(
-                            [(x.name, x) for x in self.list_fields if x.order])
-        self.filter_fields_dict = OrderedDict(
-                                    [(x.name, x) for x in self.filter_fields])
-        self.item_fields_dict = OrderedDict(
-                                    [(x.name, x) for x in self.item_fields])
+    def get_list_form(self, env):
+        return StreamForm(self.list_fields, self)
+
+    def get_filter_form(self, env):
+        return StreamForm(self.filter_fields, self)
+
+    def get_order_form(self, env):
+        return StreamForm(filter(lambda x: x.order, self.list_fields), self)
+
+    def get_item_form(self, env, item={}):
+        return StreamForm(self.item_fields, self)
 
     def query(self, keys=None):
         return self.mapper.select(keys)
 
     def get_cfg(self, env):
+        list_form = self.get_list_form(env)
+        filter_form = self.get_filter_form(env)
         return dict(
             super().get_cfg(env),
-            widget = self.widget,
-            limits = self.limits,
-            list_fields = list(map(lambda x: x.get_cfg(env), self.list_fields)),
-            filter_fields = list(map(
-                                lambda x: x.get_cfg(env), self.filter_fields)),
+            widget=self.widget,
+            max_limit=self.max_limit,
+            list_fields=list_form.get_cfg(),
+            filter_fields=filter_form.get_cfg(),
         )
-
-    def fields_from_python(self, env, items, fields_dict):
-        raw_items = []
-        for item in items:
-            raw_item = {'id': item['id']}
-            for field in fields_dict.values():
-                raw_item.update(field.from_python(env, self, item))
-            raw_items.append(raw_item)
-        return raw_items
-
-    def fields_accept(self, env, raw_item, fields_dict):
-        errors = {}
-        values = {}
-        for name in raw_item.keys():
-            field = fields_dict.get(name)
-            if not field:
-                raise FieldNotFound(self, name)
-            value, errors = field.accept(env, self, raw_item)
-            if value:
-                values.update(value)
-            else:
-                errors.update(error)
-        return values, errors
 

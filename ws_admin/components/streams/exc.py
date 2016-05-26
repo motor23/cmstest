@@ -1,6 +1,5 @@
 from ikcms.ws_apps.composite.exc import (
     BaseError,
-    FieldRequiredError,
     MessageError,
 )
 
@@ -55,16 +54,45 @@ class StreamLimitError(StreamBaseError):
 
     message = 'Stream limit error'
 
-    def __init__(self, stream, limit):
+    def __init__(self, stream):
         self.stream = stream
-        self.limit = limit
 
     def __str__(self):
-        return '{}: stream_name={}, allowed_limits={}, limit={}'.format(
+        return '{}: stream_name={}, allowed_limits=1-{}'.format(
             self.message,
             self.stream.name,
             self.stream.limits,
-            self.limit,
     )
 
+
+class StreamItemNotFound(StreamBaseError):
+
+    message = 'Item not found'
+
+    def __init__(self, stream, item_id):
+        self.stream = stream
+        self.item_id = item_id
+
+    def __str__(self):
+        return '{}: stream={}, item_id={}'.format(
+            self.message,
+            self.stream.name,
+            self.item_id,
+    )
+
+
+class StreamItemAlreadyExists(StreamBaseError):
+
+    message = 'Item already exists'
+
+    def __init__(self, stream, item_id):
+        self.stream = stream
+        self.item_id = item_id
+
+    def __str__(self):
+        return '{}: stream={}, item_id={}'.format(
+            self.message,
+            self.stream.name,
+            self.item_id,
+    )
 
