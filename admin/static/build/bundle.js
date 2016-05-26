@@ -21008,7 +21008,7 @@
 	
 	var _index2 = _interopRequireDefault(_index);
 	
-	var _list = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"./components/streams/list\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
+	var _list = __webpack_require__(266);
 	
 	var _list2 = _interopRequireDefault(_list);
 	
@@ -28718,7 +28718,247 @@
 	exports.default = Stream;
 
 /***/ },
-/* 266 */,
+/* 266 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _react = __webpack_require__(182);
+	
+	var _react2 = _interopRequireDefault(_react);
+	
+	var _reactRedux = __webpack_require__(247);
+	
+	var _actions = __webpack_require__(260);
+	
+	var _paginate = __webpack_require__(269);
+	
+	var _paginate2 = _interopRequireDefault(_paginate);
+	
+	var _spinner = __webpack_require__(264);
+	
+	var _spinner2 = _interopRequireDefault(_spinner);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Paginator = function (_React$Component) {
+	    _inherits(Paginator, _React$Component);
+	
+	    function Paginator() {
+	        _classCallCheck(this, Paginator);
+	
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(Paginator).apply(this, arguments));
+	    }
+	
+	    _createClass(Paginator, [{
+	        key: 'renderItem',
+	        value: function renderItem(page) {
+	            var _props = this.props;
+	            var limit = _props.limit;
+	            var offset = _props.offset;
+	            var change = _props.change;
+	
+	            var currentPage = Math.ceil(offset / limit + 1);
+	            if (page == currentPage) {
+	                return _react2.default.createElement(
+	                    'span',
+	                    { className: 'cms-paginator__item cms-paginator__item--current' },
+	                    page
+	                );
+	            }
+	            if (page === null) {
+	                return _react2.default.createElement(
+	                    'span',
+	                    { className: 'cms-paginator__item cms-paginator__item--ellipsis' },
+	                    '…'
+	                );
+	            }
+	            return _react2.default.createElement(
+	                'span',
+	                { className: 'cms-paginator__item', onClick: function onClick() {
+	                        return change(page);
+	                    } },
+	                page
+	            );
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	            var _props2 = this.props;
+	            var total = _props2.total;
+	            var limit = _props2.limit;
+	            var offset = _props2.offset;
+	
+	            var page = Math.ceil(offset / limit + 1);
+	            var pages = (0, _paginate2.default)(total, limit, page, 1, 3);
+	            return _react2.default.createElement(
+	                'div',
+	                { className: 'cms-paginator' },
+	                pages.map(this.renderItem.bind(this))
+	            );
+	        }
+	    }]);
+	
+	    return Paginator;
+	}(_react2.default.Component);
+	
+	Paginator.propTypes = {
+	    total: _react2.default.PropTypes.number.isRequired,
+	    limit: _react2.default.PropTypes.number.isRequired,
+	    offset: _react2.default.PropTypes.number.isRequired,
+	    change: _react2.default.PropTypes.func.isRequired
+	};
+	
+	var StreamListRow = function (_React$Component2) {
+	    _inherits(StreamListRow, _React$Component2);
+	
+	    function StreamListRow() {
+	        _classCallCheck(this, StreamListRow);
+	
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(StreamListRow).apply(this, arguments));
+	    }
+	
+	    _createClass(StreamListRow, [{
+	        key: 'render',
+	        value: function render() {
+	            var item = this.props.item;
+	
+	            return _react2.default.createElement(
+	                'tr',
+	                null,
+	                _react2.default.createElement(
+	                    'td',
+	                    null,
+	                    item.id
+	                ),
+	                _react2.default.createElement(
+	                    'td',
+	                    null,
+	                    item.title.substring(0, 100)
+	                )
+	            );
+	        }
+	    }]);
+	
+	    return StreamListRow;
+	}(_react2.default.Component);
+	
+	var StreamList = function (_React$Component3) {
+	    _inherits(StreamList, _React$Component3);
+	
+	    function StreamList() {
+	        _classCallCheck(this, StreamList);
+	
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(StreamList).apply(this, arguments));
+	    }
+	
+	    _createClass(StreamList, [{
+	        key: 'componentWillMount',
+	        value: function componentWillMount() {
+	            this.props.dispatch((0, _actions.updateStreamList)('docs', 10));
+	        }
+	    }, {
+	        key: 'changePage',
+	        value: function changePage(page) {
+	            var limit = this.props.limit;
+	
+	            var offset = (page - 1) * limit;
+	            this.props.dispatch((0, _actions.updateStreamList)('docs', limit, offset));
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	            var _props3 = this.props;
+	            var isLoading = _props3.isLoading;
+	            var items = _props3.items;
+	            var total = _props3.total;
+	            var limit = _props3.limit;
+	            var offset = _props3.offset;
+	
+	            var content = items.map(function (item) {
+	                return _react2.default.createElement(StreamListRow, { key: item.id, item: item });
+	            });
+	            if (isLoading) {
+	                return _react2.default.createElement(_spinner2.default, null);
+	            }
+	            return _react2.default.createElement(
+	                'div',
+	                null,
+	                _react2.default.createElement(Paginator, { total: total, limit: limit, offset: offset, change: this.changePage.bind(this) }),
+	                _react2.default.createElement(
+	                    'table',
+	                    { className: 'mdl-data-table' },
+	                    _react2.default.createElement(
+	                        'thead',
+	                        null,
+	                        _react2.default.createElement(
+	                            'tr',
+	                            null,
+	                            _react2.default.createElement(
+	                                'th',
+	                                null,
+	                                'ID'
+	                            ),
+	                            _react2.default.createElement(
+	                                'th',
+	                                null,
+	                                'Заголовок'
+	                            )
+	                        )
+	                    ),
+	                    _react2.default.createElement(
+	                        'tbody',
+	                        null,
+	                        content
+	                    )
+	                ),
+	                _react2.default.createElement(Paginator, { total: total, limit: limit, offset: offset, change: this.changePage.bind(this) })
+	            );
+	        }
+	    }]);
+	
+	    return StreamList;
+	}(_react2.default.Component);
+	
+	StreamList.propTypes = {
+	    isLoading: _react2.default.PropTypes.bool.isRequired,
+	    widgets: _react2.default.PropTypes.arrayOf(_react2.default.PropTypes.object).isRequired,
+	    filters: _react2.default.PropTypes.object.isRequired,
+	    errors: _react2.default.PropTypes.object.isRequired,
+	    items: _react2.default.PropTypes.arrayOf(_react2.default.PropTypes.object).isRequired,
+	    total: _react2.default.PropTypes.number.isRequired,
+	    limit: _react2.default.PropTypes.number.isRequired,
+	    offset: _react2.default.PropTypes.number.isRequired
+	};
+	
+	
+	function mapStateToProps(state, props) {
+	    return {
+	        isLoading: state.stream.isLoading,
+	        items: state.stream.items,
+	        filters: state.stream.filters,
+	        errors: state.stream.errors,
+	        total: state.stream.total,
+	        limit: state.stream.limit,
+	        offset: state.stream.offset
+	    };
+	}
+	
+	exports.default = (0, _reactRedux.connect)(mapStateToProps)(StreamList);
+
+/***/ },
 /* 267 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -28864,6 +29104,79 @@
 	function configureConnection(url) {
 	    return new Connection(url);
 	};
+
+/***/ },
+/* 269 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+	
+	exports.default = paginate;
+	function paginate(total, limit, page) {
+	    var edge = arguments.length <= 3 || arguments[3] === undefined ? 3 : arguments[3];
+	    var surround = arguments.length <= 4 || arguments[4] === undefined ? 5 : arguments[4];
+	
+	    var totalPages = Math.ceil(total / limit);
+	    var currentPage = page;
+	    var leftEnd = Math.min(edge, totalPages);
+	    var surroundStart = Math.min(Math.max(1, currentPage - surround), totalPages + 1);
+	    var surroundEnd = Math.min(currentPage + surround, totalPages);
+	    var rightStart = Math.min(Math.max(1, totalPages - edge + 1), totalPages + 1);
+	    var ranges = [];
+	    ranges.push([1, leftEnd + 1]);
+	    if (surroundEnd >= surroundStart) {
+	        ranges.push([surroundStart, surroundEnd + 1]);
+	    }
+	    if (totalPages >= rightStart) {
+	        ranges.push([rightStart, totalPages + 1]);
+	    }
+	    ranges.sort(function (_ref, _ref2) {
+	        var _ref4 = _slicedToArray(_ref, 2);
+	
+	        var a1 = _ref4[0];
+	        var a2 = _ref4[1];
+	
+	        var _ref3 = _slicedToArray(_ref2, 2);
+	
+	        var b1 = _ref3[0];
+	        var b2 = _ref3[1];
+	
+	        if (a1 > b1) return 1;
+	        if (a1 < b1) return -1;
+	        if (b1 > b2) return 1;
+	        if (b1 < b2) return -1;
+	        return 0;
+	    });
+	    var pages = [];
+	    for (var i = ranges[0][0]; i < ranges[0][1]; i++) {
+	        pages.push(i);
+	    }
+	    for (var _i = 1; _i < ranges.length; _i++) {
+	        var last = pages[pages.length - 1];
+	        var start = ranges[_i][0];
+	        var end = ranges[_i][1];
+	        if (end <= last) {
+	            continue;
+	        }
+	        if (start <= last + 2) {
+	            for (var j = last + 1; j < end; j++) {
+	                pages.push(j);
+	            }
+	        } else {
+	            pages.push(null);
+	            for (var _j = start; _j < end; _j++) {
+	                pages.push(_j);
+	            }
+	        }
+	    }
+	    return pages;
+	}
 
 /***/ }
 /******/ ]);

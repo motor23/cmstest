@@ -14,11 +14,25 @@ class Paginator extends React.Component {
     };
 
     renderItem(page) {
-        const {total, limit, offset, change} = this.props;
-        const page = Math.ceil(offset / limit + 1);
+        const {limit, offset, change} = this.props;
+        const currentPage = Math.ceil(offset / limit + 1);
+        if (page == currentPage) {
+            return (
+                <span className="cms-paginator__item cms-paginator__item--current">
+                    {page}
+                </span>
+            );
+        }
+        if (page === null) {
+            return (
+                <span className="cms-paginator__item cms-paginator__item--ellipsis">
+                    &hellip;
+                </span>
+            );
+        }
         return (
             <span className="cms-paginator__item" onClick={() => change(page)}>
-                {page ? page : '...'}
+                {page}
             </span>
         );
     }

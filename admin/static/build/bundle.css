@@ -94,3 +94,22 @@
     cursor: pointer;
     color: #ffffff;
 }
+
+.cms-paginator__item--ellipsis {
+    background: none;
+    color: #cfd7e6;
+}
+
+.cms-paginator__item--ellipsis:hover {
+    cursor: default;
+    color: #cfd7e6;
+}
+
+.cms-paginator__item--current {
+    color: #eeeeee;
+}
+
+.cms-paginator__item--current:hover {
+    cursor: default;
+    color: #eeeeee;
+}
