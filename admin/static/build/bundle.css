@@ -102,8 +102,7 @@
 }
 
 .cms-paginator__item--ellipsis:hover {
-    /*cursor: default;*/
-    /*color: #cfd7e6;*/
+    cursor: default;
 }
 
 .cms-paginator__item--current {

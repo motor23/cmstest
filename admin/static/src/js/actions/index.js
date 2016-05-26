@@ -127,7 +127,6 @@ export function updateStreamList(stream, limit, offset) {
         };
         dispatch(updateStreamListRequest());
         connection.call('streams.action.request', payload).then(payload => {
-            console.log(payload);
             dispatch(updateStreamListSuccess(payload));
         })
     };

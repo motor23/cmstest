@@ -1,16 +1,16 @@
-import React from 'react';
+import React, {Component, PropTypes} from 'react';
 import {connect} from 'react-redux';
 import {updateStreamList} from '../../actions';
 import paginate from '../../util/paginate';
 import Spinner from '../spinner';
 
 
-class Paginator extends React.Component {
+class Paginator extends Component {
     static propTypes = {
-        total: React.PropTypes.number.isRequired,
-        limit: React.PropTypes.number.isRequired,
-        offset: React.PropTypes.number.isRequired,
-        change: React.PropTypes.func.isRequired
+        total: PropTypes.number.isRequired,
+        limit: PropTypes.number.isRequired,
+        offset: PropTypes.number.isRequired,
+        change: PropTypes.func.isRequired
     };
 
     renderItem(page) {
@@ -18,7 +18,7 @@ class Paginator extends React.Component {
         const currentPage = Math.ceil(offset / limit + 1);
         if (page == currentPage) {
             return (
-                <span className="cms-paginator__item cms-paginator__item--current">
+                <span key={page} className="cms-paginator__item cms-paginator__item--current">
                     {page}
                 </span>
             );
@@ -31,7 +31,7 @@ class Paginator extends React.Component {
             );
         }
         return (
-            <span className="cms-paginator__item" onClick={() => change(page)}>
+            <span key={page} className="cms-paginator__item" onClick={() => change(page)}>
                 {page}
             </span>
         );
@@ -50,7 +50,7 @@ class Paginator extends React.Component {
 }
 
 
-class StreamListRow extends React.Component {
+class StreamListRow extends Component {
     render() {
         const {item} = this.props;
         return (
@@ -63,20 +63,20 @@ class StreamListRow extends React.Component {
 }
 
 
-class StreamList extends React.Component {
+class StreamList extends Component {
     static propTypes = {
-        isLoading: React.PropTypes.bool.isRequired,
-        widgets: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
-        filters: React.PropTypes.object.isRequired,
-        errors: React.PropTypes.object.isRequired,
-        items: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
-        total: React.PropTypes.number.isRequired,
-        limit: React.PropTypes.number.isRequired,
-        offset: React.PropTypes.number.isRequired
+        isLoading: PropTypes.bool.isRequired,
+        widgets: PropTypes.arrayOf(PropTypes.object).isRequired,
+        filters: PropTypes.object.isRequired,
+        errors: PropTypes.object.isRequired,
+        items: PropTypes.arrayOf(PropTypes.object).isRequired,
+        total: PropTypes.number.isRequired,
+        limit: PropTypes.number.isRequired,
+        offset: PropTypes.number.isRequired
     };
 
     componentWillMount() {
-        this.props.dispatch(updateStreamList('docs', 10));
+        this.props.dispatch(updateStreamList(this.props.stream, 10));
     }
 
     changePage(page) {
@@ -116,6 +116,7 @@ class StreamList extends React.Component {
 
 function mapStateToProps(state, props) {
     return {
+        stream: props.params.stream,
         isLoading: state.stream.isLoading,
         title: state.stream.title,
         items: state.stream.items,

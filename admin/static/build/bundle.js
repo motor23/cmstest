@@ -28149,7 +28149,6 @@
 	        };
 	        dispatch(updateStreamListRequest());
 	        connection.call('streams.action.request', payload).then(function (payload) {
-	            console.log(payload);
 	            dispatch(updateStreamListSuccess(payload));
 	        });
 	    };
@@ -28700,8 +28699,8 @@
 	
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 	
-	var Paginator = function (_React$Component) {
-	    _inherits(Paginator, _React$Component);
+	var Paginator = function (_Component) {
+	    _inherits(Paginator, _Component);
 	
 	    function Paginator() {
 	        _classCallCheck(this, Paginator);
@@ -28721,7 +28720,7 @@
 	            if (page == currentPage) {
 	                return _react2.default.createElement(
 	                    'span',
-	                    { className: 'cms-paginator__item cms-paginator__item--current' },
+	                    { key: page, className: 'cms-paginator__item cms-paginator__item--current' },
 	                    page
 	                );
 	            }
@@ -28734,7 +28733,7 @@
 	            }
 	            return _react2.default.createElement(
 	                'span',
-	                { className: 'cms-paginator__item', onClick: function onClick() {
+	                { key: page, className: 'cms-paginator__item', onClick: function onClick() {
 	                        return change(page);
 	                    } },
 	                page
@@ -28759,17 +28758,17 @@
 	    }]);
 	
 	    return Paginator;
-	}(_react2.default.Component);
+	}(_react.Component);
 	
 	Paginator.propTypes = {
-	    total: _react2.default.PropTypes.number.isRequired,
-	    limit: _react2.default.PropTypes.number.isRequired,
-	    offset: _react2.default.PropTypes.number.isRequired,
-	    change: _react2.default.PropTypes.func.isRequired
+	    total: _react.PropTypes.number.isRequired,
+	    limit: _react.PropTypes.number.isRequired,
+	    offset: _react.PropTypes.number.isRequired,
+	    change: _react.PropTypes.func.isRequired
 	};
 	
-	var StreamListRow = function (_React$Component2) {
-	    _inherits(StreamListRow, _React$Component2);
+	var StreamListRow = function (_Component2) {
+	    _inherits(StreamListRow, _Component2);
 	
 	    function StreamListRow() {
 	        _classCallCheck(this, StreamListRow);
@@ -28800,10 +28799,10 @@
 	    }]);
 	
 	    return StreamListRow;
-	}(_react2.default.Component);
+	}(_react.Component);
 	
-	var StreamList = function (_React$Component3) {
-	    _inherits(StreamList, _React$Component3);
+	var StreamList = function (_Component3) {
+	    _inherits(StreamList, _Component3);
 	
 	    function StreamList() {
 	        _classCallCheck(this, StreamList);
@@ -28814,7 +28813,7 @@
 	    _createClass(StreamList, [{
 	        key: 'componentWillMount',
 	        value: function componentWillMount() {
-	            this.props.dispatch((0, _actions.updateStreamList)('docs', 10));
+	            this.props.dispatch((0, _actions.updateStreamList)(this.props.stream, 10));
 	        }
 	    }, {
 	        key: 'changePage',
@@ -28886,22 +28885,23 @@
 	    }]);
 	
 	    return StreamList;
-	}(_react2.default.Component);
+	}(_react.Component);
 	
 	StreamList.propTypes = {
-	    isLoading: _react2.default.PropTypes.bool.isRequired,
-	    widgets: _react2.default.PropTypes.arrayOf(_react2.default.PropTypes.object).isRequired,
-	    filters: _react2.default.PropTypes.object.isRequired,
-	    errors: _react2.default.PropTypes.object.isRequired,
-	    items: _react2.default.PropTypes.arrayOf(_react2.default.PropTypes.object).isRequired,
-	    total: _react2.default.PropTypes.number.isRequired,
-	    limit: _react2.default.PropTypes.number.isRequired,
-	    offset: _react2.default.PropTypes.number.isRequired
+	    isLoading: _react.PropTypes.bool.isRequired,
+	    widgets: _react.PropTypes.arrayOf(_react.PropTypes.object).isRequired,
+	    filters: _react.PropTypes.object.isRequired,
+	    errors: _react.PropTypes.object.isRequired,
+	    items: _react.PropTypes.arrayOf(_react.PropTypes.object).isRequired,
+	    total: _react.PropTypes.number.isRequired,
+	    limit: _react.PropTypes.number.isRequired,
+	    offset: _react.PropTypes.number.isRequired
 	};
 	
 	
 	function mapStateToProps(state, props) {
 	    return {
+	        stream: props.params.stream,
 	        isLoading: state.stream.isLoading,
 	        title: state.stream.title,
 	        items: state.stream.items,
