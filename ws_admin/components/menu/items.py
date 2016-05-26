@@ -2,7 +2,7 @@
 class Item:
     title = ''
     children = []
-    widget = "MenuItem"
+    widget = 'MenuItem'
 
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
@@ -11,7 +11,7 @@ class Item:
         return {
             'title': self.title,
             'widget': self.widget,
-            'children': list(map(lambda x: x.dict(), self.children)),
+            'children': [child.dict() for child in  self.children],
         }
 
 
@@ -35,7 +35,8 @@ class Stream(Item):
         assert self.stream is not None
 
     def dict(self):
-        return dict(super().dict(),
+        return dict(
+            super().dict(),
             stream=self.stream,
             item_id=self.item_id,
             filters=self.filters,

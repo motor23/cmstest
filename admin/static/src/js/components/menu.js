@@ -54,7 +54,7 @@ class Menu extends React.Component {
         return (
             <div className="cms-nav">
                 <div className="cms-nav__item">
-                    <Link to="/" activeClassName="active">Начало</Link>
+                    <Link to="/" activeClassName="active" onlyActiveOnIndex={true}>Начало</Link>
                 </div>
                 <div className="cms-nav__item">
                     <Link to="/materials/" activeClassName="active">Материалы</Link>

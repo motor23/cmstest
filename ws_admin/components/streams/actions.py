@@ -15,7 +15,8 @@ class Base:
         assert self.name is not None
         self.stream = stream
 
-    async def handle(self, env): raise NotImplementedError
+    async def handle(self, env):
+        raise NotImplementedError
 
     def get_cfg(self, env):
         return {
@@ -25,7 +26,6 @@ class Base:
 
 
 class List(Base):
-
     name = 'list'
 
     message_form = MessageForm([
@@ -52,19 +52,23 @@ class List(Base):
             raise exc.StreamLimitError(self.stream)
 
         query = self.query(env, filters, order, limit)
-        count_list_items = query.count(env.db)
+        total = query.count(env.db)
         list_items = query.execute(env.db)
 
         raw_list_items = list_form.values_from_python(list_items)
 
         return {
             'stream': self.stream.name,
+            'title': self.stream.title,
             'action': self.name,
             'list_fields': list_form.get_cfg(),
-            'list_items': raw_list_items,
-            'count_list_items': count_list_items,
-            'filter_fields': filter_form.get_cfg(),
+            'errors': filters_errors,
+            'items': raw_list_items,
+            'total': total,
+            'filters_fields': filter_form.get_cfg(),
             'filters_errors': filters_errors,
+            'filters': raw_message.get('filters', {}),
+            'limit': limit,
         }
 
     def query(self, env, filters={}, order=[], limit=None):
@@ -82,7 +86,6 @@ class List(Base):
             value, name = key[0], key[1:]
             query = order_form[name].order(query, value)
         return query.limit(limit)
-
 
 
 class GetItem(Base):
@@ -179,4 +182,39 @@ class CreateItem(StoreBase):
     def store(self, env, id, values):
         item = dict(values, id=id)
         self.mapper.insert(values.keys()).items([item]).execute(env.db)
+
+    def filters_to_python(self, env, message):
+        raw_filters = message.get('filters', {})
+        if not isinstance(raw_filters, dict):
+            raise MessageError('body.filters field must be the dict')
+        for key in raw_filters:
+            if key not in self.stream.filter_fields_dict:
+                raise StreamFieldNotFound(self.stream, key)
+
+        return self.stream.fields_accept(
+            env,
+            raw_filters,
+            self.stream.filter_fields_dict,
+        )
+
+    def order_to_python(self, env, message):
+        raw_order = message.get('order', [])
+        if not isinstance(raw_order, list):
+            raise MessageError('body.order field must be the list')
+        if not raw_order:
+            raw_order = self.stream.default_order
+        for key in raw_order:
+            if not isinstance(key, str):
+                raise MessageError('body.order field items must be the str')
+            if not (key and key[0] in ['+', '-']):
+                raise MessageError(
+                    'body.order field items must starts with + or -')
+        return raw_order
+
+
+    def limit_to_python(self, env, message):
+        raw_limit = message.get('limit')
+        if raw_limit not in self.stream.limits:
+            raise StreamLimitError(self.stream, raw_limit)
+        return raw_limit
 

@@ -1,16 +1,15 @@
-import ikcms.ws_components.base
+from ikcms.ws_components.base import WS_Component as WS_ComponentBase
 from ikcms.ws_components.auth.base import user_required
 
 
-class WS_CInfoComponent(ikcms.ws_components.base.WS_Component):
-
+class WS_CInfoComponent(WS_ComponentBase):
     name = 'cinfo'
 
     @user_required
     async def h_cfg(self, env, message):
         comp_names = self._get_components_names(self.app.components)
         names = message.get('components', comp_names)
-        components = map(lambda x: self.app.get_component(x), names)
+        components = [self.app.get_component(name) for name in names]
         cfg = self._get_components_cfg(env, components)
         return {'cfg': cfg}
 
@@ -20,11 +19,13 @@ class WS_CInfoComponent(ikcms.ws_components.base.WS_Component):
         return {'list': comp_names}
 
     def _get_components_names(self, components):
-        return map(lambda x: x.name, components)
+        return [x.name for x in components]
 
     def _get_components_cfg(self, env, components):
-        return dict([(component.name, self._get_component_cfg(env, component)) \
-                    for component in components])
+        return dict([
+            (component.name, self._get_component_cfg(env, component))
+            for component in components
+        ])
 
     def _get_component_cfg(self, env, component):
         method = getattr(component, 'get_cfg', None)

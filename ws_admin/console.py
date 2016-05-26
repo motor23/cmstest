@@ -1,12 +1,9 @@
+import sys
+import json
+import inspect
 import asyncio
 import websockets
-import json
-import sys
-import inspect
 
-message = {'name':'auth.login', 'body':{'login': 'motor', 'password': 'motor'}}
-
-message = json.dumps(message)
 
 class Console:
 
@@ -30,11 +27,11 @@ class Console:
         for key, value in self.commands:
             print("{}({})".format(
                 key,
-                ','.join(inspect.getargs(value.__code__)[0][1:])),
-            )
+                ','.join(inspect.getargs(value.__code__)[0][1:])
+            ))
         print('===============================')
-        if len(sys.argv)>1:
-             self.login(sys.argv[1], sys.argv[1])
+        if len(sys.argv) > 1:
+            self.login(sys.argv[1], sys.argv[1])
 
         while True:
             message = await self.websocket.recv()
@@ -54,7 +51,9 @@ class Console:
     def login(self, login, password):
         self.send({'handler':'auth.login', 'body': {
                 'login': login,
-                'password': password}})
+                'password': password,
+            }
+        })
 
     def logout(self):
         self.send({'handler':'auth.logout', 'body': {}})
@@ -62,7 +61,9 @@ class Console:
     def cfg(self):
         self.send({'handler':'cinfo.cfg', 'body': {}})
 
-    def list(self, stream, filters={}, order=[], limit=30):
+    def list(self, stream, filters=None, order=None, limit=30):
+        filters = filters or {}
+        order = order or []
         self.send({
             'handler':'streams.action',
             'body': {
@@ -88,8 +89,8 @@ class Console:
 
 async def console(loop):
     async with websockets.connect('ws://localhost:8888') as websocket:
-         await Console(websocket, loop)()
+        await Console(websocket, loop)()
+
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(console(loop))
-

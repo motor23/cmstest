@@ -48,9 +48,11 @@ class Dashboard extends React.Component {
 }
 
 
-const mapStateToProps = state => ({
-    dashboard: state.config.menu.dashboard
-});
+function mapStateToProps(state, props) {
+    return {
+        dashboard: state.config.menu.dashboard
+    };
+}
 
 
 export default connect(mapStateToProps)(Dashboard);

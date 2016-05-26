@@ -1,4 +1,3 @@
-from iktomi.utils import cached_property
 from ws_admin.components.streams import Stream
 from ws_admin.components.streams.forms import (
     lf_id,
@@ -15,6 +14,7 @@ streams = {}
 
 class Docs(Stream):
     name = 'docs'
+    title = 'Документы'
     mapper = docs_mapper
     list_fields = [
         lf_id,

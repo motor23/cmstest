@@ -1,6 +1,5 @@
 from hashlib import md5
-
-import ikcms.ws_components.auth.base
+from ikcms.ws_components.auth.base import WS_AuthComponent as WS_AuthComponentBase
 from ikcms.ws_components.auth.base import user_required
 from ikcms.ws_apps.base.messages import MessageForm
 from ikcms.ws_apps.base import exc
@@ -23,7 +22,7 @@ class mf_key(fields.StringField):
     validators = (validators.required,)
 
 
-class WS_AuthComponent(ikcms.ws_components.auth.base.WS_AuthComponent):
+class WS_AuthComponent(WS_AuthComponentBase):
 
     login_form = MessageForm([
         mf_login,
@@ -68,7 +67,7 @@ class WS_AuthComponent(ikcms.ws_components.auth.base.WS_AuthComponent):
 
     def auth_by_password(self, env, login, password):
         key = md5(login.encode('utf8')).hexdigest()
-        if login==password:
+        if login == password:
             return key
         else:
             return False

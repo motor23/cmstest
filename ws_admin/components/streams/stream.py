@@ -34,9 +34,8 @@ class StreamBase:
         return {
             'name': self.name,
             'title': self.title,
-            'actions': list(map(lambda x: x.get_cfg(env), self.actions)),
+            'actions': [action.get_cfg(env) for action in  self.actions],
         }
-
 
 
 class Stream(StreamBase):
@@ -48,7 +47,6 @@ class Stream(StreamBase):
     filter_fields = []
     default_order = ['+id']
     item_fields = []
-
 
     actions = [
         actions.List,

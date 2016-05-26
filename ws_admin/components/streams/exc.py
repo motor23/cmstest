@@ -4,7 +4,8 @@ from ikcms.ws_apps.composite.exc import (
 )
 
 
-class StreamBaseError(BaseError): pass
+class StreamBaseError(BaseError):
+    pass
 
 
 class StreamNotFound(StreamBaseError):
@@ -17,7 +18,7 @@ class StreamNotFound(StreamBaseError):
         return '{}: stream_name={}'.format(
             self.message,
             self.stream_name,
-    )
+        )
 
 
 class ActionNotFound(StreamBaseError):
@@ -32,7 +33,7 @@ class ActionNotFound(StreamBaseError):
             self.message,
             self.stream.name,
             self.action_name,
-    )
+        )
 
 
 class StreamFieldNotFound(StreamBaseError):
@@ -48,7 +49,8 @@ class StreamFieldNotFound(StreamBaseError):
             self.message,
             self.stream.name,
             self.field_name,
-    )
+        )
+
 
 class StreamLimitError(StreamBaseError):
 
@@ -62,7 +64,7 @@ class StreamLimitError(StreamBaseError):
             self.message,
             self.stream.name,
             self.stream.limits,
-    )
+        )
 
 
 class StreamItemNotFound(StreamBaseError):
