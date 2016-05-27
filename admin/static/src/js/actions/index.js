@@ -121,7 +121,7 @@ export function updateStreamList(stream, limit, offset) {
     return (dispatch, state, connection) => {
         const payload = {
             stream: stream,
-            limit: limit,
+            page_size: limit,
             offset: offset,
             action: 'list',
             order: []

@@ -3,7 +3,8 @@ from .forms.messages import (
     mf_item_id,
     mf_filters,
     mf_order,
-    mf_stream_limit,
+    mf_page,
+    mf_page_size,
 )
 from . import exc
 
@@ -31,7 +32,8 @@ class List(Base):
     message_form = MessageForm([
         mf_filters,
         mf_order,
-        mf_stream_limit,
+        mf_page,
+        mf_page_size,
     ])
 
     async def handle(self, env, raw_message):
@@ -47,12 +49,16 @@ class List(Base):
             filters = filters_errors = {}
 
         order = message.get('order', [])
-        limit = message['limit']
-        if not (0 < limit < self.stream.max_limit):
-            raise exc.StreamLimitError(self.stream)
+        page = message.get('page', 1)
+        page_size = message.get('page_size', 1)
+        
+        if not (0 < page_size <= self.stream.max_limit):
+            raise exc.MessageError('Page size error')
 
-        query = self.query(env, filters, order, limit)
+        query = self.query(env, filters)
         total = query.count(env.db)
+
+        query = self.page_query(query, page, page_size)
         list_items = query.execute(env.db)
 
         raw_list_items = list_form.values_from_python(list_items)
@@ -68,11 +74,11 @@ class List(Base):
             'filters_fields': filter_form.get_cfg(),
             'filters_errors': filters_errors,
             'filters': raw_message.get('filters', {}),
-            'limit': limit,
+            'page_size': page_size,
+            'page': page,
         }
 
-    def query(self, env, filters={}, order=[], limit=None):
-        assert 0 < limit <= self.stream.max_limit
+    def query(self, env, filters={}, order=[]):
         list_form = self.stream.get_list_form(env)
         order_form = self.stream.get_order_form(env)
         filter_form = self.stream.get_filter_form(env)
@@ -85,7 +91,14 @@ class List(Base):
         for key in order or ['+id']:
             value, name = key[0], key[1:]
             query = order_form[name].order(query, value)
-        return query.limit(limit)
+        return query
+
+    def page_query(self, query, page=1, page_size=1):
+        assert page > 0
+        assert 0 < page_size <= self.stream.max_limit
+        return query.limit(page_size).offset((page-1)*page_size)
+
+
 
 
 class GetItem(Base):

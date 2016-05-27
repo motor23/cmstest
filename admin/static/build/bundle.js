@@ -28493,7 +28493,7 @@
 	    return function (dispatch, state, connection) {
 	        var payload = {
 	            stream: stream,
-	            limit: limit,
+	            page_size: limit,
 	            offset: offset,
 	            action: 'list',
 	            order: []

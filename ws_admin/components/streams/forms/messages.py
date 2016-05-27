@@ -12,9 +12,14 @@ class mf_filters(fields.RawDictField):
     label = 'Словарь фильтров'
 
 
-class mf_stream_limit(fields.IntField):
-    name = 'limit'
-    label = 'Лимит'
+class mf_page(fields.IntField):
+    name = 'page'
+    label = 'Номер страницы'
+
+
+class mf_page_size(fields.IntField):
+    name = 'page_size'
+    label = 'Размер страницы'
     validators = (validators.required,)
 
 
