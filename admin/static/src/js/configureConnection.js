@@ -43,11 +43,16 @@ class Connection {
         call && call.resolve(body);
     }
 
-    call(method, payload) {
+    call(handler, payload) {
         return new Promise((resolve, reject) => {
-            const requestId = Math.floor(Math.random() * 10e12);
+            const requestId = Math.floor(Math.random() * 10e12).toString();
             this._calls[requestId] = {resolve, reject};
-            this._send({request_id: requestId, name: method, body: payload});
+            this._send({
+                request_id: requestId,
+                handler: handler,
+                name: 'request',
+                body: payload
+            });
         });
     }
 }

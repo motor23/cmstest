@@ -53,7 +53,7 @@ export function loginFailure(reason) {
 export function configure() {
     return (dispatch, state, connection) => {
         dispatch(configureRequest());
-        connection.call('cinfo.cfg.request').then(payload => {
+        connection.call('cinfo.cfg').then(payload => {
             dispatch(configureUpdate(payload.cfg));
         });
     };
@@ -63,7 +63,7 @@ export function configure() {
 export function loginWithCredentials(login, password) {
     return (dispatch, state, connection) => {
         dispatch(loginRequest());
-        connection.call('auth.login.request', {login, password}).then(payload => {
+        connection.call('auth.login', {login, password}).then(payload => {
             if (payload.status === 'ok') {
                 dispatch(loginSuccess(payload.key));
                 dispatch(configure())
@@ -79,7 +79,7 @@ export function loginWithCredentials(login, password) {
 export function loginWithToken(token) {
     return (dispatch, state, connection) => {
         dispatch(loginRequest());
-        connection.call('auth.login.request', {key: token}).then(payload => {
+        connection.call('auth.login', {key: token}).then(payload => {
             if (payload.status === 'ok') {
                 dispatch(loginSuccess(payload.key));
                 dispatch(configure())
@@ -113,7 +113,7 @@ export function updateStreamListFailure(reason) {
         payload: {
             reason: reason
         }
-    }
+    };
 }
 
 
@@ -123,10 +123,11 @@ export function updateStreamList(stream, limit, offset) {
             stream: stream,
             limit: limit,
             offset: offset,
-            action: 'list'
+            action: 'list',
+            order: []
         };
         dispatch(updateStreamListRequest());
-        connection.call('streams.action.request', payload).then(payload => {
+        connection.call('streams.action', payload).then(payload => {
             dispatch(updateStreamListSuccess(payload));
         })
     };

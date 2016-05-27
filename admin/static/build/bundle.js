@@ -28431,7 +28431,7 @@
 	function configure() {
 	    return function (dispatch, state, connection) {
 	        dispatch(configureRequest());
-	        connection.call('cinfo.cfg.request').then(function (payload) {
+	        connection.call('cinfo.cfg').then(function (payload) {
 	            dispatch(configureUpdate(payload.cfg));
 	        });
 	    };
@@ -28440,7 +28440,7 @@
 	function loginWithCredentials(login, password) {
 	    return function (dispatch, state, connection) {
 	        dispatch(loginRequest());
-	        connection.call('auth.login.request', { login: login, password: password }).then(function (payload) {
+	        connection.call('auth.login', { login: login, password: password }).then(function (payload) {
 	            if (payload.status === 'ok') {
 	                dispatch(loginSuccess(payload.key));
 	                dispatch(configure());
@@ -28455,7 +28455,7 @@
 	function loginWithToken(token) {
 	    return function (dispatch, state, connection) {
 	        dispatch(loginRequest());
-	        connection.call('auth.login.request', { key: token }).then(function (payload) {
+	        connection.call('auth.login', { key: token }).then(function (payload) {
 	            if (payload.status === 'ok') {
 	                dispatch(loginSuccess(payload.key));
 	                dispatch(configure());
@@ -28495,10 +28495,11 @@
 	            stream: stream,
 	            limit: limit,
 	            offset: offset,
-	            action: 'list'
+	            action: 'list',
+	            order: []
 	        };
 	        dispatch(updateStreamListRequest());
-	        connection.call('streams.action.request', payload).then(function (payload) {
+	        connection.call('streams.action', payload).then(function (payload) {
 	            dispatch(updateStreamListSuccess(payload));
 	        });
 	    };
@@ -29461,13 +29462,18 @@
 	        }
 	    }, {
 	        key: 'call',
-	        value: function call(method, payload) {
+	        value: function call(handler, payload) {
 	            var _this = this;
 	
 	            return new Promise(function (resolve, reject) {
-	                var requestId = Math.floor(Math.random() * 10e12);
+	                var requestId = Math.floor(Math.random() * 10e12).toString();
 	                _this._calls[requestId] = { resolve: resolve, reject: reject };
-	                _this._send({ request_id: requestId, name: method, body: payload });
+	                _this._send({
+	                    request_id: requestId,
+	                    handler: handler,
+	                    name: 'request',
+	                    body: payload
+	                });
 	            });
 	        }
 	    }]);
