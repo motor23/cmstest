@@ -33,33 +33,35 @@ class Login extends React.Component {
     render() {
         let {error} = this.props;
         return (
-            <div className="mdl-layout">
-                <div className="mdl-layout__content">
-                    <div className="mdl-card mdl-shadow--6dp">
-                        <div className="mdl-card__title mdl-color--primary mdl-color-text--white">
-                            <h2 className="mdl-card__title-text">Авторизация</h2>
-                        </div>
-                        <div className="mdl-card__supporting-text">
-                            <form onKeyPress={this.handleKeyPress.bind(this)}>
-                                <div className="mdl-textfield mdl-js-textfield">
-                                    <input className="mdl-textfield__input" type="text" ref="login" id="login"/>
-                                    <label className="mdl-textfield__label" for="login">Логин</label>
-                                    {error ? <span class="mdl-textfield__error">{error}</span> : null}
+            <div className="slds-modal slds-fade-in-open">
+                <div className="slds-modal__container">
+                    <div className="slds-modal__header">
+                        <h2 className="slds-text-heading--medium">Авторизация</h2>
+                    </div>
+                    <div className="slds-modal__content">
+                        <form className="slds-form--horizontal" onKeyPress={this.handleKeyPress.bind(this)}>
+                            <div className={'slds-form-element' + (error ? ' slds-has-error' : '')}>
+                                <label className="slds-form-element__label" for="login">Логин</label>
+                                <div className="slds-form-element__control">
+                                    <input className="slds-input" type="text" ref="login" id="login"/>
                                 </div>
-                                <div className="mdl-textfield mdl-js-textfield">
-                                    <input className="mdl-textfield__input" type="password" ref="password" id="password"/>
-                                    <label className="mdl-textfield__label" for="login">Пароль</label>
-                                    {error ? <span class="mdl-textfield__error">{error}</span> : null}
+                                {error ? <div class="sld-form-element__error">{error}</div> : null}
+                            </div>
+                            <div className={'slds-form-element' + (error ? ' slds-has-error' : '')}>
+                                <label className="slds-form-element__label" for="login">Пароль</label>
+                                <div className="slds-form-element__control">
+                                    <input className="slds-input" type="password" ref="password" id="password"/>
                                 </div>
-                            </form>
-                        </div>
-                        <div className="mdl-card__actions mdl-card--border">
-                            <button className="mdl-button mdl-button--colored mdl-js-button" onClick={this.handleClick.bind(this)}>Войти</button>
-                        </div>
+                                {error ? <div class="slds-form-element__error">{error}</div> : null}
+                            </div>
+                        </form>
+                    </div>
+                    <div className="slds-modal__footer">
+                        <button className="slds-button slds-button--brand" onClick={this.handleClick.bind(this)}>Войти</button>
                     </div>
                 </div>
             </div>
-        )
+        );
     }
 }
 

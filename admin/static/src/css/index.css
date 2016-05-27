@@ -119,3 +119,7 @@
 .cms-stream .slds-page-header {
     margin-bottom: 10px;
 }
+
+.slds-modal {
+    background: #cfd7e6;
+}

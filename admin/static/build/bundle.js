@@ -108,7 +108,7 @@
 	
 	
 	// module
-	exports.push([module.id, ".mdl-layout {\n    /*align-items: center;*/\n    /*justify-content: center;*/\n    background: #efefef;\n}\n\n\n.mdl-layout__content {\n    padding: 24px;\n    flex: none;\n}\n\n\n.cms-nav {\n    height: 70px;\n    padding: 0 16px 0 25px;\n    margin-bottom: -16px;\n    display: flex;\n}\n\n\n.cms-nav__item {\n    font-weight: 500;\n    line-height: 64px;\n    padding: 0 16px;\n    color: #ffffff;\n    box-sizing: border-box;\n    border-bottom: 3px solid transparent;\n    display: flex;\n}\n\n\n.cms-nav__item a {\n    opacity: 0.65;\n    color: #ffffff;\n    text-decoration: none;\n}\n\n\n.cms-nav__item a.active {\n    opacity: 1.0;\n}\n\n\n.cms-card {\n    float: left;\n    display: flex;\n    flex-direction: column;\n    overflow: hidden;\n    background: #ffffff;\n    border-radius: 2px;\n    box-sizing: border-box;\n    margin: 10px;\n}\n\n\n.cms-card__title {\n    display: flex;\n    padding: 10px 16px 10px 16px;\n    box-sizing: border-box;\n    border-bottom: 1px solid rgba(0, 0, 0, 0.1);\n    margin-bottom: 10px;\n}\n\n\n.cms-card__item {\n    display: flex;\n    padding: 2px 16px 2px 16px;\n    box-sizing: border-box;\n    margin-bottom: 10px;\n}\n\n\n.cms-card__item a {\n    color: #00bcd4;\n    text-decoration: none;\n}\n\n\n.cms-paginator {\n    margin: 10px 0;\n}\n\n\n.cms-paginator__item {\n    margin: 0 5px;\n    padding: 2px 4px;\n    border-radius: 2px;\n    background: #f4f6f9;\n    color: #16325c;\n    border: 1px solid #d8dde6;\n}\n\n.cms-paginator__item:hover {\n    cursor: pointer;\n    color: #ffffff;\n}\n\n.cms-paginator__item--ellipsis {\n    background: none;\n    border: none;\n}\n\n.cms-paginator__item--ellipsis:hover {\n    cursor: default;\n}\n\n.cms-paginator__item--current {\n    color: #eef1f6;\n    background: #4bc076;\n}\n\n.cms-paginator__item--current:hover {\n    cursor: default;\n    color: #eef1f6;\n    background: #4bc076;\n}\n\n.cms-stream .slds-page-header {\n    margin-bottom: 10px;\n}", ""]);
+	exports.push([module.id, ".mdl-layout {\n    /*align-items: center;*/\n    /*justify-content: center;*/\n    background: #efefef;\n}\n\n\n.mdl-layout__content {\n    padding: 24px;\n    flex: none;\n}\n\n\n.cms-nav {\n    height: 70px;\n    padding: 0 16px 0 25px;\n    margin-bottom: -16px;\n    display: flex;\n}\n\n\n.cms-nav__item {\n    font-weight: 500;\n    line-height: 64px;\n    padding: 0 16px;\n    color: #ffffff;\n    box-sizing: border-box;\n    border-bottom: 3px solid transparent;\n    display: flex;\n}\n\n\n.cms-nav__item a {\n    opacity: 0.65;\n    color: #ffffff;\n    text-decoration: none;\n}\n\n\n.cms-nav__item a.active {\n    opacity: 1.0;\n}\n\n\n.cms-card {\n    float: left;\n    display: flex;\n    flex-direction: column;\n    overflow: hidden;\n    background: #ffffff;\n    border-radius: 2px;\n    box-sizing: border-box;\n    margin: 10px;\n}\n\n\n.cms-card__title {\n    display: flex;\n    padding: 10px 16px 10px 16px;\n    box-sizing: border-box;\n    border-bottom: 1px solid rgba(0, 0, 0, 0.1);\n    margin-bottom: 10px;\n}\n\n\n.cms-card__item {\n    display: flex;\n    padding: 2px 16px 2px 16px;\n    box-sizing: border-box;\n    margin-bottom: 10px;\n}\n\n\n.cms-card__item a {\n    color: #00bcd4;\n    text-decoration: none;\n}\n\n\n.cms-paginator {\n    margin: 10px 0;\n}\n\n\n.cms-paginator__item {\n    margin: 0 5px;\n    padding: 2px 4px;\n    border-radius: 2px;\n    background: #f4f6f9;\n    color: #16325c;\n    border: 1px solid #d8dde6;\n}\n\n.cms-paginator__item:hover {\n    cursor: pointer;\n    color: #ffffff;\n}\n\n.cms-paginator__item--ellipsis {\n    background: none;\n    border: none;\n}\n\n.cms-paginator__item--ellipsis:hover {\n    cursor: default;\n}\n\n.cms-paginator__item--current {\n    color: #eef1f6;\n    background: #4bc076;\n}\n\n.cms-paginator__item--current:hover {\n    cursor: default;\n    color: #eef1f6;\n    background: #4bc076;\n}\n\n.cms-stream .slds-page-header {\n    margin-bottom: 10px;\n}\n\n.slds-modal {\n    background: #cfd7e6;\n}", ""]);
 	
 	// exports
 
@@ -28575,68 +28575,72 @@
 	
 	            return _react2.default.createElement(
 	                'div',
-	                { className: 'mdl-layout' },
+	                { className: 'slds-modal slds-fade-in-open' },
 	                _react2.default.createElement(
 	                    'div',
-	                    { className: 'mdl-layout__content' },
+	                    { className: 'slds-modal__container' },
 	                    _react2.default.createElement(
 	                        'div',
-	                        { className: 'mdl-card mdl-shadow--6dp' },
+	                        { className: 'slds-modal__header' },
 	                        _react2.default.createElement(
-	                            'div',
-	                            { className: 'mdl-card__title mdl-color--primary mdl-color-text--white' },
-	                            _react2.default.createElement(
-	                                'h2',
-	                                { className: 'mdl-card__title-text' },
-	                                'Авторизация'
-	                            )
-	                        ),
+	                            'h2',
+	                            { className: 'slds-text-heading--medium' },
+	                            'Авторизация'
+	                        )
+	                    ),
+	                    _react2.default.createElement(
+	                        'div',
+	                        { className: 'slds-modal__content' },
 	                        _react2.default.createElement(
-	                            'div',
-	                            { className: 'mdl-card__supporting-text' },
+	                            'form',
+	                            { className: 'slds-form--horizontal', onKeyPress: this.handleKeyPress.bind(this) },
 	                            _react2.default.createElement(
-	                                'form',
-	                                { onKeyPress: this.handleKeyPress.bind(this) },
+	                                'div',
+	                                { className: 'slds-form-element' + (error ? ' slds-has-error' : '') },
 	                                _react2.default.createElement(
-	                                    'div',
-	                                    { className: 'mdl-textfield mdl-js-textfield' },
-	                                    _react2.default.createElement('input', { className: 'mdl-textfield__input', type: 'text', ref: 'login', id: 'login' }),
-	                                    _react2.default.createElement(
-	                                        'label',
-	                                        { className: 'mdl-textfield__label', 'for': 'login' },
-	                                        'Логин'
-	                                    ),
-	                                    error ? _react2.default.createElement(
-	                                        'span',
-	                                        { 'class': 'mdl-textfield__error' },
-	                                        error
-	                                    ) : null
+	                                    'label',
+	                                    { className: 'slds-form-element__label', 'for': 'login' },
+	                                    'Логин'
 	                                ),
 	                                _react2.default.createElement(
 	                                    'div',
-	                                    { className: 'mdl-textfield mdl-js-textfield' },
-	                                    _react2.default.createElement('input', { className: 'mdl-textfield__input', type: 'password', ref: 'password', id: 'password' }),
-	                                    _react2.default.createElement(
-	                                        'label',
-	                                        { className: 'mdl-textfield__label', 'for': 'login' },
-	                                        'Пароль'
-	                                    ),
-	                                    error ? _react2.default.createElement(
-	                                        'span',
-	                                        { 'class': 'mdl-textfield__error' },
-	                                        error
-	                                    ) : null
-	                                )
-	                            )
-	                        ),
-	                        _react2.default.createElement(
-	                            'div',
-	                            { className: 'mdl-card__actions mdl-card--border' },
+	                                    { className: 'slds-form-element__control' },
+	                                    _react2.default.createElement('input', { className: 'slds-input', type: 'text', ref: 'login', id: 'login' })
+	                                ),
+	                                error ? _react2.default.createElement(
+	                                    'div',
+	                                    { 'class': 'sld-form-element__error' },
+	                                    error
+	                                ) : null
+	                            ),
 	                            _react2.default.createElement(
-	                                'button',
-	                                { className: 'mdl-button mdl-button--colored mdl-js-button', onClick: this.handleClick.bind(this) },
-	                                'Войти'
+	                                'div',
+	                                { className: 'slds-form-element' + (error ? ' slds-has-error' : '') },
+	                                _react2.default.createElement(
+	                                    'label',
+	                                    { className: 'slds-form-element__label', 'for': 'login' },
+	                                    'Пароль'
+	                                ),
+	                                _react2.default.createElement(
+	                                    'div',
+	                                    { className: 'slds-form-element__control' },
+	                                    _react2.default.createElement('input', { className: 'slds-input', type: 'password', ref: 'password', id: 'password' })
+	                                ),
+	                                error ? _react2.default.createElement(
+	                                    'div',
+	                                    { 'class': 'slds-form-element__error' },
+	                                    error
+	                                ) : null
 	                            )
+	                        )
+	                    ),
+	                    _react2.default.createElement(
+	                        'div',
+	                        { className: 'slds-modal__footer' },
+	                        _react2.default.createElement(
+	                            'button',
+	                            { className: 'slds-button slds-button--brand', onClick: this.handleClick.bind(this) },
+	                            'Войти'
 	                        )
 	                    )
 	                )
