@@ -16,6 +16,7 @@ class Console:
             ('logout', self.logout),
             ('cfg', self.cfg),
             ('list', self.list),
+            ('get_item', self.get_item),
         )
         self.namespace = dict(self.commands)
 
@@ -41,36 +42,30 @@ class Console:
         exec(command, self.namespace)
 
     def send(self, message):
+        message['name'] = 'request'
+        message['request_id'] = 'test'
         message = json.dumps(message)
         print('> {}'.format(message))
         asyncio.ensure_future(self.websocket.send(message))
 
     def login(self, login, password):
-        self.send({
-            'name':'auth.login.request',
-            'body': {
+        self.send({'handler':'auth.login', 'body': {
                 'login': login,
                 'password': password,
             }
         })
 
     def logout(self):
-        self.send({
-            'name':'auth.logout.request',
-            'body': {}
-        })
+        self.send({'handler':'auth.logout', 'body': {}})
 
     def cfg(self):
-        self.send({
-            'name':'cinfo.cfg.request',
-            'body': {}
-        })
+        self.send({'handler':'cinfo.cfg', 'body': {}})
 
     def list(self, stream, filters=None, order=None, limit=30):
         filters = filters or {}
         order = order or []
         self.send({
-            'name':'streams.action.request',
+            'handler':'streams.action',
             'body': {
                 'stream': stream,
                 'action': 'list',
@@ -79,6 +74,17 @@ class Console:
                 'limit': limit,
             },
         })
+
+    def get_item(self, stream, item_id=None):
+        self.send({
+            'handler':'streams.action',
+            'body': {
+                'stream': stream,
+                'action': 'get_item',
+                'item_id': item_id,
+            },
+        })
+
 
 
 async def console(loop):

@@ -1,5 +1,7 @@
-from .base import Field
-from . import convs
+from ikcms.forms import (
+    fields,
+    convs,
+)
 
 
 def simple_filter(op):
@@ -10,31 +12,22 @@ def simple_filter(op):
     return f
 
 
-class FilterField(Field):
+class ff_string(fields.StringField):
     filter = simple_filter('==')
 
+class ff_int(fields.IntField):
+    filter = simple_filter('==')
 
-class FF_String(FilterField):
-    widget = "FilterStringWidget"
-
-
-class FF_Int(FF_String):
-    conv_class = convs.Int
-
-
-class FF_Find(FF_String):
+class ff_find(ff_string):
     filter = simple_filter('like')
 
 
-class FF_Id(FF_Int):
+class ff_id(ff_int):
     name = 'id'
     label = 'Id'
 
-
-class FF_Title(FF_Find):
+class ff_title(ff_find):
     name = 'title'
     label = 'Title'
 
 
-ff_id = FF_Id()
-ff_title = FF_Title()

@@ -1,9 +1,11 @@
 from ws_admin.components.streams import Stream
-from ws_admin.components.streams.fields import (
+from ws_admin.components.streams.forms import (
     lf_id,
     lf_title,
     ff_id,
     ff_title,
+    if_id,
+    if_title,
 )
 from ws_admin.mappers import docs_mapper
 
@@ -21,6 +23,10 @@ class Docs(Stream):
     filter_fields = [
         ff_id,
         ff_title,
+    ]
+    item_fields = [
+        if_id,
+        if_title,
     ]
 
 

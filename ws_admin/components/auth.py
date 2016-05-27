@@ -1,22 +1,50 @@
 from hashlib import md5
 from ikcms.ws_components.auth.base import WS_AuthComponent as WS_AuthComponentBase
 from ikcms.ws_components.auth.base import user_required
-from ikcms.ws_apps.composite.exc import FieldRequiredError
+from ikcms.ws_apps.base.messages import MessageForm
+from ikcms.ws_apps.base import exc
+from ikcms.forms import fields, validators
+
+
+class mf_login(fields.StringField):
+    name = 'login'
+    label = 'Логин'
+    validators = (validators.required,)
+
+class mf_password(fields.StringField):
+    name = 'password'
+    label = 'Пароль'
+    validators = (validators.required,)
+
+class mf_key(fields.StringField):
+    name = 'key'
+    label = 'Ключ авторизации'
+    validators = (validators.required,)
 
 
 class WS_AuthComponent(WS_AuthComponentBase):
 
+    login_form = MessageForm([
+        mf_login,
+        mf_password,
+    ])
+
+    key_form = MessageForm([
+        mf_login,
+        mf_key,
+    ])
+
+
     async def h_login(self, env, message):
-        key = message.get('key')
-        login = message.get('login')
-        password = message.get('password')
-        if key:
-            key = self.auth_by_key(env, key)
-        else:
-            if not login:
-                raise FieldRequiredError('login')
-            if not password:
-                raise FieldRequiredError('password')
+        try:
+            message = self.key_form.to_python(message)
+            login = message['login']
+            key = message['key']
+            key = self.auth_by_key(env, login, key)
+        except exc.MessageError:
+            message = self.login_form.to_python(message)
+            login = message['login']
+            password = message['password']
             key = self.auth_by_password(env, login, password)
         if key:
             env.user = {'login': login}
@@ -44,7 +72,7 @@ class WS_AuthComponent(WS_AuthComponentBase):
         else:
             return False
 
-    def auth_by_key(self, env, key):
+    def auth_by_key(self, env, login, key):
         if key == key:
             return key
         else:

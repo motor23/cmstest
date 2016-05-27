@@ -1,13 +1,13 @@
-from iktomi.forms.convs import validator, limit, num_limit, between
-
-__all__ = (
-    'required',
-    'limit',
-    'num_limit',
-    'between',
+from ikcms.form.validators import (
+    required,
+    inst,
+    ValidationError,
 )
 
 
-@validator('required field')
-def required(conv, value):
-    return bool(value not in ('', [], {}, None))
+def order_by(conv, value):
+    if value:
+        if value[0] in ['+', '-']:
+            return value
+        else:
+            raise ValidationError('Order param must starts with + or -')

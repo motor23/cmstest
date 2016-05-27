@@ -33,8 +33,8 @@ class WS_CInfoComponent(WS_ComponentBase):
 
     def handlers(self):
         return {
-            'cinfo.cfg.request': self.h_cfg,
-            'cinfo.list.request': self.h_list,
+            'cinfo.cfg': self.h_cfg,
+            'cinfo.list': self.h_list,
         }
 
 ws_cinfo_component = WS_CInfoComponent.create
