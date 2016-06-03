@@ -12,11 +12,11 @@ const router = configureRouter(store);
 
 
 connection.onerror = event =>
-    store.dispatch({type: 'CONNECTION_LOST', payload: event});
+    store.dispatch({type: 'APP_CONNECTION_CLOSED', payload: event});
 
 
 connection.onopen = event =>
-    store.dispatch({type: 'CONNECTION_ESTABLISHED', payload: event});
+    store.dispatch({type: 'APP_CONNECTION_OPENED', payload: event});
 
 
 window.connection = connection;

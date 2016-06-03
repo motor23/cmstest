@@ -7,7 +7,8 @@ const initialState = {
     errors: {},
     total: 0,
     limit: 20,
-    offset: 0
+    offset: 0,
+    order: '+id'
 };
 
 

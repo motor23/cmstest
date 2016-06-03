@@ -30,7 +30,7 @@ export function updateStreamList(stream, limit, offset) {
             page_size: limit,
             offset: offset,
             action: 'list',
-            order: []
+            order: '+id'
         };
         dispatch(updateStreamListRequest());
         connection.call('streams.action', payload).then(payload => {

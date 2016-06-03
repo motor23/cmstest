@@ -69,11 +69,11 @@
 	var router = (0, _configureRouter2.default)(store);
 	
 	connection.onerror = function (event) {
-	    return store.dispatch({ type: 'CONNECTION_LOST', payload: event });
+	    return store.dispatch({ type: 'APP_CONNECTION_CLOSED', payload: event });
 	};
 	
 	connection.onopen = function (event) {
-	    return store.dispatch({ type: 'CONNECTION_ESTABLISHED', payload: event });
+	    return store.dispatch({ type: 'APP_CONNECTION_OPENED', payload: event });
 	};
 	
 	window.connection = connection;
@@ -21243,12 +21243,17 @@
 	
 	var _stream2 = _interopRequireDefault(_stream);
 	
+	var _app = __webpack_require__(281);
+	
+	var _app2 = _interopRequireDefault(_app);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	exports.default = {
 	    user: _user2.default,
 	    conf: _conf2.default,
-	    stream: _stream2.default
+	    stream: _stream2.default,
+	    app: _app2.default
 	};
 
 /***/ },
@@ -28207,6 +28212,10 @@
 	
 	var _auth = __webpack_require__(277);
 	
+	var _connecting = __webpack_require__(282);
+	
+	var _connecting2 = _interopRequireDefault(_connecting);
+	
 	var _login = __webpack_require__(265);
 	
 	var _login2 = _interopRequireDefault(_login);
@@ -28248,11 +28257,16 @@
 	        key: 'render',
 	        value: function render() {
 	            var _props = this.props;
+	            var shouldReloadPage = _props.shouldReloadPage;
+	            var isConnected = _props.isConnected;
 	            var isLoggedIn = _props.isLoggedIn;
 	            var menu = _props.menu;
 	            var children = _props.children;
 	            var user = _props.user;
 	
+	            if (!isConnected) {
+	                return _react2.default.createElement(_connecting2.default, { shouldReloadPage: shouldReloadPage });
+	            }
 	            if (!isLoggedIn) {
 	                return _react2.default.createElement(_login2.default, null);
 	            }
@@ -28283,6 +28297,8 @@
 	
 	function mapStateToProps(state, props) {
 	    return {
+	        shouldReloadPage: state.app.shouldReloadPage,
+	        isConnected: state.app.isConnected,
 	        isLoggedIn: state.user.isLoggedIn,
 	        menu: state.conf.menu,
 	        user: state.user
@@ -29212,15 +29228,15 @@
 	    _createClass(Connection, [{
 	        key: '_onopen',
 	        value: function _onopen(event) {
-	            console.log('Connection established');
 	            this.onopen && this.onopen(event);
+	            this._reconnectAttempts = 0;
+	            this._messages.map(this._send.bind(this));
 	        }
 	    }, {
 	        key: '_onclose',
 	        value: function _onclose(event) {
-	            console.log('Connection closed');
 	            this._socket = null;
-	            this.onerror && this.onerror(event);
+	            this.onerror && this.onerror({ shouldReloadPage: false });
 	            this._reconnect();
 	        }
 	    }, {
@@ -29239,7 +29255,6 @@
 	    }, {
 	        key: '_connect',
 	        value: function _connect() {
-	            console.log('Connecting...');
 	            this._socket = new WebSocket(this._url);
 	            this._socket.onopen = this._onopen.bind(this);
 	            this._socket.onclose = this._onclose.bind(this);
@@ -29251,9 +29266,8 @@
 	            if (this._reconnectAttempts < this._reconnectAttemptsMax) {
 	                var delay = 1000 * Math.pow(2, this._reconnectAttempts++);
 	                setTimeout(this._connect.bind(this), delay);
-	                console.log('Reconnecting in', delay, 'seconds');
 	            } else {
-	                console.log('Exceeded max reconnect attempts, should reload page');
+	                this.onerror && this.onerror({ shouldReloadPage: true });
 	            }
 	        }
 	    }, {
@@ -29365,7 +29379,8 @@
 	    errors: {},
 	    total: 0,
 	    limit: 20,
-	    offset: 0
+	    offset: 0,
+	    order: '+id'
 	};
 	
 	function stream() {
@@ -29524,13 +29539,8 @@
 	    return function (dispatch, state, connection) {
 	        dispatch(loginRequest({ token: token }));
 	        connection.call('auth.login', { key: token }).then(function (payload) {
-	            if (payload.status === 'ok') {
-	                dispatch(loginSuccess(payload.key));
-	                dispatch((0, _conf.confUpdate)());
-	            }
-	            if (payload.status === 'failed') {
-	                dispatch(loginFailure(payload.reason));
-	            }
+	            dispatch(loginSuccess(payload.key));
+	            dispatch((0, _conf.confUpdate)());
 	        });
 	    };
 	}
@@ -29639,7 +29649,7 @@
 	            page_size: limit,
 	            offset: offset,
 	            action: 'list',
-	            order: []
+	            order: '+id'
 	        };
 	        dispatch(updateStreamListRequest());
 	        connection.call('streams.action', payload).then(function (payload) {
@@ -29681,6 +29691,156 @@
 	        });
 	    };
 	}
+
+/***/ },
+/* 281 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	
+	exports.default = app;
+	var initialState = {
+	    isConnected: false,
+	    shouldReloadPage: false
+	};
+	
+	function app() {
+	    var state = arguments.length <= 0 || arguments[0] === undefined ? initialState : arguments[0];
+	    var action = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	
+	    switch (action.type) {
+	        case 'APP_CONNECTION_REQUEST':
+	            return _extends({}, initialState, {
+	                isConnected: false
+	            });
+	
+	        case 'APP_CONNECTION_CLOSED':
+	            return _extends({}, initialState, {
+	                isConnected: false,
+	                shouldReloadPage: action.payload.shouldReloadPage
+	            });
+	
+	        case 'APP_CONNECTION_OPENED':
+	            return _extends({}, initialState, {
+	                isConnected: true
+	            });
+	    }
+	    return state;
+	}
+
+/***/ },
+/* 282 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _react = __webpack_require__(186);
+	
+	var _react2 = _interopRequireDefault(_react);
+	
+	var _spinner = __webpack_require__(268);
+	
+	var _spinner2 = _interopRequireDefault(_spinner);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Icon = function (_Component) {
+	    _inherits(Icon, _Component);
+	
+	    function Icon() {
+	        _classCallCheck(this, Icon);
+	
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(Icon).apply(this, arguments));
+	    }
+	
+	    _createClass(Icon, [{
+	        key: 'render',
+	        value: function render() {
+	            return _react2.default.createElement(
+	                'svg',
+	                { className: 'slds-icon sld-icon--small' },
+	                _react2.default.createElement('path', { d: 'M21.5 1.8h-1.4c-.4 0-.7.4-.7.7v3.3c0 .4-.2.6-.6.3-.1-.2-.2-.3-.4-.5-2.3-2.3-5.6-3.2-8.9-2.6-1.1.2-2.3.7-3.2 1.3-2.8 1.9-4.5 4.9-4.5 8.1 0 2.5.9 5 2.7 6.8 1.8 1.9 4.3 3 7 3 2.3 0 4.6-.8 6.3-2.3.3-.3.3-.7.1-1l-1-1c-.2-.2-.7-.3-.9 0-1.7 1.3-4 1.9-6.2 1.3-.6-.1-1.2-.4-1.8-.7-2.6-1.6-3.8-4.7-3.1-7.7.1-.6.4-1.2.7-1.8 1.3-2.2 3.6-3.5 6-3.5 1.8 0 3.6.8 4.9 2.1.2.2.4.4.5.6.2.4-.2.6-.6.6h-3.2c-.4 0-.7.3-.7.7v1.4c0 .4.3.6.7.6h8.4c.3 0 .6-.2.6-.6V2.5c0-.3-.4-.7-.7-.7z' })
+	            );
+	        }
+	    }]);
+	
+	    return Icon;
+	}(_react.Component);
+	
+	var Connecting = function (_Component2) {
+	    _inherits(Connecting, _Component2);
+	
+	    function Connecting() {
+	        _classCallCheck(this, Connecting);
+	
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(Connecting).apply(this, arguments));
+	    }
+	
+	    _createClass(Connecting, [{
+	        key: 'reload',
+	        value: function reload() {
+	            window.location.reload();
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	            var shouldReloadPage = this.props.shouldReloadPage;
+	
+	            return _react2.default.createElement(
+	                'div',
+	                { className: 'slds-modal slds-fade-in-open' },
+	                _react2.default.createElement(
+	                    'div',
+	                    { className: 'slds-modal__container' },
+	                    shouldReloadPage ? _react2.default.createElement(
+	                        'div',
+	                        null,
+	                        _react2.default.createElement(
+	                            'button',
+	                            { className: 'slds-button', onClick: this.reload },
+	                            _react2.default.createElement(Icon, null)
+	                        ),
+	                        _react2.default.createElement(
+	                            'div',
+	                            null,
+	                            'Проблема при подключении к серверу, перезагрузите страницу'
+	                        )
+	                    ) : _react2.default.createElement(
+	                        'div',
+	                        null,
+	                        _react2.default.createElement(_spinner2.default, null),
+	                        'Подключение к серверу...'
+	                    )
+	                )
+	            );
+	        }
+	    }]);
+	
+	    return Connecting;
+	}(_react.Component);
+	
+	Connecting.propTypes = {
+	    shouldReloadPage: _react.PropTypes.bool.isRequired
+	};
+	exports.default = Connecting;
 
 /***/ }
 /******/ ]);

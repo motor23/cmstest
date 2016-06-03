@@ -11,14 +11,14 @@ class Connection {
     }
 
     _onopen(event) {
-        console.log('Connection established');
         this.onopen && this.onopen(event);
+        this._reconnectAttempts = 0;
+        this._messages.map(this._send.bind(this));
     }
 
     _onclose(event) {
-        console.log('Connection closed');
         this._socket = null;
-        this.onerror && this.onerror(event);
+        this.onerror && this.onerror({shouldReloadPage: false});
         this._reconnect();
     }
 
@@ -30,7 +30,6 @@ class Connection {
     }
 
     _connect() {
-        console.log('Connecting...');
         this._socket = new WebSocket(this._url);
         this._socket.onopen = this._onopen.bind(this);
         this._socket.onclose = this._onclose.bind(this);
@@ -41,10 +40,9 @@ class Connection {
         if (this._reconnectAttempts < this._reconnectAttemptsMax) {
             const delay = 1000 * Math.pow(2, this._reconnectAttempts++);
             setTimeout(this._connect.bind(this), delay);
-            console.log('Reconnecting in', delay, 'seconds');
         }
         else {
-            console.log('Exceeded max reconnect attempts, should reload page');
+            this.onerror && this.onerror({shouldReloadPage: true});
         }
     }
 

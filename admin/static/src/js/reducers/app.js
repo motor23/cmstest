@@ -1,6 +1,6 @@
 const initialState = {
-    isConnecting: false,
-    isConnected: false
+    isConnected: false,
+    shouldReloadPage: false
 };
 
 
@@ -8,25 +8,22 @@ export default function app(state=initialState, action={}) {
     switch (action.type) {
         case 'APP_CONNECTION_REQUEST':
             return {
-                ...state,
-                isConnecting: true,
+                ...initialState,
                 isConnected: false
             };
 
         case 'APP_CONNECTION_CLOSED':
             return {
-                ...state,
-                isConnecting: true,
-                isConnected: false
+                ...initialState,
+                isConnected: false,
+                shouldReloadPage: action.payload.shouldReloadPage
             };
 
         case 'APP_CONNECTION_OPENED':
             return {
-                ...state,
-                isConnecting: false,
+                ...initialState,
                 isConnected: true
             };
-
-        return state;
     }
+    return state;
 }

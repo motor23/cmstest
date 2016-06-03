@@ -63,13 +63,8 @@ export function loginWithToken(token) {
     return (dispatch, state, connection) => {
         dispatch(loginRequest({token}));
         connection.call('auth.login', {key: token}).then(payload => {
-            if (payload.status === 'ok') {
-                dispatch(loginSuccess(payload.key));
-                dispatch(confUpdate())
-            }
-            if (payload.status === 'failed') {
-                dispatch(loginFailure(payload.reason));
-            }
+            dispatch(loginSuccess(payload.key));
+            dispatch(confUpdate())
         });
     };
 }
