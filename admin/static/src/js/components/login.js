@@ -1,6 +1,6 @@
 import React from 'react';
 import {connect} from 'react-redux';
-import {loginWithCredentials} from '../actions';
+import {loginWithPassword} from '../actions/auth';
 
 
 class Login extends React.Component {
@@ -27,7 +27,7 @@ class Login extends React.Component {
     login() {
         const login = this.refs.login.value;
         const password = this.refs.password.value;
-        this.props.dispatch(loginWithCredentials(login, password));
+        this.props.dispatch(loginWithPassword(login, password));
     }
 
     render() {
@@ -39,7 +39,7 @@ class Login extends React.Component {
                         <h2 className="slds-text-heading--medium">Авторизация</h2>
                     </div>
                     <div className="slds-modal__content">
-                        <form className="slds-form--horizontal" onKeyPress={this.handleKeyPress.bind(this)}>
+                        <form className="slds-form--horizontal" onKeyPress={this.handleKeyPress}>
                             <div className={'slds-form-element' + (error ? ' slds-has-error' : '')}>
                                 <label className="slds-form-element__label" for="login">Логин</label>
                                 <div className="slds-form-element__control">
@@ -57,7 +57,7 @@ class Login extends React.Component {
                         </form>
                     </div>
                     <div className="slds-modal__footer">
-                        <button className="slds-button slds-button--brand" onClick={this.handleClick.bind(this)}>Войти</button>
+                        <button className="slds-button slds-button--brand" onClick={this.handleClick}>Войти</button>
                     </div>
                 </div>
             </div>

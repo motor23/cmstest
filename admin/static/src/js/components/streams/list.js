@@ -1,6 +1,6 @@
 import React, {Component, PropTypes} from 'react';
 import {connect} from 'react-redux';
-import {updateStreamList} from '../../actions';
+import {updateStreamList} from '../../actions/stream';
 import paginate from '../../util/paginate';
 import Spinner from '../spinner';
 

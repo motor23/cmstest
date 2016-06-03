@@ -1,7 +1,7 @@
 import {routerReducer} from 'react-router-redux'
 import {createStore, applyMiddleware, combineReducers} from 'redux';
 import createLogger from 'redux-logger';
-import {user, config, stream} from './reducers';
+import reducers from './reducers';
 
 
 function createThunkMiddleware(connection) {
@@ -30,9 +30,7 @@ function createLoggerMiddleware(logging) {
 
 export default function configureStore(initialState, {logging, connection}) {
     const reducer = combineReducers({
-        user: user,
-        config: config,
-        stream: stream,
+        ...reducers,
         routing: routerReducer
     });
     const middleware = applyMiddleware(

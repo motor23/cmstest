@@ -1,9 +1,10 @@
 import React from 'react';
 import {connect} from 'react-redux';
 
-import {loginWithToken} from '../actions';
+import {loginWithToken} from '../actions/auth';
 import Login from './login';
 import Menu from './menu';
+import Notifications from './notifications';
 
 
 class Application extends React.Component {
@@ -19,6 +20,7 @@ class Application extends React.Component {
         if (!isLoggedIn) { return <Login/>;}
         return (
             <div className="mdl-layout mdl-layout--fixed-header">
+                <Notifications/>
                 <div className="mdl-layout__header">
                     <div className="mdl-layout__header-row">
                         <Menu menu={menu}/>
@@ -36,7 +38,7 @@ class Application extends React.Component {
 function mapStateToProps(state, props) {
     return {
         isLoggedIn: state.user.isLoggedIn,
-        menu: state.config.menu.main,
+        menu: state.conf.menu,
         user: state.user
     };
 }

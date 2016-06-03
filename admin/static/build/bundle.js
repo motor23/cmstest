@@ -68,6 +68,14 @@
 	var store = (0, _configureStore2.default)(undefined, { logging: true, connection: connection });
 	var router = (0, _configureRouter2.default)(store);
 	
+	connection.onerror = function (event) {
+	    return store.dispatch({ type: 'CONNECTION_LOST', payload: event });
+	};
+	
+	connection.onopen = function (event) {
+	    return store.dispatch({ type: 'CONNECTION_ESTABLISHED', payload: event });
+	};
+	
 	window.connection = connection;
 	window.store = store;
 	
@@ -108,7 +116,7 @@
 	
 	
 	// module
-	exports.push([module.id, ".mdl-layout {\n    /*align-items: center;*/\n    /*justify-content: center;*/\n    background: #efefef;\n}\n\n\n.mdl-layout__content {\n    padding: 24px;\n    flex: none;\n}\n\n\n.cms-nav {\n    height: 70px;\n    padding: 0 16px 0 25px;\n    margin-bottom: -16px;\n    display: flex;\n}\n\n\n.cms-nav__item {\n    font-weight: 500;\n    line-height: 64px;\n    padding: 0 16px;\n    color: #ffffff;\n    box-sizing: border-box;\n    border-bottom: 3px solid transparent;\n    display: flex;\n}\n\n\n.cms-nav__item a {\n    opacity: 0.65;\n    color: #ffffff;\n    text-decoration: none;\n}\n\n\n.cms-nav__item a.active {\n    opacity: 1.0;\n}\n\n\n.cms-card {\n    float: left;\n    display: flex;\n    flex-direction: column;\n    overflow: hidden;\n    background: #ffffff;\n    border-radius: 2px;\n    box-sizing: border-box;\n    margin: 10px;\n}\n\n\n.cms-card__title {\n    display: flex;\n    padding: 10px 16px 10px 16px;\n    box-sizing: border-box;\n    border-bottom: 1px solid rgba(0, 0, 0, 0.1);\n    margin-bottom: 10px;\n}\n\n\n.cms-card__item {\n    display: flex;\n    padding: 2px 16px 2px 16px;\n    box-sizing: border-box;\n    margin-bottom: 10px;\n}\n\n\n.cms-card__item a {\n    color: #00bcd4;\n    text-decoration: none;\n}\n\n\n.cms-paginator {\n    margin: 10px 0;\n}\n\n\n.cms-paginator__item {\n    margin: 0 5px;\n    padding: 2px 4px;\n    border-radius: 2px;\n    background: #f4f6f9;\n    color: #16325c;\n    border: 1px solid #d8dde6;\n}\n\n.cms-paginator__item:hover {\n    cursor: pointer;\n    color: #ffffff;\n}\n\n.cms-paginator__item--ellipsis {\n    background: none;\n    border: none;\n}\n\n.cms-paginator__item--ellipsis:hover {\n    cursor: default;\n}\n\n.cms-paginator__item--current {\n    color: #eef1f6;\n    background: #4bc076;\n}\n\n.cms-paginator__item--current:hover {\n    cursor: default;\n    color: #eef1f6;\n    background: #4bc076;\n}\n\n.cms-stream .slds-page-header {\n    margin-bottom: 10px;\n}\n\n.slds-modal {\n    background: #cfd7e6;\n}", ""]);
+	exports.push([module.id, ".mdl-layout {\n    /*align-items: center;*/\n    /*justify-content: center;*/\n    background: #efefef;\n}\n\n\n.mdl-layout__content {\n    padding: 24px;\n    flex: none;\n}\n\n\n.cms-nav {\n    height: 70px;\n    padding: 0 16px 0 25px;\n    margin-bottom: -16px;\n    display: flex;\n}\n\n\n.cms-nav__item {\n    font-weight: 500;\n    line-height: 64px;\n    padding: 0 16px;\n    color: #ffffff;\n    box-sizing: border-box;\n    border-bottom: 3px solid transparent;\n    display: flex;\n}\n\n\n.cms-nav__item a {\n    opacity: 0.65;\n    color: #ffffff;\n    text-decoration: none;\n}\n\n\n.cms-nav__item a.active {\n    opacity: 1.0;\n}\n\n\n.cms-card {\n    float: left;\n    display: flex;\n    flex-direction: column;\n    overflow: hidden;\n    background: #ffffff;\n    border-radius: 2px;\n    box-sizing: border-box;\n    margin: 10px;\n}\n\n\n.cms-card__title {\n    display: flex;\n    padding: 10px 16px 10px 16px;\n    box-sizing: border-box;\n    border-bottom: 1px solid rgba(0, 0, 0, 0.1);\n    margin-bottom: 10px;\n}\n\n\n.cms-card__item {\n    display: flex;\n    padding: 2px 16px 2px 16px;\n    box-sizing: border-box;\n    margin-bottom: 10px;\n}\n\n\n.cms-card__item a {\n    color: #00bcd4;\n    text-decoration: none;\n}\n\n\n.cms-paginator {\n    margin: 10px 0;\n}\n\n\n.cms-paginator__item {\n    margin: 0 5px;\n    padding: 2px 4px;\n    border-radius: 2px;\n    background: #f4f6f9;\n    color: #16325c;\n    border: 1px solid #d8dde6;\n}\n\n.cms-paginator__item:hover {\n    cursor: pointer;\n    color: #ffffff;\n}\n\n.cms-paginator__item--ellipsis {\n    background: none;\n    border: none;\n}\n\n.cms-paginator__item--ellipsis:hover {\n    cursor: default;\n}\n\n.cms-paginator__item--current {\n    color: #eef1f6;\n    background: #4bc076;\n}\n\n.cms-paginator__item--current:hover {\n    cursor: default;\n    color: #eef1f6;\n    background: #4bc076;\n}\n\n.cms-stream .slds-page-header {\n    margin-bottom: 10px;\n}\n\n.slds-modal {\n    background: #cfd7e6;\n}\n\n.slds-modal__container {\n    max-width: 25rem;\n}\n\n.slds-modal .slds-form--horizontal {\n    margin: 20px 40px;\n}", ""]);
 	
 	// exports
 
@@ -19720,6 +19728,9 @@
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+	
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	
 	exports.default = configureStore;
 	
 	var _reactRouterRedux = __webpack_require__(165);
@@ -19731,6 +19742,8 @@
 	var _reduxLogger2 = _interopRequireDefault(_reduxLogger);
 	
 	var _reducers = __webpack_require__(184);
+	
+	var _reducers2 = _interopRequireDefault(_reducers);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -19768,12 +19781,9 @@
 	    var logging = _ref.logging;
 	    var connection = _ref.connection;
 	
-	    var reducer = (0, _redux.combineReducers)({
-	        user: _reducers.user,
-	        config: _reducers.config,
-	        stream: _reducers.stream,
+	    var reducer = (0, _redux.combineReducers)(_extends({}, _reducers2.default, {
 	        routing: _reactRouterRedux.routerReducer
-	    });
+	    }));
 	    var middleware = (0, _redux.applyMiddleware)(createThunkMiddleware(connection), createLoggerMiddleware(logging));
 	    return (0, _redux.createStore)(reducer, initialState, middleware);
 	};
@@ -21213,117 +21223,33 @@
 
 /***/ },
 /* 184 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	exports.config = config;
-	exports.user = user;
-	exports.stream = stream;
-	function config(state, action) {
-	    var initialState = {
-	        auth: null,
-	        cinfo: null,
-	        menu: {
-	            dashboard: [],
-	            main: []
-	        }
-	    };
 	
-	    state = state || initialState;
-	    if (action.type === 'CONFIG_UPDATE') {
-	        return Object.assign({}, state, {
-	            auth: action.payload.auth,
-	            cinfo: action.payload.cinfo,
-	            menu: action.payload.menu
-	        });
-	    }
-	    return state;
-	}
+	var _user = __webpack_require__(276);
 	
-	function user(state, action) {
-	    var initialState = {
-	        isLoggedIn: false,
-	        token: null,
-	        error: null,
-	        name: 'root'
-	    };
+	var _user2 = _interopRequireDefault(_user);
 	
-	    state = state || initialState;
+	var _conf = __webpack_require__(274);
 	
-	    if (action.type === 'LOGIN_SUCCESS') {
-	        return Object.assign({}, state, {
-	            isLoggedIn: true,
-	            token: action.payload.token
-	        });
-	    }
+	var _conf2 = _interopRequireDefault(_conf);
 	
-	    if (action.type === 'LOGIN_FAILURE') {
-	        return Object.assign({}, state, {
-	            isLoggedIn: false,
-	            token: null,
-	            error: action.payload.reason
-	        });
-	    }
+	var _stream = __webpack_require__(275);
 	
-	    if (action.type === 'LOGOUT') {
-	        return Object.assign({}, state, {
-	            isLoggedIn: false,
-	            token: null,
-	            error: null
-	        });
-	    }
+	var _stream2 = _interopRequireDefault(_stream);
 	
-	    return state;
-	}
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	function stream(state, action) {
-	    var initialState = {
-	        isLoading: true,
-	        title: null,
-	        stream: null,
-	        items: [],
-	        filters: {},
-	        errors: {},
-	        total: 0,
-	        limit: 20,
-	        offset: 0
-	    };
-	
-	    state = state || initialState;
-	
-	    if (action.type === 'STREAM_UPDATE_REQUEST') {
-	        return Object.assign({}, state, {
-	            isLoading: true,
-	            stream: null,
-	            items: [],
-	            filters: {},
-	            errors: {},
-	            total: 0,
-	            limit: 20,
-	            offset: 0
-	        });
-	    }
-	
-	    if (action.type === 'STREAM_UPDATE_SUCCESS') {
-	        return Object.assign({}, state, {
-	            isLoading: false,
-	            title: action.payload.title,
-	            stream: action.payload.stream,
-	            items: action.payload.items,
-	            filters: action.payload.filters,
-	            errors: action.payload.errors,
-	            total: action.payload.total,
-	            limit: action.payload.limit,
-	            offset: action.payload.offset
-	        });
-	    }
-	
-	    return state;
-	}
+	exports.default = {
+	    user: _user2.default,
+	    conf: _conf2.default,
+	    stream: _stream2.default
+	};
 
 /***/ },
 /* 185 */
@@ -28279,7 +28205,7 @@
 	
 	var _reactRedux = __webpack_require__(251);
 	
-	var _actions = __webpack_require__(264);
+	var _auth = __webpack_require__(277);
 	
 	var _login = __webpack_require__(265);
 	
@@ -28288,6 +28214,10 @@
 	var _menu = __webpack_require__(266);
 	
 	var _menu2 = _interopRequireDefault(_menu);
+	
+	var _notifications = __webpack_require__(278);
+	
+	var _notifications2 = _interopRequireDefault(_notifications);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -28311,7 +28241,7 @@
 	        value: function componentWillMount() {
 	            var token = localStorage.getItem('token');
 	            if (token) {
-	                this.props.dispatch((0, _actions.loginWithToken)(token));
+	                this.props.dispatch((0, _auth.loginWithToken)(token));
 	            }
 	        }
 	    }, {
@@ -28329,6 +28259,7 @@
 	            return _react2.default.createElement(
 	                'div',
 	                { className: 'mdl-layout mdl-layout--fixed-header' },
+	                _react2.default.createElement(_notifications2.default, null),
 	                _react2.default.createElement(
 	                    'div',
 	                    { className: 'mdl-layout__header' },
@@ -28353,7 +28284,7 @@
 	function mapStateToProps(state, props) {
 	    return {
 	        isLoggedIn: state.user.isLoggedIn,
-	        menu: state.config.menu.main,
+	        menu: state.conf.menu,
 	        user: state.user
 	    };
 	}
@@ -28361,151 +28292,7 @@
 	exports.default = (0, _reactRedux.connect)(mapStateToProps)(Application);
 
 /***/ },
-/* 264 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.configureRequest = configureRequest;
-	exports.configureUpdate = configureUpdate;
-	exports.logout = logout;
-	exports.loginRequest = loginRequest;
-	exports.loginSuccess = loginSuccess;
-	exports.loginFailure = loginFailure;
-	exports.configure = configure;
-	exports.loginWithCredentials = loginWithCredentials;
-	exports.loginWithToken = loginWithToken;
-	exports.updateStreamListRequest = updateStreamListRequest;
-	exports.updateStreamListSuccess = updateStreamListSuccess;
-	exports.updateStreamListFailure = updateStreamListFailure;
-	exports.updateStreamList = updateStreamList;
-	function configureRequest() {
-	    return {
-	        type: 'CONFIG_REQUEST'
-	    };
-	}
-	
-	function configureUpdate(configuration) {
-	    return {
-	        type: 'CONFIG_UPDATE',
-	        payload: configuration
-	    };
-	}
-	
-	function logout() {
-	    localStorage.removeItem('token');
-	    return {
-	        type: 'LOGOUT'
-	    };
-	}
-	
-	function loginRequest() {
-	    return {
-	        type: 'LOGIN_REQUEST'
-	    };
-	}
-	
-	function loginSuccess(token) {
-	    localStorage.setItem('token', token);
-	    return {
-	        type: 'LOGIN_SUCCESS',
-	        payload: {
-	            token: token
-	        }
-	    };
-	}
-	
-	function loginFailure(reason) {
-	    localStorage.removeItem('token');
-	    return {
-	        type: 'LOGIN_FAILURE',
-	        payload: {
-	            reason: reason
-	        }
-	    };
-	}
-	
-	function configure() {
-	    return function (dispatch, state, connection) {
-	        dispatch(configureRequest());
-	        connection.call('cinfo.cfg').then(function (payload) {
-	            dispatch(configureUpdate(payload.cfg));
-	        });
-	    };
-	}
-	
-	function loginWithCredentials(login, password) {
-	    return function (dispatch, state, connection) {
-	        dispatch(loginRequest());
-	        connection.call('auth.login', { login: login, password: password }).then(function (payload) {
-	            if (payload.status === 'ok') {
-	                dispatch(loginSuccess(payload.key));
-	                dispatch(configure());
-	            }
-	            if (payload.status === 'failed') {
-	                dispatch(loginFailure(payload.reason));
-	            }
-	        });
-	    };
-	}
-	
-	function loginWithToken(token) {
-	    return function (dispatch, state, connection) {
-	        dispatch(loginRequest());
-	        connection.call('auth.login', { key: token }).then(function (payload) {
-	            if (payload.status === 'ok') {
-	                dispatch(loginSuccess(payload.key));
-	                dispatch(configure());
-	            }
-	            if (payload.status === 'failed') {
-	                dispatch(loginFailure(payload.reason));
-	            }
-	        });
-	    };
-	}
-	
-	function updateStreamListRequest(stream) {
-	    return {
-	        type: 'STREAM_UPDATE_REQUEST'
-	    };
-	}
-	
-	function updateStreamListSuccess(data) {
-	    return {
-	        type: 'STREAM_UPDATE_SUCCESS',
-	        payload: data
-	    };
-	}
-	
-	function updateStreamListFailure(reason) {
-	    return {
-	        type: 'STREAM_UPDATE_FAILURE',
-	        payload: {
-	            reason: reason
-	        }
-	    };
-	}
-	
-	function updateStreamList(stream, limit, offset) {
-	    return function (dispatch, state, connection) {
-	        var payload = {
-	            stream: stream,
-	            page_size: limit,
-	            offset: offset,
-	            action: 'list',
-	            order: []
-	        };
-	        dispatch(updateStreamListRequest());
-	        connection.call('streams.action', payload).then(function (payload) {
-	            dispatch(updateStreamListSuccess(payload));
-	        });
-	    };
-	}
-
-/***/ },
+/* 264 */,
 /* 265 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -28523,7 +28310,7 @@
 	
 	var _reactRedux = __webpack_require__(251);
 	
-	var _actions = __webpack_require__(264);
+	var _auth = __webpack_require__(277);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -28567,7 +28354,7 @@
 	        value: function login() {
 	            var login = this.refs.login.value;
 	            var password = this.refs.password.value;
-	            this.props.dispatch((0, _actions.loginWithCredentials)(login, password));
+	            this.props.dispatch((0, _auth.loginWithPassword)(login, password));
 	        }
 	    }, {
 	        key: 'render',
@@ -28594,7 +28381,7 @@
 	                        { className: 'slds-modal__content' },
 	                        _react2.default.createElement(
 	                            'form',
-	                            { className: 'slds-form--horizontal', onKeyPress: this.handleKeyPress.bind(this) },
+	                            { className: 'slds-form--horizontal', onKeyPress: this.handleKeyPress },
 	                            _react2.default.createElement(
 	                                'div',
 	                                { className: 'slds-form-element' + (error ? ' slds-has-error' : '') },
@@ -28640,7 +28427,7 @@
 	                        { className: 'slds-modal__footer' },
 	                        _react2.default.createElement(
 	                            'button',
-	                            { className: 'slds-button slds-button--brand', onClick: this.handleClick.bind(this) },
+	                            { className: 'slds-button slds-button--brand', onClick: this.handleClick },
 	                            'Войти'
 	                        )
 	                    )
@@ -28957,7 +28744,7 @@
 	
 	function mapStateToProps(state, props) {
 	    return {
-	        dashboard: state.config.menu.dashboard
+	        dashboard: state.conf.dashboard
 	    };
 	}
 	
@@ -28999,7 +28786,12 @@
 	    _createClass(Spinner, [{
 	        key: "render",
 	        value: function render() {
-	            return _react2.default.createElement("div", { className: "mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active" });
+	            return _react2.default.createElement(
+	                "div",
+	                { className: "slds-spinner slds-spinner--small" },
+	                _react2.default.createElement("div", { className: "slds-spinner__dot-a" }),
+	                _react2.default.createElement("div", { className: "slds-spinner__dot-b" })
+	            );
 	        }
 	    }]);
 	
@@ -29026,7 +28818,7 @@
 	
 	var _reactRedux = __webpack_require__(251);
 	
-	var _actions = __webpack_require__(264);
+	var _stream = __webpack_require__(279);
 	
 	var _paginate = __webpack_require__(270);
 	
@@ -29158,7 +28950,7 @@
 	    _createClass(StreamList, [{
 	        key: 'componentWillMount',
 	        value: function componentWillMount() {
-	            this.props.dispatch((0, _actions.updateStreamList)(this.props.stream, 10));
+	            this.props.dispatch((0, _stream.updateStreamList)(this.props.stream, 10));
 	        }
 	    }, {
 	        key: 'changePage',
@@ -29166,7 +28958,7 @@
 	            var limit = this.props.limit;
 	
 	            var offset = (page - 1) * limit;
-	            this.props.dispatch((0, _actions.updateStreamList)('docs', limit, offset));
+	            this.props.dispatch((0, _stream.updateStreamList)('docs', limit, offset));
 	        }
 	    }, {
 	        key: 'render',
@@ -29408,73 +29200,92 @@
 	        _classCallCheck(this, Connection);
 	
 	        this._url = url;
-	        this._websocket = null;
-	        this._calls = {};
-	        this._queue = [];
-	        this._ready = false;
+	        this._socket = null;
+	        this._handlers = {};
+	        this._messages = [];
+	        this._id = 0;
+	        this._reconnectAttempts = 0;
+	        this._reconnectAttemptsMax = 5;
 	        this._connect();
 	    }
 	
 	    _createClass(Connection, [{
-	        key: '_connect',
-	        value: function _connect() {
-	            //this._websocket && this._websocket.close();
-	            this._websocket = new WebSocket(this._url);
-	            this._websocket.addEventListener('open', this._open.bind(this));
-	            this._websocket.addEventListener('close', this._close.bind(this));
-	            this._websocket.addEventListener('message', this._message.bind(this));
+	        key: '_onopen',
+	        value: function _onopen(event) {
+	            console.log('Connection established');
+	            this.onopen && this.onopen(event);
 	        }
 	    }, {
-	        key: '_send',
-	        value: function _send(message) {
-	            if (this._ready) {
-	                this._websocket.send(JSON.stringify(message));
-	                return true;
-	            }
-	            this._queue.push(message);
-	            return false;
+	        key: '_onclose',
+	        value: function _onclose(event) {
+	            console.log('Connection closed');
+	            this._socket = null;
+	            this.onerror && this.onerror(event);
+	            this._reconnect();
 	        }
 	    }, {
-	        key: '_open',
-	        value: function _open(event) {
-	            this._ready = true;
-	            this._queue = this._queue.filter(this._send.bind(this));
-	        }
-	    }, {
-	        key: '_close',
-	        value: function _close(event) {
-	            this._ready = false;
-	            this._websocket = null;
-	            this._connect();
-	        }
-	    }, {
-	        key: '_message',
-	        value: function _message(event) {
+	        key: '_onmessage',
+	        value: function _onmessage(event) {
 	            var _JSON$parse = JSON.parse(event.data);
 	
 	            var request_id = _JSON$parse.request_id;
 	            var name = _JSON$parse.name;
 	            var body = _JSON$parse.body;
 	
-	            var call = this._calls[request_id];
-	            call && delete this._calls[request_id];
-	            call && call.resolve(body);
+	            var handler = this._handlers[request_id];
+	            handler && delete this._handlers[request_id];
+	            handler && handler.resolve(body);
+	        }
+	    }, {
+	        key: '_connect',
+	        value: function _connect() {
+	            console.log('Connecting...');
+	            this._socket = new WebSocket(this._url);
+	            this._socket.onopen = this._onopen.bind(this);
+	            this._socket.onclose = this._onclose.bind(this);
+	            this._socket.onmessage = this._onmessage.bind(this);
+	        }
+	    }, {
+	        key: '_reconnect',
+	        value: function _reconnect() {
+	            if (this._reconnectAttempts < this._reconnectAttemptsMax) {
+	                var delay = 1000 * Math.pow(2, this._reconnectAttempts++);
+	                setTimeout(this._connect.bind(this), delay);
+	                console.log('Reconnecting in', delay, 'seconds');
+	            } else {
+	                console.log('Exceeded max reconnect attempts, should reload page');
+	            }
+	        }
+	    }, {
+	        key: '_send',
+	        value: function _send(message) {
+	            try {
+	                this._socket.send(JSON.stringify(message));
+	            } catch (exc) {
+	                this._messages.push(message);
+	            }
 	        }
 	    }, {
 	        key: 'call',
-	        value: function call(handler, payload) {
+	        value: function call(endpoint, payload) {
 	            var _this = this;
 	
+	            var id = this._id++;
+	            var message = {
+	                name: 'request',
+	                request_id: id.toString(),
+	                handler: endpoint,
+	                body: payload
+	            };
 	            return new Promise(function (resolve, reject) {
-	                var requestId = Math.floor(Math.random() * 10e12).toString();
-	                _this._calls[requestId] = { resolve: resolve, reject: reject };
-	                _this._send({
-	                    request_id: requestId,
-	                    handler: handler,
-	                    name: 'request',
-	                    body: payload
-	                });
+	                _this._handlers[id] = { resolve: resolve, reject: reject };
+	                _this._send(message);
 	            });
+	        }
+	    }, {
+	        key: 'subscribe',
+	        value: function subscribe(endpoint, handler) {
+	            throw Error('Not implemented method');
 	        }
 	    }]);
 	
@@ -29484,6 +29295,392 @@
 	function configureConnection(url) {
 	    return new Connection(url);
 	};
+
+/***/ },
+/* 273 */,
+/* 274 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	
+	exports.default = conf;
+	var initialState = {
+	    isLoading: false,
+	    dashboard: [],
+	    menu: []
+	};
+	
+	function conf() {
+	    var state = arguments.length <= 0 || arguments[0] === undefined ? initialState : arguments[0];
+	    var action = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	
+	    if (action.type === 'CONF_UPDATE_REQUEST') {
+	        return _extends({}, initialState, {
+	            isLoading: true
+	        });
+	    }
+	
+	    if (action.type === 'CONF_UPDATE_SUCCESS') {
+	        return _extends({}, state, {
+	            isLoading: false,
+	            dashboard: action.payload.menu.dashboard,
+	            menu: action.payload.menu.main
+	        });
+	    }
+	
+	    if (action.type === 'CONF_UPDATE_FAILURE') {
+	        return _extends({}, initialState, {
+	            isLoading: false
+	        });
+	    }
+	
+	    return state;
+	}
+
+/***/ },
+/* 275 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	
+	exports.default = stream;
+	var initialState = {
+	    isLoading: true,
+	    title: null,
+	    stream: null,
+	    items: [],
+	    filters: {},
+	    errors: {},
+	    total: 0,
+	    limit: 20,
+	    offset: 0
+	};
+	
+	function stream() {
+	    var state = arguments.length <= 0 || arguments[0] === undefined ? initialState : arguments[0];
+	    var action = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	
+	    if (action.type === 'STREAM_UPDATE_REQUEST') {
+	        return _extends({}, initialState, {
+	            isLoading: true
+	        });
+	    }
+	
+	    if (action.type === 'STREAM_UPDATE_SUCCESS') {
+	        return _extends({}, state, {
+	            isLoading: false,
+	            title: action.payload.title,
+	            stream: action.payload.stream,
+	            items: action.payload.items,
+	            filters: action.payload.filters,
+	            errors: action.payload.errors,
+	            total: action.payload.total,
+	            limit: action.payload.limit,
+	            offset: action.payload.offset
+	        });
+	    }
+	
+	    if (action.type === 'STREAM_UPDATE_FAILURE') {
+	        return _extends({}, initialState, {
+	            isLoading: false
+	        });
+	    }
+	
+	    return state;
+	}
+
+/***/ },
+/* 276 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	
+	exports.default = user;
+	var initialState = {
+	    isLoggedIn: false,
+	    token: null,
+	    error: null,
+	    name: 'root'
+	};
+	
+	function user() {
+	    var state = arguments.length <= 0 || arguments[0] === undefined ? initialState : arguments[0];
+	    var action = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	
+	    if (action.type === 'AUTH_LOGIN_SUCCESS') {
+	        return _extends({}, initialState, {
+	            isLoggedIn: true,
+	            token: action.payload.token
+	        });
+	    }
+	
+	    if (action.type === 'AUTH_LOGIN_FAILURE') {
+	        return _extends({}, initialState, {
+	            error: action.payload.reason
+	        });
+	    }
+	
+	    if (action.type === 'AUTH_LOGOUT') {
+	        return _extends({}, initialState);
+	    }
+	
+	    return state;
+	}
+
+/***/ },
+/* 277 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.logout = logout;
+	exports.loginRequest = loginRequest;
+	exports.loginSuccess = loginSuccess;
+	exports.loginFailure = loginFailure;
+	exports.loginWithPassword = loginWithPassword;
+	exports.loginWithToken = loginWithToken;
+	
+	var _conf = __webpack_require__(280);
+	
+	function logout() {
+	    localStorage.removeItem('token');
+	    return {
+	        type: 'AUTH_LOGOUT'
+	    };
+	}
+	
+	function loginRequest(_ref) {
+	    var token = _ref.token;
+	    var login = _ref.login;
+	    var password = _ref.password;
+	
+	    return {
+	        type: 'AUTH_LOGIN_REQUEST',
+	        payload: {
+	            token: token,
+	            login: login,
+	            password: password
+	        }
+	    };
+	}
+	
+	function loginSuccess(token) {
+	    localStorage.setItem('token', token);
+	    return {
+	        type: 'AUTH_LOGIN_SUCCESS',
+	        payload: {
+	            token: token
+	        }
+	    };
+	}
+	
+	function loginFailure(reason) {
+	    localStorage.removeItem('token');
+	    return {
+	        type: 'AUTH_LOGIN_FAILURE',
+	        payload: {
+	            reason: reason
+	        }
+	    };
+	}
+	
+	function loginWithPassword(login, password) {
+	    return function (dispatch, state, connection) {
+	        dispatch(loginRequest({ login: login, password: password }));
+	        connection.call('auth.login', { login: login, password: password }).then(function (payload) {
+	            if (payload.status === 'ok') {
+	                dispatch(loginSuccess(payload.key));
+	                dispatch((0, _conf.confUpdate)());
+	            }
+	            if (payload.status === 'failed') {
+	                dispatch(loginFailure(payload.reason));
+	            }
+	        });
+	    };
+	}
+	
+	function loginWithToken(token) {
+	    return function (dispatch, state, connection) {
+	        dispatch(loginRequest({ token: token }));
+	        connection.call('auth.login', { key: token }).then(function (payload) {
+	            if (payload.status === 'ok') {
+	                dispatch(loginSuccess(payload.key));
+	                dispatch((0, _conf.confUpdate)());
+	            }
+	            if (payload.status === 'failed') {
+	                dispatch(loginFailure(payload.reason));
+	            }
+	        });
+	    };
+	}
+
+/***/ },
+/* 278 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _react = __webpack_require__(186);
+	
+	var _react2 = _interopRequireDefault(_react);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Notifications = function (_Component) {
+	    _inherits(Notifications, _Component);
+	
+	    function Notifications() {
+	        _classCallCheck(this, Notifications);
+	
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(Notifications).apply(this, arguments));
+	    }
+	
+	    _createClass(Notifications, [{
+	        key: "render",
+	        value: function render() {
+	            var _props = this.props;
+	            var isConnecting = _props.isConnecting;
+	            var isConnected = _props.isConnected;
+	
+	            return _react2.default.createElement(
+	                "div",
+	                { className: "slds-notify_container" },
+	                _react2.default.createElement(
+	                    "div",
+	                    { className: "slds-notify slds-notify--alert" },
+	                    _react2.default.createElement("div", { className: "slds-notify__content" })
+	                )
+	            );
+	        }
+	    }]);
+	
+	    return Notifications;
+	}(_react.Component);
+	
+	Notifications.propTypes = {
+	    isConnecting: _react.PropTypes.bool.isRequired,
+	    isConnected: _react.PropTypes.bool.isRequired,
+	    notifications: _react.PropTypes.arrayOf(_react.PropTypes.object).isRequired
+	};
+	exports.default = Notifications;
+
+/***/ },
+/* 279 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.updateStreamListRequest = updateStreamListRequest;
+	exports.updateStreamListSuccess = updateStreamListSuccess;
+	exports.updateStreamListFailure = updateStreamListFailure;
+	exports.updateStreamList = updateStreamList;
+	function updateStreamListRequest(stream) {
+	    return {
+	        type: 'STREAM_UPDATE_REQUEST'
+	    };
+	}
+	
+	function updateStreamListSuccess(data) {
+	    return {
+	        type: 'STREAM_UPDATE_SUCCESS',
+	        payload: data
+	    };
+	}
+	
+	function updateStreamListFailure(reason) {
+	    return {
+	        type: 'STREAM_UPDATE_FAILURE',
+	        payload: {
+	            reason: reason
+	        }
+	    };
+	}
+	
+	function updateStreamList(stream, limit, offset) {
+	    return function (dispatch, state, connection) {
+	        var payload = {
+	            stream: stream,
+	            page_size: limit,
+	            offset: offset,
+	            action: 'list',
+	            order: []
+	        };
+	        dispatch(updateStreamListRequest());
+	        connection.call('streams.action', payload).then(function (payload) {
+	            dispatch(updateStreamListSuccess(payload));
+	        });
+	    };
+	}
+
+/***/ },
+/* 280 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.confUpdateRequest = confUpdateRequest;
+	exports.confUpdateSuccess = confUpdateSuccess;
+	exports.confUpdate = confUpdate;
+	function confUpdateRequest() {
+	    return {
+	        type: 'CONF_UPDATE_REQUEST'
+	    };
+	}
+	
+	function confUpdateSuccess(conf) {
+	    return {
+	        type: 'CONF_UPDATE_SUCCESS',
+	        payload: conf
+	    };
+	}
+	
+	function confUpdate() {
+	    return function (dispatch, state, connection) {
+	        dispatch(confUpdateRequest());
+	        connection.call('cinfo.cfg').then(function (payload) {
+	            dispatch(confUpdateSuccess(payload.cfg));
+	        });
+	    };
+	}
 
 /***/ }
 /******/ ]);

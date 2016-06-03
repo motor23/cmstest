@@ -50,7 +50,7 @@ class Dashboard extends React.Component {
 
 function mapStateToProps(state, props) {
     return {
-        dashboard: state.config.menu.dashboard
+        dashboard: state.conf.dashboard
     };
 }
 

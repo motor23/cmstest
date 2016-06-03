@@ -123,3 +123,11 @@
 .slds-modal {
     background: #cfd7e6;
 }
+
+.slds-modal__container {
+    max-width: 25rem;
+}
+
+.slds-modal .slds-form--horizontal {
+    margin: 20px 40px;
+}

@@ -1,59 +1,78 @@
 class Connection {
     constructor(url) {
         this._url = url;
-        this._websocket = null;
-        this._calls = {};
-        this._queue = [];
-        this._ready = false;
+        this._socket = null;
+        this._handlers = {};
+        this._messages = [];
+        this._id = 0;
+        this._reconnectAttempts = 0;
+        this._reconnectAttemptsMax = 5;
         this._connect();
+    }
+
+    _onopen(event) {
+        console.log('Connection established');
+        this.onopen && this.onopen(event);
+    }
+
+    _onclose(event) {
+        console.log('Connection closed');
+        this._socket = null;
+        this.onerror && this.onerror(event);
+        this._reconnect();
+    }
+
+    _onmessage(event) {
+        const {request_id, name, body} = JSON.parse(event.data);
+        const handler = this._handlers[request_id];
+        handler && delete this._handlers[request_id];
+        handler && handler.resolve(body);
     }
 
     _connect() {
-        //this._websocket && this._websocket.close();
-        this._websocket = new WebSocket(this._url);
-        this._websocket.addEventListener('open', this._open.bind(this));
-        this._websocket.addEventListener('close', this._close.bind(this));
-        this._websocket.addEventListener('message', this._message.bind(this));
+        console.log('Connecting...');
+        this._socket = new WebSocket(this._url);
+        this._socket.onopen = this._onopen.bind(this);
+        this._socket.onclose = this._onclose.bind(this);
+        this._socket.onmessage = this._onmessage.bind(this);
+    }
+
+    _reconnect() {
+        if (this._reconnectAttempts < this._reconnectAttemptsMax) {
+            const delay = 1000 * Math.pow(2, this._reconnectAttempts++);
+            setTimeout(this._connect.bind(this), delay);
+            console.log('Reconnecting in', delay, 'seconds');
+        }
+        else {
+            console.log('Exceeded max reconnect attempts, should reload page');
+        }
     }
 
     _send(message) {
-        if (this._ready) {
-            this._websocket.send(JSON.stringify(message));
-            return true;
+        try {
+            this._socket.send(JSON.stringify(message))
         }
-        this._queue.push(message);
-        return false;
+        catch (exc) {
+            this._messages.push(message);
+        }
     }
 
-    _open(event) {
-        this._ready = true;
-        this._queue = this._queue.filter(this._send.bind(this));
-    }
-
-    _close(event) {
-        this._ready = false;
-        this._websocket = null;
-        this._connect();
-    }
-
-    _message(event) {
-        const {request_id, name, body} = JSON.parse(event.data);
-        const call = this._calls[request_id];
-        call && delete this._calls[request_id];
-        call && call.resolve(body);
-    }
-
-    call(handler, payload) {
+    call(endpoint, payload) {
+        const id = this._id++;
+        const message = {
+            name: 'request',
+            request_id: id.toString(),
+            handler: endpoint,
+            body: payload
+        };
         return new Promise((resolve, reject) => {
-            const requestId = Math.floor(Math.random() * 10e12).toString();
-            this._calls[requestId] = {resolve, reject};
-            this._send({
-                request_id: requestId,
-                handler: handler,
-                name: 'request',
-                body: payload
-            });
+            this._handlers[id] = {resolve, reject};
+            this._send(message);
         });
+    }
+
+    subscribe(endpoint, handler) {
+        throw Error('Not implemented method');
     }
 }
 
