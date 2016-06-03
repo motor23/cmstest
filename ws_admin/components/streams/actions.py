@@ -42,20 +42,18 @@ class List(Base):
         filter_form = self.stream.get_filter_form(env)
         order_form = self.stream.get_order_form(env)
 
-        raw_filters = message.get('filters')
-        if raw_filters:
-            filters, filters_errors = filter_form.to_python(raw_filters)
-        else:
-            filters = filters_errors = {}
-
-        order = message.get('order', [])
-        page = message.get('page', 1)
-        page_size = message.get('page_size', 1)
+        raw_filters = message['filters']
+        filters, filters_errors = filter_form.to_python(raw_filters)
+        order = message['order']
+        if order[1] not in order_form:
+            raise exc.StreamFieldNotFound(self.stream, order[1])
+        page = message['page']
+        page_size = message['page_size']
         
         if not (0 < page_size <= self.stream.max_limit):
             raise exc.MessageError('Page size error')
 
-        query = self.query(env, filters)
+        query = self.query(env, filters, [order])
         total = query.count(env.db)
 
         query = self.page_query(query, page, page_size)
@@ -73,12 +71,12 @@ class List(Base):
             'total': total,
             'filters_fields': filter_form.get_cfg(),
             'filters_errors': filters_errors,
-            'filters': raw_message.get('filters', {}),
+            'filters': raw_filters,
             'page_size': page_size,
             'page': page,
         }
 
-    def query(self, env, filters={}, order=[]):
+    def query(self, env, filters={}, order=[('+', 'id')]):
         list_form = self.stream.get_list_form(env)
         order_form = self.stream.get_order_form(env)
         filter_form = self.stream.get_filter_form(env)
@@ -88,8 +86,8 @@ class List(Base):
         for name, field in filter_form.items():
             query = field.filter(query, filters.get(name))
 
-        for key in order or ['+id']:
-            value, name = key[0], key[1:]
+        for value, name in order:
+            assert name in order_form
             query = order_form[name].order(query, value)
         return query
 
@@ -111,9 +109,8 @@ class GetItem(Base):
 
     async def handle(self, env, message):
         message = self.message_form.to_python(message)
-        item_id = message.get('item_id')
-        if item_id is not None:
-            item = self.get_item(env, item_id, required=True)
+        if message['item_id'] is not None:
+            item = self.get_item(env, message['item_id'], required=True)
         else:
             item = {}
         item_fields_form = self.stream.get_item_form(env, item)

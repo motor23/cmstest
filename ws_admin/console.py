@@ -61,7 +61,7 @@ class Console:
     def cfg(self):
         self.send({'handler':'cinfo.cfg', 'body': {}})
 
-    def list(self, stream, filters=None, order=[], page=1, page_size=30):
+    def list(self, stream, filters=None, order='+id', page=1, page_size=30):
         filters = filters or {}
         order = order or []
         self.send({

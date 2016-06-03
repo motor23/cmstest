@@ -9,17 +9,30 @@ from ikcms.forms import fields, validators
 class mf_login(fields.StringField):
     name = 'login'
     label = 'Логин'
+    raw_required = True
     validators = (validators.required,)
 
 class mf_password(fields.StringField):
     name = 'password'
     label = 'Пароль'
+    raw_required = True
     validators = (validators.required,)
 
 class mf_key(fields.StringField):
     name = 'key'
     label = 'Ключ авторизации'
+    raw_required = True
     validators = (validators.required,)
+
+
+
+class AuthError(exc.MessageError): pass
+
+class AuthLoginError(AuthError):
+    message = 'Incorrect login or password'
+
+class AuthKeyError(AuthError):
+    message = 'Incorrect auth key'
 
 
 class WS_AuthComponent(WS_AuthComponentBase):
@@ -30,7 +43,6 @@ class WS_AuthComponent(WS_AuthComponentBase):
     ])
 
     key_form = MessageForm([
-        mf_login,
         mf_key,
     ])
 
@@ -38,45 +50,35 @@ class WS_AuthComponent(WS_AuthComponentBase):
     async def h_login(self, env, message):
         try:
             message = self.key_form.to_python(message)
-            login = message['login']
-            key = message['key']
-            key = self.auth_by_key(env, login, key)
+            key, login = self.auth_by_key(env, message['key'])
         except exc.MessageError:
             message = self.login_form.to_python(message)
-            login = message['login']
-            password = message['password']
-            key = self.auth_by_password(env, login, password)
-        if key:
-            env.user = {'login': login}
-            return {
-                'status': 'ok',
-                'login': login,
-                'key': key,
-                'session_id': env.session_id,
-            }
-        else:
-            return {
-                'status': 'failed',
-                'reason': 'Wrong login or password',
-            }
+            key, login = self.auth_by_password(
+                                    env, message['login'], message['password'])
+        env.user = {'login': login}
+        return {
+            'login': login,
+            'key': key,
+            'session_id': env.session_id,
+        }
 
     @user_required
     async def h_logout(self, env, message):
         env.user = None
-        return {'status': 'ok'}
+        return {}
 
     def auth_by_password(self, env, login, password):
         key = md5(login.encode('utf8')).hexdigest()
         if login == password:
-            return key
+            return login, key
         else:
-            return False
+            raise AuthLoginError
 
-    def auth_by_key(self, env, login, key):
-        if key == key:
-            return key
-        else:
-            return False
+    def auth_by_key(self, env, key):
+        try:
+            login, password = key.split('.')
+        except ValueError:
+            raise AuthKeyError
 
 
 ws_auth_component = WS_AuthComponent.create
