@@ -5,6 +5,7 @@ from .forms.messages import (
     mf_order,
     mf_page,
     mf_page_size,
+    mf_kwargs,
 )
 from . import exc
 
@@ -29,15 +30,16 @@ class Base:
 class List(Base):
     name = 'list'
 
-    message_form = MessageForm([
-        mf_filters,
-        mf_order,
-        mf_page,
-        mf_page_size,
-    ])
+    class MessageForm(MessageForm):
+        fields = [
+            mf_filters,
+            mf_order,
+            mf_page,
+            mf_page_size,
+        ]
 
     async def handle(self, env, raw_message):
-        message = self.message_form.to_python(raw_message)
+        message = self.MessageForm().to_python(raw_message)
         list_form = self.stream.get_list_form(env)
         filter_form = self.stream.get_filter_form(env)
         order_form = self.stream.get_order_form(env)
@@ -45,8 +47,8 @@ class List(Base):
         raw_filters = message['filters']
         filters, filters_errors = filter_form.to_python(raw_filters)
         order = message['order']
-        if order[1] not in order_form:
-            raise exc.StreamFieldNotFound(self.stream, order[1])
+        if order[1:] not in order_form:
+            raise exc.StreamFieldNotFound(self.stream, order[1:])
         page = message['page']
         page_size = message['page_size']
         
@@ -74,9 +76,10 @@ class List(Base):
             'filters': raw_filters,
             'page_size': page_size,
             'page': page,
+            'order': message['order'],
         }
 
-    def query(self, env, filters={}, order=[('+', 'id')]):
+    def query(self, env, filters={}, order=['+id']):
         list_form = self.stream.get_list_form(env)
         order_form = self.stream.get_order_form(env)
         filter_form = self.stream.get_filter_form(env)
@@ -86,7 +89,8 @@ class List(Base):
         for name, field in filter_form.items():
             query = field.filter(query, filters.get(name))
 
-        for value, name in order:
+        for value in order:
+            value, name = value[0], value[1:]
             assert name in order_form
             query = order_form[name].order(query, value)
         return query
@@ -103,17 +107,20 @@ class GetItem(Base):
 
     name = 'get_item'
 
-    message_form = MessageForm([
-        mf_item_id,
-    ])
+    class MessageForm(MessageForm):
+        fields = [
+            mf_item_id,
+            mf_kwargs,
+        ]
 
     async def handle(self, env, message):
-        message = self.message_form.to_python(message)
+        message = self.MessageForm().to_python(message)
         if message['item_id'] is not None:
             item = self.get_item(env, message['item_id'], required=True)
         else:
             item = {}
-        item_fields_form = self.stream.get_item_form(env, item)
+        item_fields_form = self.stream.get_item_form(
+                                                env, item, message['kwargs'])
         raw_item = item_fields_form.from_python(item)
         return {
             'item_fields': item_fields_form.get_cfg(),
@@ -122,8 +129,11 @@ class GetItem(Base):
 
     def get_item(self, env, item_id, required=False):
         items = self.stream.query().filter_by_id(item_id).execute(env.db)
-        if not items and required:
-            raise exc.StreamItemNotFound(self.stream, item_id)
+        if not items:
+            if required:
+                raise exc.StreamItemNotFound(self.stream, item_id)
+            else:
+                return None
         return items[0]
 
 

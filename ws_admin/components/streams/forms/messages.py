@@ -26,23 +26,18 @@ class mf_page_size(fields.IntField):
     to_python_default = 1
 
 
-class OrderByConv(convs.Str):
-    validators = (
-        validators.required,
-        validators.match(
-            regex = '[+\-]{1}',
-            message = 'Order value must startswith "+" or "-"',
-        )
-    )
-    def to_python(self, field, value):
-        values, errors = super().to_python(field, value)
-        if values:
-            return (values[0], values[1:]), errors
-
-
 class mf_order(fields.StringField):
     name = 'order'
     label = 'Сортировка'
-    conv = OrderByConv()
-    to_python_default = ('+', 'id')
+    to_python_default = '+id'
+    required = True
+    regex = '[+\-]{1}'
+    regex_error = 'Order value must startswith "+" or "-"',
+
+
+class mf_kwargs(fields.RawDictField):
+    name = 'kwargs'
+    label = 'Ключевые аргументы'
+    to_python_default = {}
+
 

@@ -10,26 +10,29 @@ class mf_login(fields.StringField):
     name = 'login'
     label = 'Логин'
     raw_required = True
-    validators = (validators.required,)
+    required = True
+
 
 class mf_password(fields.StringField):
     name = 'password'
     label = 'Пароль'
     raw_required = True
-    validators = (validators.required,)
+    required = True
+
 
 class mf_key(fields.StringField):
     name = 'key'
     label = 'Ключ авторизации'
     raw_required = True
-    validators = (validators.required,)
-
+    required = True
 
 
 class AuthError(exc.MessageError): pass
 
+
 class AuthLoginError(AuthError):
     message = 'Incorrect login or password'
+
 
 class AuthKeyError(AuthError):
     message = 'Incorrect auth key'
@@ -37,22 +40,23 @@ class AuthKeyError(AuthError):
 
 class WS_AuthComponent(WS_AuthComponentBase):
 
-    login_form = MessageForm([
-        mf_login,
-        mf_password,
-    ])
+    class LoginForm(MessageForm):
+        fields = [
+            mf_login,
+            mf_password,
+        ]
 
-    key_form = MessageForm([
-        mf_key,
-    ])
-
+    class KeyForm(MessageForm):
+        fields = [
+            mf_key,
+        ]
 
     async def h_login(self, env, message):
         try:
-            message = self.key_form.to_python(message)
+            message = self.KeyForm().to_python(message)
             key, login = self.auth_by_key(env, message['key'])
         except exc.MessageError:
-            message = self.login_form.to_python(message)
+            message = self.LoginForm().to_python(message)
             key, login = self.auth_by_password(
                                     env, message['login'], message['password'])
         env.user = {'login': login}
