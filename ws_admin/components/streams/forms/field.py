@@ -1,6 +1,6 @@
 from ikcms.forms import fields
 
-class Field(fields.BaseField):
+class Field(fields.Field):
 
     widget = None
 

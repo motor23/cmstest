@@ -1,6 +1,6 @@
 from iktomi.utils import cached_property
+from ikcms.forms import Form
 
-from .forms import StreamForm
 from . import actions
 from . import exc
 
@@ -43,10 +43,15 @@ class Stream(StreamBase):
     widget = 'Stream'
     max_limit = 100
 
+    ListForm = Form
+    FilterForm = Form
+    ItemForm = Form
+
     list_fields = []
     filter_fields = []
-    default_order = ['+id']
     item_fields = []
+
+    default_order = ['+id']
 
     actions = [
         actions.List,
@@ -61,16 +66,24 @@ class Stream(StreamBase):
     ]
 
     def get_list_form(self, env):
-        return StreamForm(self.list_fields, self)
+        class Form(self.ListForm):
+            fields = self.list_fields
+        return Form(env=env, stream=self)
 
     def get_filter_form(self, env):
-        return StreamForm(self.filter_fields, self)
+        class Form(self.FilterForm):
+            fields = self.filter_fields
+        return Form(env=env, stream=self)
 
     def get_order_form(self, env):
-        return StreamForm(filter(lambda x: x.order, self.list_fields), self)
+        class Form(self.ListForm):
+            fields = [f for f in self.list_fields if f.order]
+        return Form(env=env, stream=self)
 
-    def get_item_form(self, env, item={}):
-        return StreamForm(self.item_fields, self)
+    def get_item_form(self, env, item={}, kwargs={}):
+        class Form(self.ItemForm):
+            fields = self.item_fields
+        return Form(env=env, stream=self)
 
     def query(self, keys=None):
         return self.mapper.select(keys)
