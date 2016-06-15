@@ -8,3 +8,6 @@ js-watch:
 
 test-js:
 	npm --prefix admin/static run test:js
+
+test-py:
+	PYTHONPATH=third-party nosetests tests
