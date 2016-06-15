@@ -1,5 +1,4 @@
 from unittest import TestCase
-from ikcms.forms.fields import BaseField
 from ikcms.forms.convs import RawValueTypeError
 from ikcms.forms.convs import NOTSET
 

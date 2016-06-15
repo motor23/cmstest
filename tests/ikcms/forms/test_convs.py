@@ -1,84 +1,139 @@
-from functools import partial
+from datetime import date
 from unittest import TestCase
-from hypothesis import given
-from hypothesis import strategies as s
+from unittest.mock import MagicMock
 from ikcms.forms.convs import *
 
 
 class BoolConvTestCase(TestCase):
     def test_to_python(self):
-        conv = Bool()
-        to_python = partial(conv.to_python, None)
-
-        self.assertEqual(None, to_python(None))
-        self.assertEqual(False, to_python(False))
-        self.assertEqual(False, to_python(''))
-        self.assertEqual(False, to_python(0))
-        self.assertEqual(True, to_python(True))
-        self.assertEqual(True, to_python(object()))
-        self.assertEqual(True, to_python(' '))
-        self.assertEqual(True, to_python(1))
+        field = MagicMock()
+        conv = Bool(field)
+        self.assertEqual(None, conv.to_python(None))
+        self.assertEqual(False, conv.to_python(False))
+        self.assertEqual(True, conv.to_python(True))
+        with self.assertRaises(RawValueTypeError):
+            conv.to_python('')
 
     def test_from_python(self):
-        conv = Bool()
-        from_python = partial(conv.from_python, None)
-
-        self.assertEqual(None, from_python(None))
-        self.assertEqual(False, from_python(False))
-        self.assertEqual(False, from_python(''))
-        self.assertEqual(False, from_python(0))
-        self.assertEqual(True, from_python(True))
-        self.assertEqual(True, from_python(object()))
-        self.assertEqual(True, from_python(1))
+        field = MagicMock()
+        conv = Bool(field)
+        self.assertEqual(None, conv.from_python(None))
+        self.assertEqual(False, conv.from_python(False))
+        self.assertEqual(True, conv.from_python(True))
 
 
 class IntConvTestCase(TestCase):
 
     def test_to_python(self):
-        conv = Int()
-        to_python = partial(conv.to_python, None)
-
-        self.assertEqual(None, to_python(None))
-        self.assertEqual(1337, to_python(1337))
-        self.assertEqual(1337, to_python('1337'))
+        field = MagicMock()
+        conv = Int(field)
+        self.assertEqual(None, conv.to_python(None))
+        self.assertEqual(1, conv.to_python(1))
+        with self.assertRaises(RawValueTypeError):
+            conv.to_python('1')
 
     def test_from_python(self):
-        conv = Int()
-        from_python = partial(conv.from_python, None)
-
-        self.assertEqual(None, from_python(None))
-        self.assertEqual(1337, from_python(1337))
+        field = MagicMock()
+        conv = Int(field)
+        self.assertEqual(None, conv.from_python(None))
+        self.assertEqual(1, conv.from_python(1))
 
 
 class StrConvTestCase(TestCase):
     def test_to_python(self):
-        pass
+        field = MagicMock()
+        conv = Str(field)
+        self.assertEqual(None, conv.to_python(None))
+        self.assertEqual('str', conv.to_python('str'))
+        with self.assertRaises(RawValueTypeError):
+            conv.to_python(True)
 
     def test_from_python(self):
-        pass
+        field = MagicMock()
+        conv = Str(field)
+        self.assertEqual(None, conv.from_python(None))
+        self.assertEqual('str', conv.from_python('str'))
 
 
 class ListConvTestCase(TestCase):
     def test_to_python(self):
-        conv = List(conv=Int())
-        to_python = partial(conv.to_python, None)
-
-        self.assertEqual(None, to_python(None))
-        self.assertEqual([], to_python([]))
-        self.assertEqual([1], to_python([1]))
-        self.assertEqual([1, 2], to_python([1, 2]))
-        self.assertEqual([1], to_python(['1']))
-
-        with self.assertRaises(RawValueTypeError) as ctx:
-            to_python('not_a_list')
-
-        with self.assertRaises(ValidationError) as ctx:
-            to_python(['not_a_number'])
-
-        self.assertEqual(ctx.exception.error, [Int.error_message])
+        field = MagicMock()
+        field.conv = Int(field)
+        field.to_python = field.conv.to_python
+        conv = List(field)
+        self.assertEqual(None, conv.to_python(None))
+        self.assertEqual([], conv.to_python([]))
+        self.assertEqual([1], conv.to_python([1]))
+        self.assertEqual([1, 2], conv.to_python([1, 2]))
+        with self.assertRaises(RawValueTypeError):
+            conv.to_python('invalid')
+        with self.assertRaises(RawValueTypeError):
+            conv.to_python(['invalid'])
 
     def test_from_python(self):
-        conv = List(conv=Int())
-        from_python = partial(conv.from_python, None)
+        field = MagicMock()
+        field.name = 'TestField'
+        field.conv = Int(field)
+        field.from_python = field.conv.from_python
+        conv = List(field)
+        self.assertEqual(None, conv.from_python(None))
+        self.assertEqual([], conv.from_python([]))
+        self.assertEqual([1, 2], conv.from_python([1, 2]))
 
-        self.assertEqual(None, from_python(None))
+
+class DictConvTestCase(TestCase):
+    def test_to_python(self):
+        str_field = MagicMock()
+        str_field.name = 'str_field'
+        str_field.conv = Str(str_field)
+        str_field.raw_required = False
+        str_field.to_python_default = MagicMock()
+        str_field.to_python = str_field.conv.to_python
+        int_field = MagicMock()
+        int_field.name = 'int_field'
+        int_field.conv = Int(int_field)
+        int_field.raw_required = False
+        int_field.to_python_default = MagicMock()
+        int_field.to_python = int_field.conv.to_python
+        field = MagicMock()
+        field.named_fields = {'str_field': str_field, 'int_field': int_field}
+        conv = Dict(field)
+        default_raw = {
+        }
+        default_result = {
+            'str_field': str_field.to_python_default,
+            'int_field': int_field.to_python_default,
+        }
+        first_raw = {
+            'str_field': 'str',
+            'int_field': 1,
+        }
+        first_result = {
+            'str_field': 'str',
+            'int_field': 1,
+        }
+        self.assertEqual(None, conv.to_python(None))
+        self.assertEqual(default_result, conv.to_python(default_raw))
+        self.assertEqual(first_result, conv.to_python(first_raw))
+
+    def test_from_python(self):
+        field = MagicMock()
+
+
+class DateConvTestCase(TestCase):
+    def test_to_python(self):
+        field = MagicMock()
+        field.format = '%Y-%m-%d'
+        conv = Date(field)
+        self.assertEqual(None, conv.to_python(None))
+        self.assertEqual(date(2016, 6, 15), conv.to_python('2016-06-15'))
+        with self.assertRaises(ValidationError) as exc:
+            conv.to_python('invalid')
+        self.assertEqual(exc.exception.error, Date.error_not_valid)
+
+    def test_from_python(self):
+        field = MagicMock()
+        field.format = '%Y-%m-%d'
+        conv = Date(field)
+        self.assertEqual(None, conv.from_python(None))
+        self.assertEqual('2016-06-15', conv.from_python(date(2016, 6, 15)))
