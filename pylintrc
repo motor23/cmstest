@@ -16,12 +16,14 @@ jobs=2
 # E0213: Method should have "self" as first argument
 # E0202: An attribute defined in iktomi.web.app line 69 hides this method
 # E1121: Too many positional arguments for constructor call
-# E0401
-disable=W0612,W0613,W0511,W0142,W0622,C0111,C0103,R0201,R0903,E0213,E0202,E1121,E0401
+# E0401:
+# W0614: Unused wildcard import
+# W0401: Wildcard import
+disable=W0612,W0613,W0511,W0142,W0622,C0111,C0103,R0201,R0903,E0213,E0202,E1121,E0401,W0614,W0401
 
 [Reports]
 output-format=colorized
-reports=yes
+reports=no
 msg-template={msg_id} {path}:{line} [{symbol}, {obj}] {msg}
 
 [Basic]

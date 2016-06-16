@@ -1,14 +1,16 @@
-from .forms.messages import (
-    MessageForm,
-    mf_item_id,
-    mf_filters,
-    mf_order,
-    mf_page,
-    mf_page_size,
-    mf_kwargs,
-    mf_values,
-)
-from . import exc
+from .forms.messages import MessageForm
+from .forms.messages import mf_item_id
+from .forms.messages import mf_filters
+from .forms.messages import mf_order
+from .forms.messages import mf_page
+from .forms.messages import mf_page_size
+from .forms.messages import mf_kwargs
+from .forms.messages import mf_values
+from .exc import StreamNotFound
+from .exc import StreamItemNotFound
+from .exc import StreamLimitError
+from .exc import StreamFieldNotFound
+from .exc import MessageError
 
 
 class Base:
@@ -49,18 +51,19 @@ class List(Base):
         filters, filters_errors = filter_form.to_python(raw_filters)
         order = message['order']
         if order[1:] not in order_form:
-            raise exc.StreamFieldNotFound(self.stream, order[1:])
+            raise StreamFieldNotFound(self.stream, order[1:])
         page = message['page']
         page_size = message['page_size']
         
         if not (0 < page_size <= self.stream.max_limit):
-            raise exc.MessageError('Page size error')
+            raise MessageError('Page size error')
 
-        query = self.query(env, filters, [order])
-        total = query.count(env.db)
+        with env.db(self.stream.mapper.db_id) as tnx:
+            query = self.query(env, filters, [order])
+            total = query.count(tnx)
 
-        query = self.page_query(query, page, page_size)
-        list_items = query.execute(env.db)
+            query = self.page_query(query, page, page_size)
+            list_items = query.execute(tnx)
 
         raw_list_items = list_form.values_from_python(list_items)
 
@@ -213,5 +216,4 @@ class DeleteItem(Base):
         return {
             'item_id': message['item_id'],
         }
-
 

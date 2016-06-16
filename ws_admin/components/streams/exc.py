@@ -1,7 +1,5 @@
-from ikcms.ws_apps.composite.exc import (
-    BaseError,
-    MessageError,
-)
+from ikcms.ws_apps.composite.exc import BaseError
+from ikcms.ws_apps.composite.exc import MessageError
 
 
 class StreamBaseError(BaseError):

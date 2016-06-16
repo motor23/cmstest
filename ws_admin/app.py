@@ -18,4 +18,3 @@ class App(ikcms.ws_apps.composite.App):
         ws_menu_component(menu=menu),
         ws_streams_component(streams=streams),
     ]
-
