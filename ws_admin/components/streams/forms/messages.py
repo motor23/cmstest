@@ -1,5 +1,4 @@
-from ikcms.ws_apps.base.messages import MessageForm
-from ikcms.forms import fields, validators, convs
+from ikcms.forms import fields
 
 
 class mf_item_id(fields.IntField):
@@ -31,7 +30,7 @@ class mf_order(fields.StringField):
     label = 'Сортировка'
     to_python_default = '+id'
     required = True
-    regex = '[+\-]{1}'
+    regex = r'[+\-]{1}'
     regex_error = 'Order value must startswith "+" or "-"',
 
 
@@ -39,5 +38,3 @@ class mf_kwargs(fields.RawDictField):
     name = 'kwargs'
     label = 'Ключевые аргументы'
     to_python_default = {}
-
-

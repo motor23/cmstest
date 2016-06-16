@@ -1,13 +1,15 @@
-from .forms.messages import (
-    MessageForm,
-    mf_item_id,
-    mf_filters,
-    mf_order,
-    mf_page,
-    mf_page_size,
-    mf_kwargs,
-)
-from . import exc
+from .forms.messages import MessageForm
+from .forms.messages import mf_item_id
+from .forms.messages import mf_filters
+from .forms.messages import mf_order
+from .forms.messages import mf_page
+from .forms.messages import mf_page_size
+from .forms.messages import mf_kwargs
+from .exc import StreamNotFound
+from .exc import StreamItemNotFound
+from .exc import StreamLimitError
+from .exc import StreamFieldNotFound
+from .exc import MessageError
 
 
 class Base:
@@ -48,12 +50,12 @@ class List(Base):
         filters, filters_errors = filter_form.to_python(raw_filters)
         order = message['order']
         if order[1:] not in order_form:
-            raise exc.StreamFieldNotFound(self.stream, order[1:])
+            raise StreamFieldNotFound(self.stream, order[1:])
         page = message['page']
         page_size = message['page_size']
         
         if not (0 < page_size <= self.stream.max_limit):
-            raise exc.MessageError('Page size error')
+            raise MessageError('Page size error')
 
         query = self.query(env, filters, [order])
         total = query.count(env.db)
@@ -131,7 +133,7 @@ class GetItem(Base):
         items = self.stream.query().filter_by_id(item_id).execute(env.db)
         if not items:
             if required:
-                raise exc.StreamItemNotFound(self.stream, item_id)
+                raise StreamItemNotFound(self.stream, item_id)
             else:
                 return None
         return items[0]
@@ -152,16 +154,16 @@ class StoreBase(Base):
             'errors': errors,
         }
 
-    def get_id(self, maessage):
+    def get_id(self, message):
         id = message.get('id')
         if not id:
-            raise exc.FieldRequiredError('body.id')
+            raise FieldRequiredError('body.id')
         return id
 
     def get_raw_values(self, message):
         raw_values = message.get('values')
-        if not isinstance(values, dict):
-            raise exc.MessageError('body.values field must be the dict')
+        if not isinstance(raw_values, dict):
+            raise MessageError('body.values field must be the dict')
 
     def get_item(self, env, id):
         raise NotImplementedError
@@ -181,7 +183,7 @@ class UpdateItem(StoreBase):
     def get_item(self, env, id):
         item = self.stream.get_item(env, id)
         if not item:
-            raise exc.StreamItemNotFound(self, id)
+            raise StreamItemNotFound(self, id)
         return item
 
 
@@ -196,7 +198,7 @@ class CreateItem(StoreBase):
     def get_item(self, env, id):
         item = self.stream.get_item(env, id)
         if item:
-            raise exc.StreamItemNotFound(self, id)
+            raise StreamItemNotFound(self, id)
         return None
 
     def store(self, env, id, values):
