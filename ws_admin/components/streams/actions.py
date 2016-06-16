@@ -6,6 +6,7 @@ from .forms.messages import (
     mf_page,
     mf_page_size,
     mf_kwargs,
+    mf_values,
 )
 from . import exc
 
@@ -110,131 +111,107 @@ class GetItem(Base):
     class MessageForm(MessageForm):
         fields = [
             mf_item_id,
-            mf_kwargs,
         ]
 
     async def handle(self, env, message):
         message = self.MessageForm().to_python(message)
-        if message['item_id'] is not None:
-            item = self.get_item(env, message['item_id'], required=True)
-        else:
-            item = {}
-        item_fields_form = self.stream.get_item_form(
-                                                env, item, message['kwargs'])
+        with env.db(self.stream.mapper.db_id) as tnx:
+            item = self.stream.get_item(tnx, message['item_id'], required=True)
+        item_fields_form = self.stream.get_item_form(env, item=item)
         raw_item = item_fields_form.from_python(item)
         return {
             'item_fields': item_fields_form.get_cfg(),
             'item': raw_item,
         }
 
-    def get_item(self, env, item_id, required=False):
-        items = self.stream.query().filter_by_id(item_id).execute(env.db)
-        if not items:
-            if required:
-                raise exc.StreamItemNotFound(self.stream, item_id)
-            else:
-                return None
-        return items[0]
 
+class NewItem(Base):
 
-class StoreBase(Base):
+    name = 'new_item'
+
+    class MessageForm(MessageForm):
+        fields = [
+            mf_kwargs,
+        ]
 
     async def handle(self, env, message):
-        id = self.get_id(message)
-        raw_values = self.get_raw_values(message)
-        item = self.get_item(env, id)
-        item_fields = self.stream.get_item_fields(env, item)
-        values, errors = self.accept(env, raw_values, item_fields)
-        self.store(env, id, values)
+        message = self.MessageForm().to_python(message)
+        item_fields_form = self.stream.get_item_form(
+                                                 env, kwargs=message['kwargs'])
+        raw_item = item_fields_form.from_python(item_fields_form.get_initials())
         return {
-            'fields': self.stream.get_fields_cfg(env, item_fields),
-            'values': raw_values,
-            'errors': errors,
+            'item_fields': item_fields_form.get_cfg(),
+            'item': raw_item,
         }
 
-    def get_id(self, maessage):
-        id = message.get('id')
-        if not id:
-            raise exc.FieldRequiredError('body.id')
-        return id
 
-    def get_raw_values(self, message):
-        raw_values = message.get('values')
-        if not isinstance(values, dict):
-            raise exc.MessageError('body.values field must be the dict')
-
-    def get_item(self, env, id):
-        raise NotImplementedError
-
-    def accept(self, env, raw_values, item_fields):
-        return self.stream.item_accept(env, raw_values, item_fields)
-
-    def store(self, env, values):
-        raise NotImplementedError
-
-
-
-class UpdateItem(StoreBase):
-
-    name = 'update_item'
-
-    def get_item(self, env, id):
-        item = self.stream.get_item(env, id)
-        if not item:
-            raise exc.StreamItemNotFound(self, id)
-        return item
-
-
-    def store(self, env, id, values):
-        self.mapper.update(values.keys()).filter_by_id(id).execute(env.db)
-
-
-class CreateItem(StoreBase):
+class CreateItem(Base):
 
     name = 'create_item'
 
-    def get_item(self, env, id):
-        item = self.stream.get_item(env, id)
-        if item:
-            raise exc.StreamItemNotFound(self, id)
-        return None
+    class MessageForm(MessageForm):
+        fields = [
+            mf_values,
+            mf_kwargs,
+        ]
 
-    def store(self, env, id, values):
-        item = dict(values, id=id)
-        self.mapper.insert(values.keys()).items([item]).execute(env.db)
-
-    def filters_to_python(self, env, message):
-        raw_filters = message.get('filters', {})
-        if not isinstance(raw_filters, dict):
-            raise MessageError('body.filters field must be the dict')
-        for key in raw_filters:
-            if key not in self.stream.filter_fields_dict:
-                raise StreamFieldNotFound(self.stream, key)
-
-        return self.stream.fields_accept(
-            env,
-            raw_filters,
-            self.stream.filter_fields_dict,
-        )
-
-    def order_to_python(self, env, message):
-        raw_order = message.get('order', [])
-        if not isinstance(raw_order, list):
-            raise MessageError('body.order field must be the list')
-        if not raw_order:
-            raw_order = self.stream.default_order
-        for key in raw_order:
-            if not isinstance(key, str):
-                raise MessageError('body.order field items must be the str')
-            if not (key and key[0] in ['+', '-']):
-                raise MessageError(
-                    'body.order field items must starts with + or -')
-        return raw_order
+    async def handle(self, env, message):
+        item_fields_form = self.stream.get_item_form(
+                                                env, kwargs=message['kwargs'])
+        raw_item = message['values']
+        item, errors = item_fields_form.to_python(raw_item)
+        if not errors:
+            with env.db(self.stream.mapper.db_id) as tnx:
+                item = self.stream.create_item(tnx, item)
+            raw_item = item_fields_form.from_python(item)
+        return {
+            'item_fields': item_fields_form.get_cfg(),
+            'item': raw_item,
+            'errors': errors,
+        }
 
 
-    def limit_to_python(self, env, message):
-        raw_limit = message.get('limit')
-        if raw_limit not in self.stream.limits:
-            raise StreamLimitError(self.stream, raw_limit)
-        return raw_limit
+class UpdateItem(Base):
+    
+    name = 'update_item'
+
+    class MessageForm(MessageForm):
+        fields = [
+            mf_item_id,
+            mf_values,
+        ]
+
+    async def handle(self, env, message):
+        item_fields_form = self.stream.get_item_form(env)
+        item_id = message['item_id']
+        raw_values = message['values']
+        values, errors = item_fields_form.to_python(raw_values,
+                                                    keys=raw_values.keys())
+        if not errors:
+            with env.db(self.stream.mapper.db_id) as tnx:
+                item = self.stream.update_item(tnx, item_id, values)
+            raw_item = item_fields_form.from_python(item, keys=item.keys())
+        return {
+            'item_fields': item_fields_form.get_cfg(),
+            'item': raw_item,
+            'errors': errors,
+        }
+
+
+class DeleteItem(Base):
+
+    name = 'delete_item'
+
+    class MessageForm(MessageForm):
+        fields = [
+            mf_item_id,
+        ]
+
+    async def handle(self, env, message):
+        with env.db(self.stream.mapper.db_id) as tnx:
+            self.stream.delete_item(tnx, message['item_id'])
+        return {
+            'item_id': message['item_id'],
+        }
+
 

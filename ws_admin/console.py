@@ -17,6 +17,10 @@ class Console:
             ('cfg', self.cfg),
             ('list', self.list),
             ('get_item', self.get_item),
+            ('new_item', self.new_item),
+            ('create_item', self.create_item),
+            ('update_item', self.update_item),
+            ('delete_item', self.delete_item),
         )
         self.namespace = dict(self.commands)
 
@@ -86,6 +90,47 @@ class Console:
             },
         })
 
+    def new_item(self, stream, kwargs={}):
+        self.send({
+            'handler':'streams.action',
+            'body': {
+                'stream': stream,
+                'action': 'new_item',
+                'kwargs': kwargs,
+            },
+        })
+
+    def create_item(self, stream, values, kwargs={}):
+        self.send({
+            'handler':'streams.action',
+            'body': {
+                'stream': stream,
+                'action': 'create_item',
+                'values': values,
+                'kwargs': kwargs,
+            },
+        })
+
+    def update_item(self, stream, item_id, values):
+        self.send({
+            'handler':'streams.action',
+            'body': {
+                'stream': stream,
+                'action': 'update_item',
+                'item_id': item_id,
+                'values': values,
+            },
+        })
+
+    def delete_item(self, stream, item_id):
+        self.send({
+            'handler':'streams.action',
+            'body': {
+                'stream': stream,
+                'action': 'delete_item',
+                'item_id': item_id,
+            },
+        })
 
 
 async def console(loop):

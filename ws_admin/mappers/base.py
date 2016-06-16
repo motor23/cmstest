@@ -3,7 +3,7 @@ from sqlalchemy.orm import ColumnProperty, RelationshipProperty
 from sqlalchemy import sql, func
 
 
-class ItemNotFoundError(Exception):
+class ItemNotFound(Exception):
     pass
 
 
@@ -153,7 +153,7 @@ class SelectQuery(Query):
         for item in self._items:
             row = row_by_id.get(item['id'])
             if row is None:
-                raise ItemNotFoundError(item['id'])
+                raise ItemNotFound(item['id'])
             item.update(row)
         return self._items
 
@@ -188,7 +188,7 @@ class UpdateQuery(Query):
             value = dict([(key, item[key]) for key in self._table_keys])
             result = db.execute(query.values(**value))
             if result.rowcount != 1:
-                raise ItemNotFoundError(item['id'])
+                raise ItemNotFound(item['id'])
             for key in self._relation_keys:
                 self._mapper.relations[key].store(db, item['id'], item[key])
         return len(self._items)
@@ -197,7 +197,25 @@ class UpdateQuery(Query):
         return db.execute(self._query).rowcount
 
 
-def model_to_mapper(model):
+class DeleteQuery(Query):
+
+    def set_query(self, query=None):
+        self._query = self._mapper.table.delete()
+
+    def _execute_items(self, db):
+        assert not [item for item in self._items if 'id' not in item]
+        for item in self._items:
+            query = self._query.where(self._mapper.table.c.id == item['id'])
+            result = db.execute(query)
+            if result.rowcount != 1:
+                raise ItemNotFound(item['id'])
+        return len(self._items)
+
+    def _execute_query(self, db):
+        return db.execute(self._query).rowcount
+
+
+def model_to_mapper(model, mapper_cls):
     relations = {}
     for name in dir(model):
         attr = getattr(model, name)
@@ -220,16 +238,20 @@ def model_to_mapper(model):
 
 class Mapper:
 
+    db_id = 'main'
+
     table = None
     relations = {}
 
     SelectQuery = SelectQuery
     InsertQuery = InsertQuery
     UpdateQuery = UpdateQuery
+    DeleteQuery = DeleteQuery
 
-    def __init__(self, table, relations):
-        relations = relations or {}
+    def __init__(self, table, relations, db_id=None):
+        self.db_id = db_id and db_id or self.db_id
         self.table = table
+        relations = relations or {}
         self.relations = relations.copy()
         self.allowed_keys = set(list(self.table.c.keys()) + list(self.relations))
 
@@ -245,14 +267,20 @@ class Mapper:
         relation_keys = set([key for key in keys if key in self.relations])
         return table_keys, relation_keys
 
+    def get_engine(self, db):
+        return db.binds[self.table]
+
     def select(self, keys=None):
         return self.SelectQuery(self, keys)
 
     def insert(self, keys=None):
         return self.InsertQuery(self, keys)
 
-    def update(self, values, keys=None):
-        return self.UpdateQuery(self, values)
+    def update(self, keys=None):
+        return self.UpdateQuery(self, keys)
+
+    def delete(self):
+        return self.DeleteQuery(self)
 
     def load(self, db, items, keys=None):
         return self.select(keys).items(items).execute(db)

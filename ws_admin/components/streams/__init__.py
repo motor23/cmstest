@@ -12,6 +12,11 @@ class WS_Streams(WS_ComponentBase):
     name = 'streams'
     streams = {}
 
+    def __init__(self, app):
+        super().__init__(app)
+        self.streams = dict([(name, cls(self)) \
+                                    for name, cls in self.streams.items()])
+
     def get_cfg(self, env):
         return {
             'streams': [s.get_cfg(env) for s in self.streams.values()],

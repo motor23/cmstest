@@ -30,5 +30,4 @@ class Docs(Stream):
     ]
 
 
-Docs().register(streams)
-
+Docs.register(streams)

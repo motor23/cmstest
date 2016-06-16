@@ -5,8 +5,8 @@ from ikcms.forms import fields, validators, convs
 class mf_item_id(fields.IntField):
     name = 'item_id'
     label = 'Идентификатор документа'
-    to_python_default = None
-
+    raw_required = True
+    required = True
 
 class mf_filters(fields.RawDictField):
     name = 'filters'
@@ -41,3 +41,8 @@ class mf_kwargs(fields.RawDictField):
     to_python_default = {}
 
 
+class mf_values(fields.RawDictField):
+    name = 'values'
+    label = 'Значения'
+    raw_required = True
+    required = True
