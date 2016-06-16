@@ -1,3 +1,4 @@
+from ikcms.ws_apps.base.messages import MessageForm
 from ikcms.forms import fields
 
 
