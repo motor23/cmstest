@@ -1,13 +1,14 @@
-js:
+static:
 	npm --prefix admin/static run build:js
 
-
-js-watch:
+static-watch:
 	npm --prefix admin/static run watch:js
 
-
-test-js:
+static-test:
 	npm --prefix admin/static run test:js
 
-test-py:
+test:
 	PYTHONPATH=third-party nosetests tests
+
+lint:
+	PYTHONPATH=third-party pylint ikcms admin ws_admin models tests
