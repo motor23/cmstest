@@ -23,7 +23,6 @@ class BoolConvTestCase(TestCase):
 
 
 class IntConvTestCase(TestCase):
-
     def test_to_python(self):
         field = MagicMock()
         conv = Int(field)
@@ -118,6 +117,23 @@ class DictConvTestCase(TestCase):
 
     def test_from_python(self):
         field = MagicMock()
+        str_field = MagicMock()
+        str_field.name = 'str_field'
+        str_field.conv = Str(str_field)
+        str_field.raw_required = False
+        str_field.from_python = str_field.conv.from_python
+        int_field = MagicMock()
+        int_field.name = 'int_field'
+        int_field.conv = Int(int_field)
+        int_field.raw_required = False
+        int_field.from_python = int_field.conv.from_python
+        field = MagicMock()
+        field.named_fields = {'str_field': str_field, 'int_field': int_field}
+        conv = Dict(field)
+
+        self.assertEqual(None, conv.from_python(None))
+        self.assertEqual({'str_field': None, 'int_field': None},
+                         conv.from_python({}))
 
 
 class DateConvTestCase(TestCase):
