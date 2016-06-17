@@ -1,15 +1,14 @@
-from ikcms.forms import (
-    fields,
-    widgets,
-)
+from ikcms.forms import fields
 
 
 def simple_order(field, query, value):
     assert value in ['+', '-']
     return query.order_by(value + field.name)
 
+
 class lf_str(fields.StringField):
     order = simple_order
+
 
 class lf_int(fields.IntField):
     order = simple_order

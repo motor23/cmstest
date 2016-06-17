@@ -1,5 +1,4 @@
 from ikcms.ws_components.base import WS_Component as WS_ComponentBase
-from . import items
 
 
 class WS_MenuComponent(WS_ComponentBase):

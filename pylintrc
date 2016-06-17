@@ -19,7 +19,11 @@ jobs=2
 # E0401:
 # W0614: Unused wildcard import
 # W0401: Wildcard import
-disable=W0612,W0613,W0511,W0142,W0622,C0111,C0103,R0201,R0903,E0213,E0202,E1121,E0401,W0614,W0401
+# W0122: Use of exec
+# R0914: Too many local variables
+# R0902: Too many instance attributes
+# W0703: Catching too general exception Exception
+disable=W0612,W0613,W0511,W0142,W0622,C0111,C0103,R0201,R0903,E0213,E0202,E1121,E0401,W0614,W0401,W0122,R0914,R0902,W0703
 
 [Reports]
 output-format=colorized

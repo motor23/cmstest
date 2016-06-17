@@ -172,6 +172,9 @@ class InsertQuery(Query):
                 self._mapper.relations[key].store(db, item['id'], item[key])
         return self._items
 
+    def _execute_query(self, db):
+        return db.execute(self._query).rowcount
+
 
 class UpdateQuery(Query):
 

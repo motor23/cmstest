@@ -1,4 +1,4 @@
-from .forms.messages import MessageForm
+from .forms.messages import MessageForm as MessageFormBase
 from .forms.messages import mf_item_id
 from .forms.messages import mf_filters
 from .forms.messages import mf_order
@@ -6,9 +6,6 @@ from .forms.messages import mf_page
 from .forms.messages import mf_page_size
 from .forms.messages import mf_kwargs
 from .forms.messages import mf_values
-from .exc import StreamNotFound
-from .exc import StreamItemNotFound
-from .exc import StreamLimitError
 from .exc import StreamFieldNotFound
 from .exc import MessageError
 
@@ -20,7 +17,7 @@ class Base:
         assert self.name is not None
         self.stream = stream
 
-    async def handle(self, env):
+    async def handle(self, env, message):
         raise NotImplementedError
 
     def get_cfg(self, env):
@@ -33,7 +30,7 @@ class Base:
 class List(Base):
     name = 'list'
 
-    class MessageForm(MessageForm):
+    class MessageForm(MessageFormBase):
         fields = [
             mf_filters,
             mf_order,
@@ -54,8 +51,8 @@ class List(Base):
             raise StreamFieldNotFound(self.stream, order[1:])
         page = message['page']
         page_size = message['page_size']
-        
-        if not (0 < page_size <= self.stream.max_limit):
+
+        if not 0 < page_size <= self.stream.max_limit:
             raise MessageError('Page size error')
 
         with env.db(self.stream.mapper.db_id) as tnx:
@@ -83,7 +80,10 @@ class List(Base):
             'order': message['order'],
         }
 
-    def query(self, env, filters={}, order=['+id']):
+    def query(self, env, filters=None, order=None):
+        filters = filters or {}
+        order = order or ['+id']
+
         list_form = self.stream.get_list_form(env)
         order_form = self.stream.get_order_form(env)
         filter_form = self.stream.get_filter_form(env)
@@ -111,7 +111,7 @@ class GetItem(Base):
 
     name = 'get_item'
 
-    class MessageForm(MessageForm):
+    class MessageForm(MessageFormBase):
         fields = [
             mf_item_id,
         ]
@@ -132,7 +132,7 @@ class NewItem(Base):
 
     name = 'new_item'
 
-    class MessageForm(MessageForm):
+    class MessageForm(MessageFormBase):
         fields = [
             mf_kwargs,
         ]
@@ -140,7 +140,7 @@ class NewItem(Base):
     async def handle(self, env, message):
         message = self.MessageForm().to_python(message)
         item_fields_form = self.stream.get_item_form(
-                                                 env, kwargs=message['kwargs'])
+            env, kwargs=message['kwargs'])
         raw_item = item_fields_form.from_python(item_fields_form.get_initials())
         return {
             'item_fields': item_fields_form.get_cfg(),
@@ -152,7 +152,7 @@ class CreateItem(Base):
 
     name = 'create_item'
 
-    class MessageForm(MessageForm):
+    class MessageForm(MessageFormBase):
         fields = [
             mf_values,
             mf_kwargs,
@@ -160,7 +160,7 @@ class CreateItem(Base):
 
     async def handle(self, env, message):
         item_fields_form = self.stream.get_item_form(
-                                                env, kwargs=message['kwargs'])
+            env, kwargs=message['kwargs'])
         raw_item = message['values']
         item, errors = item_fields_form.to_python(raw_item)
         if not errors:
@@ -175,10 +175,10 @@ class CreateItem(Base):
 
 
 class UpdateItem(Base):
-    
+
     name = 'update_item'
 
-    class MessageForm(MessageForm):
+    class MessageForm(MessageFormBase):
         fields = [
             mf_item_id,
             mf_values,
@@ -205,7 +205,7 @@ class DeleteItem(Base):
 
     name = 'delete_item'
 
-    class MessageForm(MessageForm):
+    class MessageForm(MessageFormBase):
         fields = [
             mf_item_id,
         ]

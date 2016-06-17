@@ -2,11 +2,11 @@ from sqlalchemy.schema import MetaData
 from sqlalchemy import (
     Column,
     Integer,
-    DateTime,
+    #DateTime,
     String,
-    Text,
-    Enum,
-    Boolean,
+    #Text,
+    #Enum,
+    #Boolean,
     ForeignKey,
 )
 from sqlalchemy.orm import (
@@ -23,7 +23,9 @@ TABLE_ARGS = {
     'mysql_default charset': 'utf8',
 }
 
-class ModelsMeta(AutoTableNameMeta, TableArgsMeta(TABLE_ARGS)): pass
+class ModelsMeta(AutoTableNameMeta, TableArgsMeta(TABLE_ARGS)):
+    pass
+
 
 Base = declarative_base(
     metadata=metadata,

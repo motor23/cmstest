@@ -29,9 +29,9 @@ class Console:
         print('===============================')
         print('Commands:')
         for key, value in self.commands:
-            print("{}({})".format(
+            print("{}{}".format(
                 key,
-                ','.join(inspect.getargs(value.__code__)[0][1:])
+                str(inspect.signature(value))
             ))
         print('===============================')
         if len(sys.argv) > 1:
@@ -54,10 +54,9 @@ class Console:
 
     def login(self, login, password):
         self.send({'handler':'auth.login', 'body': {
-                'login': login,
-                'password': password,
-            }
-        })
+            'login': login,
+            'password': password,
+        }})
 
     def logout(self):
         self.send({'handler':'auth.logout', 'body': {}})
@@ -90,24 +89,24 @@ class Console:
             },
         })
 
-    def new_item(self, stream, kwargs={}):
+    def new_item(self, stream, kwargs=None):
         self.send({
             'handler':'streams.action',
             'body': {
                 'stream': stream,
                 'action': 'new_item',
-                'kwargs': kwargs,
+                'kwargs': kwargs or {},
             },
         })
 
-    def create_item(self, stream, values, kwargs={}):
+    def create_item(self, stream, values, kwargs=None):
         self.send({
             'handler':'streams.action',
             'body': {
                 'stream': stream,
                 'action': 'create_item',
                 'values': values,
-                'kwargs': kwargs,
+                'kwargs': kwargs or {},
             },
         })
 

@@ -1,7 +1,4 @@
-from iktomi.utils import cached_property
 from ikcms.forms import Form
-
-from ws_admin.mappers import ItemNotFound
 
 from . import actions
 from . import exc
@@ -65,13 +62,13 @@ class Stream(StreamBase):
         actions.CreateItem,
         actions.UpdateItem,
         actions.DeleteItem,
-#        actions.create_draft,
-#        actions.delete_draft,
-#        actions.create_new_item,
-#        actions.edit_item,
-#        actions.get_field_block,
-#        actions.set_field_value,
-#        actions.delete_item,
+        #actions.create_draft,
+        #actions.delete_draft,
+        #actions.create_new_item,
+        #actions.edit_item,
+        #actions.get_field_block,
+        #actions.set_field_value,
+        #actions.delete_item,
     ]
 
     def __init__(self, component):
@@ -83,24 +80,25 @@ class Stream(StreamBase):
         return self.component.app.db(self.db_id)
 
     def get_list_form(self, env):
-        class Form(self.ListForm):
+        class ListForm(self.ListForm):
             fields = self.list_fields
-        return Form(env=env, stream=self)
+        return ListForm(env=env, stream=self)
 
     def get_filter_form(self, env):
-        class Form(self.FilterForm):
+        class FilterForm(self.FilterForm):
             fields = self.filter_fields
-        return Form(env=env, stream=self)
+        return FilterForm(env=env, stream=self)
 
     def get_order_form(self, env):
-        class Form(self.ListForm):
+        class ListForm(self.ListForm):
             fields = [f for f in self.list_fields if f.order]
-        return Form(env=env, stream=self)
+        return ListForm(env=env, stream=self)
 
-    def get_item_form(self, env, item=None, kwargs={}):
-        class Form(self.ItemForm):
+    def get_item_form(self, env, item=None, kwargs=None):
+        kwargs = kwargs or {}
+        class ItemForm(self.ItemForm):
             fields = self.item_fields
-        return Form(env=env, stream=self)
+        return ItemForm(env=env, stream=self)
 
     def query(self, keys=None):
         return self.mapper.select(keys)
@@ -123,8 +121,8 @@ class Stream(StreamBase):
                 raise exc.StreamItemNotFound(self, item_id)
             else:
                 return None
-        assert len(items)==1, \
-               'There are {} items with id={}'.format(cnt, item_id)
+        assert len(items) == 1, \
+               'There are {} items with id={}'.format(len(items), item_id)
         return items[0]
 
     def create_item(self, tnx, values):

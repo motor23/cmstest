@@ -27,7 +27,8 @@ class mf_key(fields.StringField):
     required = True
 
 
-class AuthError(exc.MessageError): pass
+class AuthError(exc.MessageError):
+    pass
 
 
 class AuthLoginError(AuthError):
@@ -58,7 +59,7 @@ class WS_AuthComponent(WS_AuthComponentBase):
         except exc.MessageError:
             message = self.LoginForm().to_python(message)
             key, login = self.auth_by_password(
-                                    env, message['login'], message['password'])
+                env, message['login'], message['password'])
         env.user = {'login': login}
         return {
             'login': login,
