@@ -2,6 +2,8 @@ from datetime import date
 from unittest import TestCase
 from unittest.mock import MagicMock
 from ikcms.forms.convs import *
+from ikcms.forms import exc
+from ikcms.forms import fields
 
 
 class BoolConvTestCase(TestCase):
@@ -11,7 +13,7 @@ class BoolConvTestCase(TestCase):
         self.assertEqual(None, conv.to_python(None))
         self.assertEqual(False, conv.to_python(False))
         self.assertEqual(True, conv.to_python(True))
-        with self.assertRaises(RawValueTypeError):
+        with self.assertRaises(exc.RawValueTypeError):
             conv.to_python('')
 
     def test_from_python(self):
@@ -28,7 +30,7 @@ class IntConvTestCase(TestCase):
         conv = Int(field)
         self.assertEqual(None, conv.to_python(None))
         self.assertEqual(1, conv.to_python(1))
-        with self.assertRaises(RawValueTypeError):
+        with self.assertRaises(exc.RawValueTypeError):
             conv.to_python('1')
 
     def test_from_python(self):
@@ -44,7 +46,7 @@ class StrConvTestCase(TestCase):
         conv = Str(field)
         self.assertEqual(None, conv.to_python(None))
         self.assertEqual('str', conv.to_python('str'))
-        with self.assertRaises(RawValueTypeError):
+        with self.assertRaises(exc.RawValueTypeError):
             conv.to_python(True)
 
     def test_from_python(self):
@@ -56,17 +58,16 @@ class StrConvTestCase(TestCase):
 
 class ListConvTestCase(TestCase):
     def test_to_python(self):
-        field = MagicMock()
+        field = fields.Field()
         field.conv = Int(field)
-        field.to_python = field.conv.to_python
         conv = List(field)
         self.assertEqual(None, conv.to_python(None))
         self.assertEqual([], conv.to_python([]))
         self.assertEqual([1], conv.to_python([1]))
         self.assertEqual([1, 2], conv.to_python([1, 2]))
-        with self.assertRaises(RawValueTypeError):
+        with self.assertRaises(exc.RawValueTypeError):
             conv.to_python('invalid')
-        with self.assertRaises(RawValueTypeError):
+        with self.assertRaises(exc.RawValueTypeError):
             conv.to_python(['invalid'])
 
     def test_from_python(self):
@@ -82,20 +83,19 @@ class ListConvTestCase(TestCase):
 
 class DictConvTestCase(TestCase):
     def test_to_python(self):
-        str_field = MagicMock()
+        str_field = fields.Field()
         str_field.name = 'str_field'
         str_field.conv = Str(str_field)
         str_field.raw_required = False
         str_field.to_python_default = MagicMock()
-        str_field.to_python = str_field.conv.to_python
-        int_field = MagicMock()
+        int_field = fields.Field()
         int_field.name = 'int_field'
         int_field.conv = Int(int_field)
         int_field.raw_required = False
         int_field.to_python_default = MagicMock()
-        int_field.to_python = int_field.conv.to_python
-        field = MagicMock()
-        field.named_fields = {'str_field': str_field, 'int_field': int_field}
+        int_field.to_python = int_field.to_python
+        field = fields.Field()
+        field.fields = [str_field, int_field]
         conv = Dict(field)
         default_raw = {
         }
@@ -132,8 +132,7 @@ class DictConvTestCase(TestCase):
         conv = Dict(field)
 
         self.assertEqual(None, conv.from_python(None))
-        self.assertEqual({'str_field': None, 'int_field': None},
-                         conv.from_python({}))
+        self.assertEqual({}, conv.from_python({}))
 
 
 class DateConvTestCase(TestCase):
@@ -143,9 +142,9 @@ class DateConvTestCase(TestCase):
         conv = Date(field)
         self.assertEqual(None, conv.to_python(None))
         self.assertEqual(date(2016, 6, 15), conv.to_python('2016-06-15'))
-        with self.assertRaises(ValidationError) as exc:
+        with self.assertRaises(exc.ValidationError) as e:
             conv.to_python('invalid')
-        self.assertEqual(exc.exception.error, Date.error_not_valid)
+        self.assertEqual(e.exception.error, Date.error_not_valid)
 
     def test_from_python(self):
         field = MagicMock()

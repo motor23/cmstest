@@ -1,6 +1,6 @@
 from unittest import TestCase
-from ikcms.forms.convs import RawValueTypeError
-from ikcms.forms.convs import NOTSET
+from ikcms.forms import exc
+from ikcms.forms import convs
 
 
 class FieldTestCase(TestCase):
