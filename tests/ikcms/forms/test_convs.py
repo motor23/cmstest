@@ -58,9 +58,7 @@ class StrConvTestCase(TestCase):
 
 class ListConvTestCase(TestCase):
     def test_to_python(self):
-        field = fields.Field()
-        field.conv = Int(field)
-        conv = List(field)
+        conv = List(self.field())
         self.assertEqual(None, conv.to_python(None))
         self.assertEqual([], conv.to_python([]))
         self.assertEqual([1], conv.to_python([1]))
@@ -71,14 +69,16 @@ class ListConvTestCase(TestCase):
             conv.to_python(['invalid'])
 
     def test_from_python(self):
-        field = MagicMock()
-        field.name = 'TestField'
-        field.conv = Int(field)
-        field.from_python = field.conv.from_python
-        conv = List(field)
+        conv = List(self.field())
         self.assertEqual(None, conv.from_python(None))
         self.assertEqual([], conv.from_python([]))
         self.assertEqual([1, 2], conv.from_python([1, 2]))
+
+    def field(self):
+        field = MagicMock()
+        field.name = 'TestField'
+        field.fields = [fields.Int()]
+        return field
 
 
 class DictConvTestCase(TestCase):
