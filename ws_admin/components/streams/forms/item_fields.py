@@ -1,11 +1,18 @@
 from ikcms.forms import fields
 
-class if_id(fields.IntField):
+
+__all__ = (
+    'id',
+    'title',
+)
+
+
+class id(fields.Int):
     name = 'id'
     label = 'Id'
 
 
-class if_title(fields.StringField):
+class title(fields.String):
 
     name = 'title'
     label = 'Title'

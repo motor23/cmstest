@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 
 from ikcms.forms import exc
 from ikcms.forms import fields
-from ikcms.forms import convs
 
 
 class BaseTestCase(TestCase):
@@ -11,14 +10,14 @@ class BaseTestCase(TestCase):
     field_cls = fields.Base
     type_error_values = []
     to_python_values = [
-            ('test_str', 'test_str'), 
-            (None, None),
-            (5, 5),
-            ({'aa',22}, {'aa',22}),
-            ([3,6], [3,6]),
+        ('test_str', 'test_str'),
+        (None, None),
+        (5, 5),
+        ({'aa', 22}, {'aa', 22}),
+        ([3, 6], [3, 6]),
     ]
     from_python_values = to_python_values
-    to_python_default_values = ['test_str', None, 5, [3,6]]
+    to_python_default_values = ['test_str', None, 5, [3, 6]]
 
 
     validation_tests = []
@@ -38,7 +37,7 @@ class BaseTestCase(TestCase):
 
         for value in self.type_error_values:
             with self.assertRaises(exc.RawValueTypeError) as e:
-                field.to_python(value),
+                field.to_python(value)
             self.assertEqual(e.exception.field_name, field.name)
 
         for kwargs, allowed_values, denied_values in self.validation_tests:
@@ -82,13 +81,13 @@ class FieldTestCase(BaseTestCase):
         field = self.field()()
         for raw_value, python_value in self.to_python_values:
             self.assertEqual(
-                field.to_python(self.test_dict(field.name, raw_value)), 
+                field.to_python(self.test_dict(field.name, raw_value)),
                 {field.name: python_value},
             )
 
         for value in self.type_error_values:
             with self.assertRaises(exc.RawValueTypeError) as e:
-                field.to_python(self.test_dict(field.name, value)),
+                field.to_python(self.test_dict(field.name, value))
             self.assertEqual(e.exception.field_name, field.name)
 
         for kwargs, allowed_values, denied_values in self.validation_tests:
@@ -97,7 +96,7 @@ class FieldTestCase(BaseTestCase):
                 field.to_python(self.test_dict(field.name, value))
             for value in denied_values:
                 with self.assertRaises(exc.ValidationError) as e:
-                    field.to_python(self.test_dict(field.name, value)),
+                    field.to_python(self.test_dict(field.name, value))
                 self.assertEqual(list(e.exception.error.keys()), [field.name])
 
 
@@ -155,12 +154,13 @@ class StringTestCase(FieldTestCase):
     ]
     validation_tests = [
         ({'required': True}, ['test_str', '325566'], [None, '']),
-        ({'min_len': 3}, [None, 'test_str', '325', '333'*40], ['', '1','23']),
+        ({'min_len': 3}, [None, 'test_str', '325', '333'*40], ['', '1', '23']),
         ({'max_len': 3}, [None, '', '3', '32', '123'], ['1234', '23'*5]),
-        ({'regex': '[abs]{3}$'},
+        (
+            {'regex': '[abs]{3}$'},
             [None, 'bsa', 'abs'],
             ['ab', 'abd', 'absabs', ''],
-        )
+        ),
     ]
 
 
@@ -169,11 +169,11 @@ class IntTestCase(FieldTestCase):
     field_cls = fields.Int
 
     to_python_values = [
-            (1, 1),
-            (-4, -4),
-            (500, 500),
-            (None, None),
-            (0, 0),
+        (1, 1),
+        (-4, -4),
+        (500, 500),
+        (None, None),
+        (0, 0),
     ]
     from_python_values = to_python_values
     type_error_values = [
@@ -190,19 +190,25 @@ class IntTestCase(FieldTestCase):
 class DictTestCase(FieldTestCase):
 
     field_cls = fields.Dict
-    type_error_values = [5, [2,4], "ddddd", MagicMock()]
+    type_error_values = [5, [2, 4], "ddddd", MagicMock()]
     to_python_values = [
         (None, None),
         ({}, {}),
-        ({'f1': 'value1', 'f2': 'value2'}, {'f1': 'value1', 'f2': 'value2'}),
-        ({
-            'f1': 'value1',
-            'f2': 'value2',
-            'other4': 'value3',
-        }, {
-            'f1': 'value1',
-            'f2': 'value2',
-        }),
+        (
+            {'f1': 'value1', 'f2': 'value2'},
+            {'f1': 'value1', 'f2': 'value2'},
+        ),
+        (
+            {
+                'f1': 'value1',
+                'f2': 'value2',
+                'other4': 'value3',
+            },
+            {
+                'f1': 'value1',
+                'f2': 'value2',
+            }
+        ),
     ]
     from_python_values = [
         ({'f1': 'value1', 'f2': 'value2'}, {'f1': 'value1', 'f2': 'value2'}),
@@ -216,22 +222,22 @@ class DictTestCase(FieldTestCase):
         }),
     ]
     validation_tests = [
-        ({'required': True},
-         [
-             {
-                'f1': 'value1',
-                'f2': 'value2',
-                'other4': 'value3',
-             },
-             {
-                'f1': 'value1',
-             },
-             {
-                'f1': 'value1',
-                'f2': None,
-             },
-        ],
-        [None, {}]),
+        (
+            {'required': True},
+            [
+                {
+                    'f1': 'value1',
+                    'f2': 'value2',
+                    'other4': 'value3',
+                },
+                {'f1': 'value1'},
+                {
+                    'f1': 'value1',
+                    'f2': None,
+                },
+            ],
+            [None, {}]
+        ),
     ]
 
     def field(self, **kwargs):
@@ -248,25 +254,27 @@ class ListTestCase(FieldTestCase):
     field_cls = fields.List
     type_error_values = [5, {'x':'xxx'}, "ddddd", MagicMock()]
     to_python_values = [
-            (None, None),
-            ([],[]),
-            ([1, 2, 3], [1, 2, 3]),
-            ([1, None, 3], [1, None, 3]),
-            ([{},[],[]], [{},[],[]]),
+        (None, None),
+        ([], []),
+        ([1, 2, 3], [1, 2, 3]),
+        ([1, None, 3], [1, None, 3]),
+        ([{}, [], []], [{}, [], []]),
     ]
 
     from_python_values = [
-            (None, None),
-            ([],[]),
-            ([1, 2, 3], [1, 2, 3]),
-            ([1, None, 3], [1, None, 3]),
-            ([{},[],[]], [{},[],[]]),
+        (None, None),
+        ([], []),
+        ([1, 2, 3], [1, 2, 3]),
+        ([1, None, 3], [1, None, 3]),
+        ([{}, [], []], [{}, [], []]),
     ]
 
     validation_tests = [
-        ({'required': True},
-         [[1,2,3],[None],[[]]],
-         [None, []]),
+        (
+            {'required': True},
+            [[1, 2, 3], [None], [[]]],
+            [None, []],
+        ),
     ]
 
     def field(self, **kwargs):
@@ -278,55 +286,97 @@ class BlockTestCase(BaseTestCase):
 
     field_cls = fields.Block
     type_error_values = [
-            {'test': 5},
-            {'test': [2,4]},
-            {'test': "ddddd"},
-            {'test': MagicMock()},
+        {'test': 5},
+        {'test': [2, 4]},
+        {'test': "ddddd"},
+        {'test': MagicMock()},
     ]
     to_python_default_values = []
     to_python_values = [
-        ({'test':{'f1': 'value1', 'f2': 'value2'}},
-         {'f1': 'value1', 'f2': 'value2'}),
-        ({'test': {
-            'f1': 'value1',
-            'f2': 'value2',
-            'other': 'value3',
-        }}, {
-            'f1': 'value1',
-            'f2': 'value2',
-        }),
+        (
+            {
+                'test':{
+                    'f1': 'value1',
+                    'f2': 'value2',
+                }
+            },
+            {
+                'f1': 'value1',
+                'f2': 'value2',
+            }
+        ),
+        (
+            {
+                'test': {
+                    'f1': 'value1',
+                    'f2': 'value2',
+                    'other': 'value3',
+                }
+            },
+            {
+                'f1': 'value1',
+                'f2': 'value2',
+            }
+        ),
     ]
 
     from_python_values = [
-        ({'f1': 'value1', 'f2': 'value2'},
-         {'test':{'f1': 'value1', 'f2': 'value2'}},
+        (
+            {
+                'f1': 'value1',
+                'f2': 'value2'
+            },
+            {
+                'test': {
+                    'f1': 'value1',
+                    'f2': 'value2',
+                },
+            },
         ),
-        ({
-            'f1': 'value1',
-            'f2': 'value2',
-            'other4': 'value3',
-         }, {'test': {
-            'f1': 'value1',
-            'f2': 'value2',
-        }}),
-    ]
-    validation_tests = [
-        ({'required': True},
-         [
-             {'test':{
+        (
+            {
                 'f1': 'value1',
                 'f2': 'value2',
                 'other4': 'value3',
-             }},
-             {'test':{
-                'f1': 'value1',
-             }},
-             {'test':{
-                'f1': 'value1',
-                'f2': None,
-             }},
-        ],
-         [{'test': None}, {'test':{}}]),
+            },
+            {
+                'test': {
+                    'f1': 'value1',
+                    'f2': 'value2',
+                }
+            }
+        ),
+    ]
+    validation_tests = [
+        (
+            {
+                'required': True,
+            },
+            [
+                {
+                    'test': {
+                        'f1': 'value1',
+                        'f2': 'value2',
+                        'other4': 'value3',
+                    },
+                },
+                {
+                    'test': {
+                        'f1': 'value1',
+                    },
+                },
+                {
+                    'test': {
+                        'f1': 'value1',
+                        'f2': None,
+                    },
+                },
+            ],
+            [
+                {'test': None},
+                {'test': {}}
+            ],
+        ),
     ]
 
     def field(self, **kwargs):

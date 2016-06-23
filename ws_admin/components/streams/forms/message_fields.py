@@ -1,32 +1,43 @@
 from ikcms.forms import fields
-from ikcms.ws_apps.base.messages import MessageForm
 
 
-class mf_item_id(fields.IntField):
+__all__ = (
+    'item_id',
+    'filters',
+    'page',
+    'page_size',
+    'order',
+    'kwargs',
+    'values',
+)
+
+
+class item_id(fields.Int):
     name = 'item_id'
     label = 'Идентификатор документа'
     raw_required = True
     required = True
 
-class mf_filters(fields.RawDictField):
+
+class filters(fields.RawDict):
     name = 'filters'
     label = 'Словарь фильтров'
     to_python_default = {}
 
 
-class mf_page(fields.IntField):
+class page(fields.Int):
     name = 'page'
     label = 'Номер страницы'
     to_python_default = 1
 
 
-class mf_page_size(fields.IntField):
+class page_size(fields.Int):
     name = 'page_size'
     label = 'Размер страницы'
     to_python_default = 1
 
 
-class mf_order(fields.StringField):
+class order(fields.String):
     name = 'order'
     label = 'Сортировка'
     to_python_default = '+id'
@@ -35,13 +46,13 @@ class mf_order(fields.StringField):
     regex_error = 'Order value must startswith "+" or "-"',
 
 
-class mf_kwargs(fields.RawDictField):
+class kwargs(fields.RawDict):
     name = 'kwargs'
     label = 'Ключевые аргументы'
     to_python_default = {}
 
 
-class mf_values(fields.RawDictField):
+class values(fields.RawDict):
     name = 'values'
     label = 'Значения'
     raw_required = True

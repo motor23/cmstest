@@ -1,55 +1,23 @@
 from hashlib import md5
 from ikcms.ws_components.auth.base import WS_AuthComponent as WS_AuthComponentBase
 from ikcms.ws_components.auth.base import user_required
-from ikcms.ws_apps.base.messages import MessageForm
-from ikcms.ws_apps.base import exc
-from ikcms.forms import fields, validators
+from ikcms.ws_apps.base.forms import MessageForm
 
-
-class mf_login(fields.StringField):
-    name = 'login'
-    label = 'Логин'
-    raw_required = True
-    required = True
-
-
-class mf_password(fields.StringField):
-    name = 'password'
-    label = 'Пароль'
-    raw_required = True
-    required = True
-
-
-class mf_key(fields.StringField):
-    name = 'key'
-    label = 'Ключ авторизации'
-    raw_required = True
-    required = True
-
-
-class AuthError(exc.MessageError):
-    pass
-
-
-class AuthLoginError(AuthError):
-    message = 'Incorrect login or password'
-
-
-class AuthKeyError(AuthError):
-    message = 'Incorrect auth key'
+from . import exc
+from .forms import message_fields
 
 
 class WS_AuthComponent(WS_AuthComponentBase):
 
     class LoginForm(MessageForm):
         fields = [
-            mf_login,
-            mf_password,
+            message_fields.login,
+            message_fields.password,
         ]
 
     class KeyForm(MessageForm):
         fields = [
-            mf_key,
+            message_fields.key,
         ]
 
     async def h_login(self, env, message):
@@ -77,13 +45,13 @@ class WS_AuthComponent(WS_AuthComponentBase):
         if login == password:
             return login, key
         else:
-            raise AuthLoginError
+            raise exc.AuthLoginError
 
     def auth_by_key(self, env, key):
         try:
             login, password = key.split('.')
         except ValueError:
-            raise AuthKeyError
+            raise exc.AuthKeyError
 
 
 ws_auth_component = WS_AuthComponent.create

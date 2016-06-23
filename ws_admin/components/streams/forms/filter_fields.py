@@ -1,6 +1,16 @@
 from ikcms.forms import fields
 
 
+__all__ = (
+    'simple_filter',
+    'String',
+    'Int',
+    'Find',
+    'id',
+    'title',
+)
+
+
 def simple_filter(op):
     def f(field, query, value):
         if value is not None:
@@ -9,21 +19,26 @@ def simple_filter(op):
     return f
 
 
-class ff_string(fields.StringField):
+
+class String(fields.String):
     filter = simple_filter('==')
 
-class ff_int(fields.IntField):
+
+class Int(fields.Int):
     filter = simple_filter('==')
 
-class ff_find(ff_string):
+
+class Find(String):
     filter = simple_filter('like')
 
 
-class ff_id(ff_int):
+
+class id(Int):
     name = 'id'
     label = 'Id'
 
-class ff_title(ff_find):
+
+class title(Find):
     name = 'title'
     label = 'Title'
 

@@ -4,6 +4,12 @@ from . import actions
 from . import exc
 
 
+__all__ = (
+    'StreamBase',
+    'Stream',
+)
+
+
 class StreamBase:
     name = None
     title = u'Название потока'
@@ -25,7 +31,7 @@ class StreamBase:
         if action:
             return action.handle(env, message)
         else:
-            raise exc.ActionNotFound(self, action_name)
+            raise exc.StreamActionNotFound(self, action_name)
 
     def get_action(self, name):
         for action in self.actions:

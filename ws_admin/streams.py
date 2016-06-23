@@ -1,12 +1,7 @@
 from ws_admin.components.streams import Stream
-from ws_admin.components.streams.forms import (
-    lf_id,
-    lf_title,
-    ff_id,
-    ff_title,
-    if_id,
-    if_title,
-)
+from ws_admin.components.streams.forms import list_fields
+from ws_admin.components.streams.forms import filter_fields
+from ws_admin.components.streams.forms import item_fields
 from ws_admin.mappers import docs_mapper
 
 streams = {}
@@ -17,16 +12,16 @@ class Docs(Stream):
     title = 'Документы'
     mapper = docs_mapper
     list_fields = [
-        lf_id,
-        lf_title,
+        list_fields.id,
+        list_fields.title,
     ]
     filter_fields = [
-        ff_id,
-        ff_title,
+        filter_fields.id,
+        filter_fields.title,
     ]
     item_fields = [
-        if_id,
-        if_title,
+        item_fields.id,
+        item_fields.title,
     ]
 
 

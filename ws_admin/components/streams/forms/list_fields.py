@@ -1,24 +1,33 @@
 from ikcms.forms import fields
 
 
+__all__ = (
+    'simple_order',
+    'String',
+    'Int',
+    'id',
+    'title',
+)
+
+
 def simple_order(field, query, value):
     assert value in ['+', '-']
     return query.order_by(value + field.name)
 
 
-class lf_str(fields.StringField):
+class String(fields.String):
     order = simple_order
 
 
-class lf_int(fields.IntField):
+class Int(fields.Int):
     order = simple_order
 
 
-class lf_id(lf_int):
+class id(Int):
     name = 'id'
     label = 'ID'
 
 
-class lf_title(lf_str):
+class title(String):
     name = 'title'
     label = 'Title'

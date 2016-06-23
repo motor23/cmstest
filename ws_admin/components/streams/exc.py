@@ -1,5 +1,16 @@
-from ikcms.ws_apps.composite.exc import BaseError
-from ikcms.ws_apps.composite.exc import MessageError
+from ikcms.ws_apps.base.exc import BaseError
+from ikcms.ws_apps.base.exc import MessageError
+
+
+__all__ = (
+    'MessageError',
+    'StreamBaseError',
+    'StreamNotFound',
+    'StreamActionNotFound',
+    'StreamFieldNotFound',
+    'StreamItemNotFound',
+    'StreamItemAlreadyExists',
+)
 
 
 class StreamBaseError(BaseError):
@@ -20,7 +31,7 @@ class StreamNotFound(StreamBaseError):
         )
 
 
-class ActionNotFound(StreamBaseError):
+class StreamActionNotFound(StreamBaseError):
     message = 'Action not found'
 
     def __init__(self, stream, action_name):
