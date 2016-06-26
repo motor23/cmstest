@@ -1,7 +1,7 @@
-from ikcms.ws_components.base import WS_Component as WS_ComponentBase
+import ikcms.ws_components.base
 
 
-class WS_MenuComponent(WS_ComponentBase):
+class Component(ikcms.ws_components.base.Component):
     name = 'menu'
     menu = {}
 
@@ -12,4 +12,4 @@ class WS_MenuComponent(WS_ComponentBase):
         return result
 
 
-ws_menu_component = WS_MenuComponent.create
+menu = Component.create_cls

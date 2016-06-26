@@ -1,4 +1,4 @@
-from ikcms.ws_components.base import WS_Component as WS_ComponentBase
+import ikcms.ws_components.base
 from . import exc
 from .stream import Stream
 
@@ -8,7 +8,7 @@ __all__ = (
 )
 
 
-class WS_Streams(WS_ComponentBase):
+class Component(ikcms.ws_components.base.Component):
     name = 'streams'
     streams = {}
 
@@ -36,4 +36,4 @@ class WS_Streams(WS_ComponentBase):
         }
 
 
-ws_streams_component = WS_Streams.create
+streams = Component.create_cls

@@ -80,7 +80,7 @@ class Stream(StreamBase):
     def __init__(self, component):
         super().__init__(component)
         assert self.mapper
-        self.db_id = self.mapper.get_engine(self.component.app.db).db_id
+        self.db_id = self.mapper.db_id
 
     def tnx(self):
         return self.component.app.db(self.db_id)
@@ -120,8 +120,8 @@ class Stream(StreamBase):
             filter_fields=filter_form.get_cfg(),
         )
 
-    def get_item(self, tnx, item_id, required=False):
-        items = self.query().filter_by_id(item_id).execute(tnx)
+    async def get_item(self, db, item_id, required=False):
+        items = await self.query().filter_by_id(item_id).execute(db)
         if not items:
             if required:
                 raise exc.StreamItemNotFound(self, item_id)
@@ -131,11 +131,13 @@ class Stream(StreamBase):
                'There are {} items with id={}'.format(len(items), item_id)
         return items[0]
 
-    def create_item(self, tnx, values):
-        return self.mapper.insert(values.keys()).items([values]).execute(tnx)[0]
+    async def create_item(self, db, values):
+        insert = self.mapper.insert(values.keys()).items([values])
+        result = await insert.execute(db)
+        return result[0]
 
-    def update_item(self, tnx, item_id, values):
-        cnt = self.mapper.update(values.keys()).\
+    async def update_item(self, tnx, item_id, values):
+        cnt = await self.mapper.update(values.keys()).\
                             filter_by_id(item_id).\
                             values(**values).\
                             execute(tnx)
@@ -144,8 +146,8 @@ class Stream(StreamBase):
         assert cnt == 1, 'There are {} items with id={}'.format(cnt, item_id)
         return values
 
-    def delete_item(self, tnx, item_id):
-        cnt = self.mapper.delete().filter_by_id(item_id).execute(tnx)
+    async def delete_item(self, tnx, item_id):
+        cnt = await self.mapper.delete().filter_by_id(item_id).execute(tnx)
         if not cnt:
             raise exc.StreamItemNotFound(self, item_id)
         assert cnt == 1, 'There are {} items with id={}'.format(cnt, item_id)

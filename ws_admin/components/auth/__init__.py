@@ -1,13 +1,17 @@
 from hashlib import md5
-from ikcms.ws_components.auth.base import WS_AuthComponent as WS_AuthComponentBase
+import ikcms.ws_components.auth.base
 from ikcms.ws_components.auth.base import user_required
 from ikcms.ws_apps.base.forms import MessageForm
 
 from . import exc
 from .forms import message_fields
 
+__all__ = (
+    'Auth',
+    'auth',
+)
 
-class WS_AuthComponent(WS_AuthComponentBase):
+class Auth(ikcms.ws_components.auth.base.Component):
 
     class LoginForm(MessageForm):
         fields = [
@@ -54,4 +58,4 @@ class WS_AuthComponent(WS_AuthComponentBase):
             raise exc.AuthKeyError
 
 
-ws_auth_component = WS_AuthComponent.create
+auth = Auth.create_cls

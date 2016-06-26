@@ -48,13 +48,13 @@ class List(Base):
 
         if not 0 < page_size <= self.stream.max_limit:
             raise exc.MessageError('Page size error')
-
-        with env.db(self.stream.mapper.db_id) as tnx:
+        db = await env.app.db(self.stream.mapper.db_id)
+        async with await db.begin():
             query = self.query(env, filters, [order])
-            total = query.count(tnx)
+            total = await query.count(db)
 
             query = self.page_query(query, page, page_size)
-            list_items = query.execute(tnx)
+            list_items = await query.execute(db)
 
         raw_list_items = list_form.values_from_python(list_items)
 
@@ -112,8 +112,12 @@ class GetItem(Base):
 
     async def handle(self, env, message):
         message = self.MessageForm().to_python(message)
-        with env.db(self.stream.mapper.db_id) as tnx:
-            item = self.stream.get_item(tnx, message['item_id'], required=True)
+        db = await env.app.db(self.stream.mapper.db_id)
+        async with await db.begin():
+            item = await self.stream.get_item(
+                db, message['item_id'],
+                required=True,
+            )
         item_fields_form = self.stream.get_item_form(env, item=item)
         raw_item = item_fields_form.from_python(item)
         return {
@@ -158,8 +162,9 @@ class CreateItem(Base):
         raw_item = message['values']
         item, errors = item_fields_form.to_python(raw_item)
         if not errors:
-            with env.db(self.stream.mapper.db_id) as tnx:
-                item = self.stream.create_item(tnx, item)
+            db = await env.app.db(self.stream.mapper.db_id)
+            async with await db.begin():
+                item = await self.stream.create_item(db, item)
             raw_item = item_fields_form.from_python(item)
         return {
             'item_fields': item_fields_form.get_cfg(),
@@ -185,8 +190,9 @@ class UpdateItem(Base):
         values, errors = item_fields_form.to_python(raw_values,
                                                     keys=raw_values.keys())
         if not errors:
-            with env.db(self.stream.mapper.db_id) as tnx:
-                item = self.stream.update_item(tnx, item_id, values)
+            db = await env.app.db(self.stream.mapper.db_id)
+            async with await db.begin():
+                item = await self.stream.update_item(db, item_id, values)
             raw_item = item_fields_form.from_python(item, keys=item.keys())
         return {
             'item_fields': item_fields_form.get_cfg(),
@@ -205,8 +211,9 @@ class DeleteItem(Base):
         ]
 
     async def handle(self, env, message):
-        with env.db(self.stream.mapper.db_id) as tnx:
-            self.stream.delete_item(tnx, message['item_id'])
+        db = await env.app.db(self.stream.mapper.db_id)
+        async with await db.begin():
+            await self.stream.delete_item(db, message['item_id'])
         return {
             'item_id': message['item_id'],
         }

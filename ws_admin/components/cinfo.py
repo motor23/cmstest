@@ -1,8 +1,8 @@
-from ikcms.ws_components.base import WS_Component as WS_ComponentBase
+import ikcms.ws_components.base
 from ikcms.ws_components.auth.base import user_required
 
 
-class WS_CInfoComponent(WS_ComponentBase):
+class Component(ikcms.ws_components.base.Component):
     name = 'cinfo'
 
     @user_required
@@ -37,4 +37,4 @@ class WS_CInfoComponent(WS_ComponentBase):
             'cinfo.list': self.h_list,
         }
 
-ws_cinfo_component = WS_CInfoComponent.create
+cinfo = Component.create_cls
