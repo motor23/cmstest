@@ -31,10 +31,5 @@ class Component(ikcms.ws_components.base.Component):
         method = getattr(component, 'get_cfg', None)
         return method and method(env) or {}
 
-    def handlers(self):
-        return {
-            'cinfo.cfg': self.h_cfg,
-            'cinfo.list': self.h_list,
-        }
 
 cinfo = Component.create_cls

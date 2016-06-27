@@ -30,10 +30,5 @@ class Component(ikcms.ws_components.base.Component):
         else:
             raise exc.StreamNotFound(stream_name)
 
-    def handlers(self):
-        return {
-            'streams.action': self.h_action,
-        }
-
 
 streams = Component.create_cls
