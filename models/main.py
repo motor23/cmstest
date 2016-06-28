@@ -1,19 +1,14 @@
 from sqlalchemy.schema import MetaData
-from sqlalchemy import (
-    Column,
-    Integer,
-    #DateTime,
-    String,
-    #Text,
-    #Enum,
-    #Boolean,
-    ForeignKey,
-)
-from sqlalchemy.orm import (
-    relation,
-)
+from sqlalchemy import Column
+from sqlalchemy import Integer
+from sqlalchemy import String
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from iktomi.db.sqla.declarative import AutoTableNameMeta, TableArgsMeta
+from ikcms.ws_components.auth.models import create_user
+from ikcms.ws_components.auth.models import create_group
+from ikcms.ws_components.auth.models import create_user_group
 
 
 metadata = MetaData()
@@ -54,6 +49,9 @@ class Doc(Base):
 
     id = Column(Integer, primary_key=True)
     title = Column(String(500), default='')
-    tags = relation(Tag, secondary=Doc_Tag.__table__)
+    tags = relationship(Tag, secondary=Doc_Tag.__table__)
 
 
+user_table, user_relationships = create_user(metadata)
+group_table, group_relationships = create_group(metadata)
+user_group_table, user_group_relationships = create_user_group(metadata)
