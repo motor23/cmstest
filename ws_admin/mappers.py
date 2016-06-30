@@ -1,11 +1,12 @@
-from ikcms import orm
+from ikcms.orm import Mapper
+from ikcms.orm import model_to_mapper
 
 from models.main import Tag, Doc
 
 
-class MainMapper(orm.Mapper):
+class MainMapper(Mapper):
     db_id = 'main'
 
 
-tags_mapper = orm.model_to_mapper(Tag, MainMapper)
-docs_mapper = orm.model_to_mapper(Doc, MainMapper)
+tags_mapper = model_to_mapper(Tag, MainMapper)
+docs_mapper = model_to_mapper(Doc, MainMapper)

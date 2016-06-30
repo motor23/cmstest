@@ -1,3 +1,5 @@
+.PHONY: static static-watch static-test test lint
+
 static:
 	npm --prefix admin/static run build:js
 

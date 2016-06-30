@@ -11,25 +11,23 @@ __all__ = (
 )
 
 
-def simple_filter(op):
-    def f(field, query, value):
-        if value is not None:
-            query = query.filter(field.name, op, value)
-        return query
-    return f
+def eq_filter(field, query, value):
+    column = field.context['stream'].mapper.table.c[field.name]
+    return query.where(column==value)
 
+def like_filter(field, query, value):
+    column = field.context['stream'].mapper.table.c[field.name]
+    return query.where(column.like("%{}%".format(value)))
 
 
 class String(fields.String):
-    filter = simple_filter('==')
-
+    filter = eq_filter
 
 class Int(fields.Int):
-    filter = simple_filter('==')
-
+    filter = eq_filter
 
 class Find(String):
-    filter = simple_filter('like')
+    filter = like_filter
 
 
 

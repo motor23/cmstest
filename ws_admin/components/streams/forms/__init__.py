@@ -1,5 +1,5 @@
 from .field import Field
-from .list_fields import *
-from .filter_fields import *
-from .item_fields import *
+from . import list_fields
+from . import filter_fields
+from . import item_fields
 
