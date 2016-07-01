@@ -162,3 +162,16 @@ class MapperTestCase(TestCase):
                 self.test_items[4-1],
             ])
 
+    @asynctest
+    async def test_count_by_query(self):
+        db = await self.create_db()
+        async with await db('db1') as conn:
+            result = await self.mapper.count_by_query(conn, self.mapper.query())
+            self.assertEqual(result, 0)
+
+            q = sql.insert(self.models1.test_table1).values(self.test_items)
+            result = await conn.execute(q)
+
+            result = await self.mapper.count_by_query(conn, self.mapper.query())
+            self.assertEqual(result, 4)
+
