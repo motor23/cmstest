@@ -69,26 +69,43 @@ class MapperTestCase(TestCase):
             q = sql.insert(self.models1.test_table1).values(self.test_items)
             result = await conn.execute(q)
 
-            items = await self.mapper.select_by_ids(conn, [4,2])
-            self.assertEqual(items, [self.test_items[4-1], self.test_items[2-1]])
-            items = await self.mapper.select_by_ids(conn, [4,2], keys=['title'])
+            # ids arg
+            items = await self.mapper.select(conn, ids=[2, 4])
             self.assertEqual(items, [
-                {'id': 4, 'title': '444t'},
+                self.test_items[2-1],
+                self.test_items[4-1],
+            ])
+            items = await self.mapper.select(conn, [2, 4], keys=['title'])
+            self.assertEqual(items, [
                 {'id': 2, 'title': '222t'},
+                {'id': 4, 'title': '444t'},
             ])
 
+            with self.assertRaises(orm.ItemNotFound) as e:
+                await self.mapper.select(conn, ids=[4, 50, 2])
+            self.assertEqual(e.exception.args[0], 50)
+
+            # query arg
             q = self.mapper.query()
             q = q.where(self.mapper.table.c.title=='333t')
-            items = await self.mapper.select_by_query(conn, q)
+            items = await self.mapper.select(conn, query=q)
             self.assertEqual(items, [self.test_items[3-1]])
-            items = await self.mapper.select_by_query(conn, q, keys=['title2'])
+
+            items = await self.mapper.select(
+                conn, query=q, keys=['title2'])
             self.assertEqual(items, [
                 {'id': 3, 'title2': '333t2'},
             ])
 
+            # ids and query args
+            q = self.mapper.query()
+            items = await self.mapper.select(conn, ids=[4,2], query=q)
+            self.assertEqual(items, [self.test_items[4-1], self.test_items[2-1]])
+
+            q = q.where(self.mapper.table.c.title=='333t')
             with self.assertRaises(orm.ItemNotFound) as e:
-                await self.mapper.select_by_ids(conn, [4, 50, 2])
-            self.assertEqual(e.exception.args[0], 50)
+                await self.mapper.select(conn, ids=[4], query=q)
+            self.assertEqual(e.exception.args[0], 4)
 
     @asynctest
     async def test_insert(self):
@@ -115,9 +132,9 @@ class MapperTestCase(TestCase):
             updated_item2 = dict(self.test_items[2-1], title='updated')
             item = await self.mapper.update(conn, updated_item2)
             self.assertEqual(item, updated_item2)
-            items = await self.mapper.select_by_ids(conn, [2])
+            items = await self.mapper.select(conn, [2])
             self.assertEqual(items, [updated_item2])
-            items = await self.mapper.select_by_ids(conn, [1, 2, 3, 4])
+            items = await self.mapper.select(conn, [1, 2, 3, 4])
             self.assertEqual(items, [
                 self.test_items[1-1],
                 updated_item2,
@@ -128,19 +145,28 @@ class MapperTestCase(TestCase):
             updated_item4 = dict(self.test_items[4-1], title2='updated2')
             item = await self.mapper.update(
                 conn,
-                {'id':4, 'title2': 'updated2'},
-                ['title2'],
+                item = {'id':4, 'title2': 'updated2'},
+                keys = ['title2'],
             )
             self.assertEqual(item, {'id':4, 'title2': 'updated2'})
-            items = await self.mapper.select_by_ids(conn, [4])
+            items = await self.mapper.select(conn, [4])
             self.assertEqual(items, [updated_item4])
-            items = await self.mapper.select_by_ids(conn, [1, 2, 3, 4])
+            items = await self.mapper.select(conn, [1, 2, 3, 4])
             self.assertEqual(items, [
                 self.test_items[1-1],
                 updated_item2,
                 self.test_items[3-1],
                 updated_item4,
             ])
+            query = self.mapper.query()
+            query = query.where(self.mapper.table.c.title=='zzz')
+            with self.assertRaises(orm.ItemNotFound) as e:
+                await self.mapper.update(
+                    conn,
+                    item={'id':4, 'title2': 'updated2'},
+                    query=query,
+                    keys=['title2'],
+                )
 
     @asynctest
     async def test_delete(self):
@@ -148,18 +174,32 @@ class MapperTestCase(TestCase):
         async with await db('db1') as conn:
             q = sql.insert(self.models1.test_table1).values(self.test_items)
             result = await conn.execute(q)
-            item = await self.mapper.delete(conn, 2)
+            # id arg
+            await self.mapper.delete(conn, 2)
             with self.assertRaises(orm.ItemNotFound) as e:
-                await self.mapper.select_by_ids(conn, [2])
+                await self.mapper.select(conn, [2])
             self.assertEqual(e.exception.args[0], 2)
             with self.assertRaises(orm.ItemNotFound) as e:
                 await self.mapper.delete(conn, 2)
             self.assertEqual(e.exception.args[0], 2)
-            items = await self.mapper.select_by_ids(conn, [1, 3, 4])
+            items = await self.mapper.select(conn, [1, 3, 4])
             self.assertEqual(items, [
                 self.test_items[1-1],
                 self.test_items[3-1],
                 self.test_items[4-1],
+            ])
+            # id and query args
+            q = self.mapper.query()
+            q = q.where(self.mapper.table.c.title=='zzz')
+            with self.assertRaises(orm.ItemNotFound) as e:
+                await self.mapper.select(conn, ids=[4], query=q)
+            self.assertEqual(e.exception.args[0], 4)
+            q = self.mapper.query()
+            await self.mapper.delete(conn, 4, query=q)
+            items = await self.mapper.select(conn, query=q)
+            self.assertEqual(items, [
+                self.test_items[1-1],
+                self.test_items[3-1],
             ])
 
     @asynctest
