@@ -13,11 +13,15 @@ __all__ = (
 
 def eq_filter(field, query, value):
     column = field.context['stream'].mapper.table.c[field.name]
-    return query.where(column==value)
+    if value is not None:
+        query = query.where(column==value)
+    return query
 
 def like_filter(field, query, value):
     column = field.context['stream'].mapper.table.c[field.name]
-    return query.where(column.like("%{}%".format(value)))
+    if value is not None:
+        query = query.where(column.like("%{}%".format(value)))
+    return query
 
 
 class String(fields.String):

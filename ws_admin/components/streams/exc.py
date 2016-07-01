@@ -1,9 +1,11 @@
 from ikcms.ws_apps.base.exc import BaseError
 from ikcms.ws_apps.base.exc import MessageError
+from ikcms.forms.exc import ValidationError
 
 
 __all__ = (
     'MessageError',
+    'ValidationError',
     'StreamBaseError',
     'StreamNotFound',
     'StreamActionNotFound',

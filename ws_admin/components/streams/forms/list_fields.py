@@ -12,7 +12,11 @@ __all__ = (
 
 def simple_order(field, query, value):
     assert value in ['+', '-']
-    return query.order_by(value + field.name)
+    field = self.context['stream'].mapper.table.c[field.name]
+    if value == '+':
+        return query.order_by(field.name)
+    else:
+        return query.order_by(field.name.desc())
 
 
 class String(fields.String):

@@ -29,12 +29,14 @@ class page(fields.Int):
     name = 'page'
     label = 'Номер страницы'
     to_python_default = 1
+    min_value = 1
 
 
 class page_size(fields.Int):
     name = 'page_size'
     label = 'Размер страницы'
     to_python_default = 1
+    min_value = 1
 
 
 class order(fields.String):

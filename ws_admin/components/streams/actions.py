@@ -37,24 +37,25 @@ class List(Base):
         list_form = self.stream.get_list_form(env)
         filter_form = self.stream.get_filter_form(env)
         order_form = self.stream.get_order_form(env)
-
-        raw_filters = message['filters']
-        filters, filters_errors = filter_form.to_python(raw_filters)
         order = message['order']
         if order[1:] not in order_form:
             raise exc.StreamFieldNotFound(self.stream, order[1:])
+
+        raw_filters = message['filters']
+        filters, filters_errors = filter_form.to_python(raw_filters)
         page = message['page']
         page_size = message['page_size']
 
         if not 0 < page_size <= self.stream.max_limit:
             raise exc.MessageError('Page size error')
-        db = await env.app.db(self.stream.mapper.db_id)
-        async with await db.begin():
+        conn = await env.app.db(self.stream.mapper.db_id)
+        async with await conn.begin():
             query = self.query(env, filters, [order])
-            total = await query.count(db)
+            total = await self.stream.mapper.count_by_query(conn, query)
 
             query = self.page_query(query, page, page_size)
-            list_items = await query.execute(db)
+            list_items = await self.stream.mapper.select_by_query(
+                conn, query, keys=set(list_form.keys()))
 
         raw_list_items = list_form.values_from_python(list_items)
 
@@ -63,7 +64,6 @@ class List(Base):
             'title': self.stream.title,
             'action': self.name,
             'list_fields': list_form.get_cfg(),
-            'errors': filters_errors,
             'items': raw_list_items,
             'total': total,
             'filters_fields': filter_form.get_cfg(),
@@ -78,11 +78,10 @@ class List(Base):
         filters = filters or {}
         order = order or ['+id']
 
-        list_form = self.stream.get_list_form(env)
         order_form = self.stream.get_order_form(env)
         filter_form = self.stream.get_filter_form(env)
 
-        query = self.stream.query(list_form.keys())
+        query = self.stream.query()
 
         for name, field in filter_form.items():
             query = field.filter(query, filters.get(name))

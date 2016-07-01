@@ -106,8 +106,8 @@ class Stream(StreamBase):
             fields = self.item_fields
         return ItemForm(env=env, stream=self)
 
-    def query(self, keys=None):
-        return self.mapper.query(keys)
+    def query(self):
+        return self.mapper.query()
 
     def get_cfg(self, env):
         list_form = self.get_list_form(env)
