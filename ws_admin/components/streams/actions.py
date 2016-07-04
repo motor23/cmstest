@@ -95,7 +95,10 @@ class List(Base):
     def page_query(self, query, page=1, page_size=1):
         assert page > 0
         assert 0 < page_size <= self.stream.max_limit
-        return query.limit(page_size).offset((page-1)*page_size)
+        query = query.limit(page_size)
+        if page != 1:
+            query = query.offset((page-1)*page_size)
+        return query
 
 
 
@@ -111,18 +114,27 @@ class GetItem(Base):
 
     async def handle(self, env, message):
         message = self.MessageForm().to_python(message)
-        db = await env.app.db(self.stream.mapper.db_id)
-        async with await db.begin():
-            item = await self.stream.get_item(
-                db, message['item_id'],
-                required=True,
-            )
-        item_fields_form = self.stream.get_item_form(env, item=item)
-        raw_item = item_fields_form.from_python(item)
+        item_id = message['item_id']
+        conn = await env.app.db(self.stream.mapper.db_id)
+        async with await conn.begin():
+            items = await self.stream.mapper.select_by_query(
+                conn, self.query(item_id))
+
+        if not items:
+            raise exc.StreamItemNotFound(self.stream, item_id)
+        assert len(items) == 1, \
+               'There are {} items with id={}'.format(len(items), item_id)
+
+        item_fields_form = self.stream.get_item_form(env, item=items[0])
+        raw_item = item_fields_form.from_python(items[0])
         return {
             'item_fields': item_fields_form.get_cfg(),
             'item': raw_item,
         }
+
+    def query(self, item_id):
+        return self.stream.query().\
+            where(self.stream.mapper.table.c['id'] == item_id)
 
 
 class NewItem(Base):

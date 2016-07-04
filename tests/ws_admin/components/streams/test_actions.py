@@ -1,49 +1,27 @@
 import asyncio
 from unittest import TestCase
 from unittest.mock import MagicMock
+from sqlalchemy.testing.assertions import AssertsCompiledSQL
 
 from ws_admin.components.streams import actions
 from ws_admin.components.streams import exc
 
+from ikcms.orm import Mapper
 from ikcms.utils.asynctests import asynctest
+
 from ws_admin.components.streams.stream import Stream
+from ws_admin.components.streams.forms import list_fields
+from ws_admin.components.streams.forms import filter_fields
+from tests.models import models1
 
 
 TEST_DB_ID = 'test_db_id'
 
-class ActionsTestCase(TestCase):
+class ActionsTestCase(TestCase, AssertsCompiledSQL):
 
+    __dialect__ = 'default'
 
     def setUp(self):
-        class QueryMock:
-
-            def __init__(self):
-                self._conditions = []
-                self._order = []
-                self._limit = None
-                self._offset = None
-
-            def where(self, condition):
-                self._conditions.append(condition)
-                return self
-            def limit(self, limit):
-                self._limit = limit
-                return self
-            def offset(self, offset):
-                self._offset = offset
-                return self
-            def order_by(self, order):
-                self._order.append(order)
-                return self
-
-
-        class ModelFieldMock:
-            def __init__(self, **kwargs):
-                self.__dict__.update(kwargs)
-
-            def desc(self):
-                return (self.name, '-')
-
 
         class FormFieldMock:
             enable_order = False
@@ -53,7 +31,8 @@ class ActionsTestCase(TestCase):
             def __init__(self, **kwargs):
                 self.__dict__.update(kwargs)
 
-            def __call__(self, *args, **kwargs):
+            def __call__(self, context=None, parent=None):
+                self.context = context
                 return self
 
             def to_python(self, values):
@@ -61,23 +40,15 @@ class ActionsTestCase(TestCase):
                 if value is not None:
                     if value==exc.ValidationError:
                         raise value({self.name: 'error'})
-                    return {self.name: ('to_python', value)}
+                    return {self.name: '{}-to_python'.format(value)}
                 else:
                     return {}
 
             def from_python(self, value):
-                return {self.name: ('from_python', value.get(self.name))}
+                return {self.name: '{}-from_python'.format(value.get(self.name))}
 
-            def order(self, query, value):
-                assert self.enable_order
-                if value:
-                    return query.order_by((self.name, value))
-
-            def filter(self, query, value):
-                assert self.enable_filter
-                if value is not None:
-                    query = query.where((self.name, value))
-                return query
+            order = list_fields.simple_order
+            filter = filter_fields.eq_filter
 
             @property
             def widget(self):
@@ -88,12 +59,7 @@ class ActionsTestCase(TestCase):
             max_limit = 50
             name = 'test_stream'
             title = 'test_stream_title'
-            mapper = MagicMock()
-            mapper.db_id = TEST_DB_ID
-            mapper.table.c = {
-                'id': ModelFieldMock(name='id'),
-                'title': ModelFieldMock(name='title'),
-            }
+            mapper = Mapper(models1.test_table1, {}, TEST_DB_ID)
 
             list_fields = [
                     FormFieldMock(
@@ -125,12 +91,9 @@ class ActionsTestCase(TestCase):
                     ),
             ]
             item_fields = [
-                    FormFieldMock(name='id'),
-                    FormFieldMock(name='title'),
+                    FormFieldMock(name='id', _widget='ID_ITEM_WIDGET'),
+                    FormFieldMock(name='title', _widget='TITLE_ITEM_WIDGET'),
             ]
-
-            def query(self):
-                return QueryMock()
 
 
         class TnMock:
@@ -193,20 +156,24 @@ class ActionsTestCase(TestCase):
         async def count_by_query(conn, query):
             self.assertIsInstance(conn, self.env.app.db.ConnMock)
             self.assertEqual(conn.tn.state, 'begin')
-            self.assertEqual(query._conditions, [])
-            self.assertEqual(query._order, [('id', '+')])
-            self.assertEqual(query._limit, None)
-            self.assertEqual(query._offset, None)
+            self.assert_compile(
+                query,
+                "SELECT test_table1.id FROM test_table1 "
+                    "ORDER BY test_table1.id",
+                literal_binds=True,
+            )
             return 'TOTAL'
         self.stream.mapper.count_by_query = count_by_query
 
         async def select_by_query(conn, query, keys):
             self.assertIsInstance(conn, self.env.app.db.ConnMock)
             self.assertEqual(conn.tn.state, 'begin')
-            self.assertEqual(query._conditions, [])
-            self.assertEqual(query._order, [('id', '+')])
-            self.assertEqual(query._limit, 1)
-            self.assertEqual(query._offset, 0)
+            self.assert_compile(
+                query,
+                "SELECT test_table1.id FROM test_table1 "
+                   "ORDER BY test_table1.id LIMIT 1",
+                literal_binds=True,
+            )
             self.assertEqual(keys, {'id', 'title'})
             return test_items
         self.stream.mapper.select_by_query = select_by_query
@@ -221,12 +188,12 @@ class ActionsTestCase(TestCase):
         )
         self.assertEqual(resp['items'], [
             {
-                'id': ('from_python', 'id1'),
-                'title': ('from_python', 'title1'),
+                'id': 'id1-from_python',
+                'title': 'title1-from_python',
             },
             {
-                'id': ('from_python', 'id2'),
-                'title': ('from_python', 'title2'),
+                'id': 'id2-from_python',
+                'title': 'title2-from_python',
             },
 
         ])
@@ -247,32 +214,29 @@ class ActionsTestCase(TestCase):
         async def count_by_query(conn, query):
             self.assertIsInstance(conn, self.env.app.db.ConnMock)
             self.assertEqual(conn.tn.state, 'begin')
-            self.assertEqual(
-                query._conditions,
-                [
-                    ('id', ('to_python', 'id_filter')),
-                    ('title', ('to_python', 'title_filter')),
-                ]
+            self.assert_compile(
+                query,
+                "SELECT test_table1.id FROM test_table1 "
+                    "WHERE test_table1.id = 'id_filter-to_python' "
+                    "AND test_table1.title = 'title_filter-to_python' "
+                    "ORDER BY test_table1.title DESC",
+                literal_binds=True,
             )
-            self.assertEqual(query._order, [('title', '-')])
-            self.assertEqual(query._limit, None)
-            self.assertEqual(query._offset, None)
             return 'TOTAL'
         self.stream.mapper.count_by_query = count_by_query
 
         async def select_by_query(conn, query, keys):
             self.assertIsInstance(conn, self.env.app.db.ConnMock)
             self.assertEqual(conn.tn.state, 'begin')
-            self.assertEqual(
-                query._conditions,
-                [
-                    ('id', ('to_python', 'id_filter')),
-                    ('title', ('to_python', 'title_filter')),
-                ],
+            self.assert_compile(
+                query,
+                "SELECT test_table1.id FROM test_table1 "
+                    "WHERE test_table1.id = 'id_filter-to_python' "
+                    "AND test_table1.title = 'title_filter-to_python' "
+                    "ORDER BY test_table1.title DESC "
+                    "LIMIT 10 OFFSET 20",
+                literal_binds=True,
             )
-            self.assertEqual(query._order, [('title', '-')])
-            self.assertEqual(query._limit, 10)
-            self.assertEqual(query._offset, 20)
             self.assertEqual(keys, {'id', 'title'})
             return test_items
         self.stream.mapper.select_by_query = select_by_query
@@ -293,12 +257,12 @@ class ActionsTestCase(TestCase):
         )
         self.assertEqual(resp['items'], [
             {
-                'id': ('from_python', 'id1'),
-                'title': ('from_python', 'title1'),
+                'id': 'id1-from_python',
+                'title': 'title1-from_python',
             },
             {
-                'id': ('from_python', 'id2'),
-                'title': ('from_python', 'title2'),
+                'id': 'id2-from_python',
+                'title': 'title2-from_python',
             },
 
         ])
@@ -358,17 +322,23 @@ class ActionsTestCase(TestCase):
            })
         # test ValidationError
         async def count_by_query(conn, query):
-            self.assertEqual(
-                query._conditions,
-                [('title', ('to_python', 'title_filter'))],
+            self.assert_compile(
+                query,
+                "SELECT test_table1.id FROM test_table1 "
+                    "WHERE test_table1.title = 'title_filter-to_python' "
+                    "ORDER BY test_table1.id",
+                literal_binds=True,
             )
             return 'TOTAL'
         self.stream.mapper.count_by_query = count_by_query
 
         async def select_by_query(conn, query, keys):
-            self.assertEqual(
-                query._conditions,
-                [('title', ('to_python', 'title_filter'))],
+            self.assert_compile(
+                query,
+                "SELECT test_table1.id FROM test_table1 "
+                    "WHERE test_table1.title = 'title_filter-to_python' "
+                    "ORDER BY test_table1.id LIMIT 1",
+                literal_binds=True,
             )
             return test_items
         self.stream.mapper.select_by_query = select_by_query
@@ -384,4 +354,67 @@ class ActionsTestCase(TestCase):
                 resp['filters'],
                 {'id': exc.ValidationError, 'title': 'title_filter'},
         )
+
+
+    @asynctest
+    async def test_get_item(self):
+        action = actions.GetItem(self.stream)
+        test_item = {
+            'id': 'id1',
+            'title': 'title1',
+        }
+
+        async def select_by_query(conn, query, keys=None):
+            self.assertIsInstance(conn, self.env.app.db.ConnMock)
+            self.assertEqual(conn.tn.state, 'begin')
+
+            self.assert_compile(
+                query,
+                "SELECT test_table1.id FROM test_table1 "
+                    "WHERE test_table1.id = 500",
+                literal_binds=True,
+            )
+            self.assertEqual(keys, None)
+            return [test_item]
+        self.stream.mapper.select_by_query = select_by_query
+
+        resp = await action.handle(self.env, {'item_id': 500})
+        self.assertEqual(
+            resp['item_fields'],
+            ['ID_ITEM_WIDGET', 'TITLE_ITEM_WIDGET'],
+        )
+        self.assertEqual(resp['item'], {
+            'id': 'id1-from_python',
+            'title': 'title1-from_python',
+        })
+        # test Errors
+        async def count_by_query(conn, query):
+            raise Exception()
+        self.stream.mapper.count_by_query = count_by_query
+
+        async def select_by_query(conn, query, keys):
+            raise Exception()
+        self.stream.mapper.select_by_query = select_by_query
+
+        with self.assertRaises(exc.MessageError):
+            await action.handle(self.env, {
+                'item_id': {},
+            })
+        with self.assertRaises(exc.MessageError):
+            await action.handle(self.env, {})
+
+        async def select_by_query(conn, query, keys=None):
+            return []
+        self.stream.mapper.select_by_query = select_by_query
+
+        with self.assertRaises(exc.StreamItemNotFound):
+            await action.handle(self.env, {'item_id': 500})
+
+        async def select_by_query(conn, query, keys=None):
+            return [1, 2]
+        self.stream.mapper.select_by_query = select_by_query
+
+        with self.assertRaises(AssertionError):
+            await action.handle(self.env, {'item_id': 500})
+
 
