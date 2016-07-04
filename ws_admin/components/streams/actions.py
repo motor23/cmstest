@@ -51,11 +51,11 @@ class List(Base):
         conn = await env.app.db(self.stream.mapper.db_id)
         async with await conn.begin():
             query = self.query(env, filters, [order])
-            total = await self.stream.mapper.count_by_query(conn, query)
+            total = await self.stream.mapper.count(conn, query)
 
             query = self.page_query(query, page, page_size)
-            list_items = await self.stream.mapper.select_by_query(
-                conn, query, keys=set(list_form.keys()))
+            list_items = await self.stream.mapper.select(
+                conn, query=query, keys=set(list_form.keys()))
 
         raw_list_items = list_form.values_from_python(list_items)
 
@@ -101,8 +101,6 @@ class List(Base):
         return query
 
 
-
-
 class GetItem(Base):
 
     name = 'get_item'
@@ -117,8 +115,8 @@ class GetItem(Base):
         item_id = message['item_id']
         conn = await env.app.db(self.stream.mapper.db_id)
         async with await conn.begin():
-            items = await self.stream.mapper.select_by_query(
-                conn, self.query(item_id))
+            items = await self.stream.mapper.select(
+                conn, query=self.query(item_id))
 
         if not items:
             raise exc.StreamItemNotFound(self.stream, item_id)
@@ -150,7 +148,8 @@ class NewItem(Base):
         message = self.MessageForm().to_python(message)
         item_fields_form = self.stream.get_item_form(
             env, kwargs=message['kwargs'])
-        raw_item = item_fields_form.from_python(item_fields_form.get_initials())
+        raw_item = item_fields_form.from_python(
+            item_fields_form.get_initials(**message['kwargs']))
         return {
             'item_fields': item_fields_form.get_cfg(),
             'item': raw_item,
@@ -168,14 +167,15 @@ class CreateItem(Base):
         ]
 
     async def handle(self, env, message):
+        message = self.MessageForm().to_python(message)
         item_fields_form = self.stream.get_item_form(
             env, kwargs=message['kwargs'])
         raw_item = message['values']
         item, errors = item_fields_form.to_python(raw_item)
         if not errors:
-            db = await env.app.db(self.stream.mapper.db_id)
-            async with await db.begin():
-                item = await self.stream.create_item(db, item)
+            conn = await env.app.db(self.stream.mapper.db_id)
+            async with await conn.begin():
+                item = await self.stream.mapper.insert(conn, item)
             raw_item = item_fields_form.from_python(item)
         return {
             'item_fields': item_fields_form.get_cfg(),
@@ -195,19 +195,29 @@ class UpdateItem(Base):
         ]
 
     async def handle(self, env, message):
+        message = self.MessageForm().to_python(message)
         item_fields_form = self.stream.get_item_form(env)
         item_id = message['item_id']
         raw_values = message['values']
         values, errors = item_fields_form.to_python(raw_values,
                                                     keys=raw_values.keys())
         if not errors:
-            db = await env.app.db(self.stream.mapper.db_id)
-            async with await db.begin():
-                item = await self.stream.update_item(db, item_id, values)
-            raw_item = item_fields_form.from_python(item, keys=item.keys())
+            conn = await env.app.db(self.stream.mapper.db_id)
+            async with await conn.begin():
+                try:
+                    item = await self.stream.mapper.update(
+                        conn,
+                        item_id,
+                        values,
+                        query=self.stream.query(),
+                        keys=list(values.keys()))
+                except exc.ItemNotFound:
+                    raise exc.StreamItemNotFound(self, item_id)
+            raw_values = item_fields_form.from_python(item, keys=item.keys())
         return {
             'item_fields': item_fields_form.get_cfg(),
-            'item': raw_item,
+            'item_id': item_id,
+            'values': raw_values,
             'errors': errors,
         }
 
@@ -222,9 +232,14 @@ class DeleteItem(Base):
         ]
 
     async def handle(self, env, message):
-        db = await env.app.db(self.stream.mapper.db_id)
-        async with await db.begin():
-            await self.stream.delete_item(db, message['item_id'])
+        message = self.MessageForm().to_python(message)
+        conn = await env.app.db(self.stream.mapper.db_id)
+        async with await conn.begin():
+            try:
+                await self.stream.mapper.delete(
+                    conn, message['item_id'], query=self.stream.query())
+            except exc.ItemNotFound:
+                raise exc.StreamItemNotFound(self, message['item_id'])
         return {
             'item_id': message['item_id'],
         }

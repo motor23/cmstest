@@ -130,7 +130,7 @@ class MapperTestCase(TestCase):
             result = await conn.execute(q)
             # test without 'keys' key arg
             updated_item2 = dict(self.test_items[2-1], title='updated')
-            item = await self.mapper.update(conn, updated_item2)
+            item = await self.mapper.update(conn, 2, updated_item2)
             self.assertEqual(item, updated_item2)
             items = await self.mapper.select(conn, [2])
             self.assertEqual(items, [updated_item2])
@@ -145,6 +145,7 @@ class MapperTestCase(TestCase):
             updated_item4 = dict(self.test_items[4-1], title2='updated2')
             item = await self.mapper.update(
                 conn,
+                4,
                 item = {'id':4, 'title2': 'updated2'},
                 keys = ['title2'],
             )
@@ -163,6 +164,7 @@ class MapperTestCase(TestCase):
             with self.assertRaises(orm.ItemNotFound) as e:
                 await self.mapper.update(
                     conn,
+                    4,
                     item={'id':4, 'title2': 'updated2'},
                     query=query,
                     keys=['title2'],
@@ -203,15 +205,15 @@ class MapperTestCase(TestCase):
             ])
 
     @asynctest
-    async def test_count_by_query(self):
+    async def test_count(self):
         db = await self.create_db()
         async with await db('db1') as conn:
-            result = await self.mapper.count_by_query(conn, self.mapper.query())
+            result = await self.mapper.count(conn, self.mapper.query())
             self.assertEqual(result, 0)
 
             q = sql.insert(self.models1.test_table1).values(self.test_items)
             result = await conn.execute(q)
 
-            result = await self.mapper.count_by_query(conn, self.mapper.query())
+            result = await self.mapper.count(conn, self.mapper.query())
             self.assertEqual(result, 4)
 
