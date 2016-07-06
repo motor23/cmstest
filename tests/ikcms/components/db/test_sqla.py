@@ -8,8 +8,18 @@ from tests.cfg import cfg
 from tests.models import models1, models2
 
 
-MYSQL_URL = getattr(cfg, 'MYSQL_URL', None)
-POSTGRESS_URL = getattr(cfg, 'POSTGRESS_URL', None)
+try:
+    import MySQLdb
+    mysql_skip = False
+except ImportError:
+    mysql_skip = True
+
+try:
+    raise ImportError
+    import psycopg2
+    pg_skip = False
+except ImportError:
+    pg_skip = True
 
 
 class SQLAComponentTestCase(TestCase):
@@ -19,13 +29,13 @@ class SQLAComponentTestCase(TestCase):
         'db2': models2,
     }
 
-    @skipIf(not MYSQL_URL, 'mysql url undefined')
+    @skipIf(mysql_skip, 'MySQLdb not installed')
     def test_mysql(self):
-        self._db_test(MYSQL_URL)
+        self._db_test(cfg.MYSQL_URL)
 
-    @skipIf(not POSTGRESS_URL, 'mysql url undefined')
+    @skipIf(pg_skip, 'Psycopg2 not instaled')
     def test_postgress(self):
-        self._db_test(POSTGRESS_URL)
+        self._db_test(cfg.POSTGRESS_URL)
 
     def _db_test(self, db_url):
         app = MagicMock()
@@ -68,4 +78,5 @@ class SQLAComponentTestCase(TestCase):
         session.commit()
         cnt = session.query(Test).filter_by(id=5, title='test_title2').count()
         self.assertEqual(cnt, 0)
+        session.close()
 
