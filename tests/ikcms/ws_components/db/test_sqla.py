@@ -9,9 +9,18 @@ from ikcms.utils.asynctests import asynctest
 from tests.cfg import cfg
 from tests.models import models1, models2
 
+try:
+    import aiomysql
+    mysql_skip = False
+except ImportError:
+    mysql_skip = True
 
-MYSQL_URL = getattr(cfg, 'MYSQL_URL', None)
-POSTGRESS_URL = getattr(cfg, 'POSTGRESS_URL', None)
+try:
+    raise ImportError
+    import aiopg
+    pg_skip = False
+except ImportError:
+    pg_skip = True
 
 
 class SQLAComponentTestCase(TestCase):
@@ -21,16 +30,15 @@ class SQLAComponentTestCase(TestCase):
         'db2': models2,
     }
 
-    @skipIf(not MYSQL_URL, 'mysql url undefined')
+    @skipIf(mysql_skip, 'Aiomysql not installed')
     @asynctest
     async def test_mysql(self):
-        await self._db_test(MYSQL_URL)
+        await self._db_test(cfg.MYSQL_URL)
 
-    @skipIf(not POSTGRESS_URL, 'mysql url undefined')
+    @skipIf(pg_skip, 'Aiopg not instaled')
     @asynctest
     async def test_postgress(self):
-        await self._db_test(POSTGRESS_URL)
-
+        await self._db_test(cfg.POSTGRESS_URL)
 
     async def _db_test(self, db_url):
         app = MagicMock()

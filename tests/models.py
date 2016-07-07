@@ -4,6 +4,9 @@ from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Table
 from sqlalchemy import sql
+from sqlalchemy.ext.declarative import declarative_base
+
+
 
 
 class ModelsBase:
@@ -18,20 +21,28 @@ class ModelsBase:
 
 class Models1(ModelsBase):
     metadata = MetaData()
-    test_table1 = Table('test_table1', metadata,
-        Column('id', Integer, primary_key=True),
-        Column('title', String(60), nullable=True),
-        Column('title2', String(60), nullable=True),
-    )
+    Base = declarative_base(metadata=metadata)
+
+    class Test(Base):
+        __tablename__ = 'test_table1'
+        id =  Column(Integer, primary_key=True)
+        title = Column(String(60), nullable=True)
+        title2 = Column(String(60), nullable=True)
+
+    test_table1 = Test.__table__
 
 
 class Models2(ModelsBase):
     metadata = MetaData()
-    test_table2 = Table('test_table2', metadata,
-        Column('id', Integer, primary_key=True),
-        Column('title', String(60), nullable=True),
-        Column('title2', String(60), nullable=True),
-    )
+    Base = declarative_base(metadata=metadata)
+
+    class Test(Base):
+        __tablename__ = 'test_table2'
+        id =  Column(Integer, primary_key=True)
+        title = Column(String(60), nullable=True)
+        title2 = Column(String(60), nullable=True)
+
+    test_table2 = Test.__table__
 
 
 models1 = Models1()
