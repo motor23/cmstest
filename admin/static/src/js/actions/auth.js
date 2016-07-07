@@ -47,14 +47,9 @@ export function loginWithPassword(login, password) {
     return (dispatch, state, connection) => {
         dispatch(loginRequest({login, password}));
         connection.call('auth.login', {login, password}).then(payload => {
-            if (payload.status === 'ok') {
-                dispatch(loginSuccess(payload.key));
-                dispatch(confUpdate())
-            }
-            if (payload.status === 'failed') {
-                dispatch(loginFailure(payload.reason));
-            }
-        });
+            dispatch(loginSuccess(payload.token));
+            dispatch(confUpdate());
+        }).catch(payload => dispatch(loginFailure(payload.message)));
     };
 }
 
@@ -62,9 +57,9 @@ export function loginWithPassword(login, password) {
 export function loginWithToken(token) {
     return (dispatch, state, connection) => {
         dispatch(loginRequest({token}));
-        connection.call('auth.login', {key: token}).then(payload => {
-            dispatch(loginSuccess(payload.key));
+        connection.call('auth.login', {token: token}).then(payload => {
+            dispatch(loginSuccess(payload.token));
             dispatch(confUpdate())
-        });
+        }).catch(payload => dispatch(loginFailure('Невалидный токен')));
     };
 }

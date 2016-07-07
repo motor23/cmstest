@@ -52,6 +52,6 @@ class Doc(Base):
     tags = relationship(Tag, secondary=Doc_Tag.__table__)
 
 
-user_table, user_relationships = create_user(metadata)
-group_table, group_relationships = create_group(metadata)
-user_group_table, user_group_relationships = create_user_group(metadata)
+User = create_user(Base)
+Group = create_group(Base)
+User_Group = create_user_group(Base)

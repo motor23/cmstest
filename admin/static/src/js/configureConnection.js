@@ -25,8 +25,17 @@ class Connection {
     _onmessage(event) {
         const {request_id, name, body} = JSON.parse(event.data);
         const handler = this._handlers[request_id];
-        handler && delete this._handlers[request_id];
-        handler && handler.resolve(body);
+        delete this._handlers[request_id];
+        if (handler && handler.resolve && name === 'response') {
+            handler.resolve(body);
+        }
+        else if (handler && handler.reject && name === 'error') {
+            console.log(handler)
+            handler.reject(body);
+        }
+        else {
+            console.log('Unknown status: ', name);
+        }
     }
 
     _connect() {

@@ -2,6 +2,7 @@ import ikcms.cli.ws_app
 import ikcms.ws_apps.composite
 import ikcms.ws_components.db.sqla
 import ikcms.ws_components.cache.aioredis
+import ikcms.ws_components.auth.base
 
 from . import components
 
@@ -13,8 +14,8 @@ class App(ikcms.ws_apps.composite.App):
     components = [
         ikcms.ws_components.db.sqla.component(),
         ikcms.ws_components.cache.aioredis.component(),
+        ikcms.ws_components.auth.base.component(),
 
-        components.auth(),
         components.cinfo(),
         components.menu(menu=menu),
         components.streams(streams=streams),

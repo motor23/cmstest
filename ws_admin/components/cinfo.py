@@ -1,11 +1,11 @@
 import ikcms.ws_components.base
-from ikcms.ws_components.auth.base import user_required
+from ikcms.ws_components.auth.base import restrict
 
 
 class Component(ikcms.ws_components.base.Component):
     name = 'cinfo'
 
-    @user_required
+    @restrict()
     async def h_cfg(self, env, message):
         comp_names = self._get_components_names(self.app.components)
         names = message.get('components', comp_names)
@@ -13,7 +13,7 @@ class Component(ikcms.ws_components.base.Component):
         cfg = self._get_components_cfg(env, components)
         return {'cfg': cfg}
 
-    @user_required
+    @restrict()
     async def h_list(self, env, message):
         comp_names = self._get_components_names(self.app.components)
         return {'list': comp_names}

@@ -2,7 +2,8 @@ from ws_admin.components.streams import Stream
 from ws_admin.components.streams.forms import list_fields
 from ws_admin.components.streams.forms import filter_fields
 from ws_admin.components.streams.forms import item_fields
-from ws_admin.mappers import docs_mapper
+
+from models.mappers import docs_mapper
 
 streams = {}
 
