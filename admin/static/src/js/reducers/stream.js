@@ -6,8 +6,8 @@ const initialState = {
     filters: {},
     errors: {},
     total: 0,
-    limit: 20,
-    offset: 0,
+    pageSize: 20,
+    page: 1,
     order: '+id'
 };
 
@@ -30,8 +30,8 @@ export default function stream(state=initialState, action={}) {
             filters: action.payload.filters,
             errors: action.payload.errors,
             total: action.payload.total,
-            limit: action.payload.limit,
-            offset: action.payload.offset
+            pageSize: action.payload.page_size,
+            page: action.payload.page
         };
     }
 

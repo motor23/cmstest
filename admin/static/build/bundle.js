@@ -21367,8 +21367,8 @@
 	    filters: {},
 	    errors: {},
 	    total: 0,
-	    limit: 20,
-	    offset: 0,
+	    pageSize: 20,
+	    page: 1,
 	    order: '+id'
 	};
 	
@@ -21391,8 +21391,8 @@
 	            filters: action.payload.filters,
 	            errors: action.payload.errors,
 	            total: action.payload.total,
-	            limit: action.payload.limit,
-	            offset: action.payload.offset
+	            pageSize: action.payload.page_size,
+	            page: action.payload.page
 	        });
 	    }
 	
@@ -29341,21 +29341,19 @@
 	
 	    _createClass(Paginator, [{
 	        key: 'renderItem',
-	        value: function renderItem(page) {
+	        value: function renderItem(n) {
 	            var _props = this.props;
-	            var limit = _props.limit;
-	            var offset = _props.offset;
+	            var page = _props.page;
 	            var change = _props.change;
 	
-	            var currentPage = Math.ceil(offset / limit + 1);
-	            if (page == currentPage) {
+	            if (n === page) {
 	                return _react2.default.createElement(
 	                    'span',
-	                    { key: page, className: 'cms-paginator__item cms-paginator__item--current' },
-	                    page
+	                    { key: n, className: 'cms-paginator__item cms-paginator__item--current' },
+	                    n
 	                );
 	            }
-	            if (page === null) {
+	            if (n === null) {
 	                return _react2.default.createElement(
 	                    'span',
 	                    { className: 'cms-paginator__item cms-paginator__item--ellipsis' },
@@ -29364,10 +29362,10 @@
 	            }
 	            return _react2.default.createElement(
 	                'span',
-	                { key: page, className: 'cms-paginator__item', onClick: function onClick() {
-	                        return change(page);
+	                { key: n, className: 'cms-paginator__item', onClick: function onClick() {
+	                        return change(n);
 	                    } },
-	                page
+	                n
 	            );
 	        }
 	    }, {
@@ -29375,11 +29373,11 @@
 	        value: function render() {
 	            var _props2 = this.props;
 	            var total = _props2.total;
-	            var limit = _props2.limit;
-	            var offset = _props2.offset;
+	            var page = _props2.page;
+	            var pageSize = _props2.pageSize;
 	
-	            var page = Math.ceil(offset / limit + 1);
-	            var pages = (0, _paginate2.default)(total, limit, page, 1, 3);
+	            var pages = (0, _paginate2.default)(total, pageSize, page, 1, 3);
+	            console.log(pages);
 	            return _react2.default.createElement(
 	                'div',
 	                { className: 'cms-paginator' },
@@ -29393,8 +29391,8 @@
 	
 	Paginator.propTypes = {
 	    total: _react.PropTypes.number.isRequired,
-	    limit: _react.PropTypes.number.isRequired,
-	    offset: _react.PropTypes.number.isRequired,
+	    page: _react.PropTypes.number.isRequired,
+	    pageSize: _react.PropTypes.number.isRequired,
 	    change: _react.PropTypes.func.isRequired
 	};
 	
@@ -29444,26 +29442,30 @@
 	    _createClass(StreamList, [{
 	        key: 'componentWillMount',
 	        value: function componentWillMount() {
-	            this.props.dispatch((0, _stream.updateStreamList)(this.props.stream, 10));
+	            var _props3 = this.props;
+	            var stream = _props3.stream;
+	            var page = _props3.page;
+	            var pageSize = _props3.pageSize;
+	
+	            this.props.dispatch((0, _stream.updateStreamList)(stream, page, pageSize));
 	        }
 	    }, {
 	        key: 'changePage',
 	        value: function changePage(page) {
-	            var limit = this.props.limit;
+	            var pageSize = this.props.pageSize;
 	
-	            var offset = (page - 1) * limit;
-	            this.props.dispatch((0, _stream.updateStreamList)('docs', limit, offset));
+	            this.props.dispatch((0, _stream.updateStreamList)('docs', page, pageSize));
 	        }
 	    }, {
 	        key: 'render',
 	        value: function render() {
-	            var _props3 = this.props;
-	            var isLoading = _props3.isLoading;
-	            var title = _props3.title;
-	            var items = _props3.items;
-	            var total = _props3.total;
-	            var limit = _props3.limit;
-	            var offset = _props3.offset;
+	            var _props4 = this.props;
+	            var isLoading = _props4.isLoading;
+	            var title = _props4.title;
+	            var items = _props4.items;
+	            var total = _props4.total;
+	            var pageSize = _props4.pageSize;
+	            var page = _props4.page;
 	
 	            var content = items.map(function (item) {
 	                return _react2.default.createElement(StreamListRow, { key: item.id, item: item });
@@ -29510,7 +29512,7 @@
 	                        content
 	                    )
 	                ),
-	                _react2.default.createElement(Paginator, { total: total, limit: limit, offset: offset, change: this.changePage.bind(this) })
+	                _react2.default.createElement(Paginator, { total: total, page: page, pageSize: pageSize, change: this.changePage.bind(this) })
 	            );
 	        }
 	    }]);
@@ -29525,8 +29527,8 @@
 	    errors: _react.PropTypes.object.isRequired,
 	    items: _react.PropTypes.arrayOf(_react.PropTypes.object).isRequired,
 	    total: _react.PropTypes.number.isRequired,
-	    limit: _react.PropTypes.number.isRequired,
-	    offset: _react.PropTypes.number.isRequired
+	    pageSize: _react.PropTypes.number.isRequired,
+	    page: _react.PropTypes.number.isRequired
 	};
 	
 	
@@ -29539,8 +29541,8 @@
 	        filters: state.stream.filters,
 	        errors: state.stream.errors,
 	        total: state.stream.total,
-	        limit: state.stream.limit,
-	        offset: state.stream.offset
+	        pageSize: state.stream.pageSize,
+	        page: state.stream.page
 	    };
 	}
 	
@@ -29581,12 +29583,12 @@
 	    };
 	}
 	
-	function updateStreamList(stream, limit, offset) {
+	function updateStreamList(stream, page, pageSize) {
 	    return function (dispatch, state, connection) {
 	        var payload = {
 	            stream: stream,
-	            page_size: limit,
-	            offset: offset,
+	            page_size: pageSize,
+	            page: page,
 	            action: 'list',
 	            order: '+id'
 	        };

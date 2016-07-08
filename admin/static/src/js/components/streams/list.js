@@ -8,22 +8,21 @@ import Spinner from '../spinner';
 class Paginator extends Component {
     static propTypes = {
         total: PropTypes.number.isRequired,
-        limit: PropTypes.number.isRequired,
-        offset: PropTypes.number.isRequired,
+        page: PropTypes.number.isRequired,
+        pageSize: PropTypes.number.isRequired,
         change: PropTypes.func.isRequired
     };
 
-    renderItem(page) {
-        const {limit, offset, change} = this.props;
-        const currentPage = Math.ceil(offset / limit + 1);
-        if (page == currentPage) {
+    renderItem(n) {
+        const {page, change} = this.props;
+        if (n === page) {
             return (
-                <span key={page} className="cms-paginator__item cms-paginator__item--current">
-                    {page}
+                <span key={n} className="cms-paginator__item cms-paginator__item--current">
+                    {n}
                 </span>
             );
         }
-        if (page === null) {
+        if (n === null) {
             return (
                 <span className="cms-paginator__item cms-paginator__item--ellipsis">
                     &hellip;
@@ -31,16 +30,16 @@ class Paginator extends Component {
             );
         }
         return (
-            <span key={page} className="cms-paginator__item" onClick={() => change(page)}>
-                {page}
+            <span key={n} className="cms-paginator__item" onClick={() => change(n)}>
+                {n}
             </span>
         );
     }
 
     render() {
-        const {total, limit, offset} = this.props;
-        const page = Math.ceil(offset / limit + 1);
-        const pages = paginate(total, limit, page, 1, 3);
+        const {total, page, pageSize} = this.props;
+        const pages = paginate(total, pageSize, page, 1, 3);
+        console.log(pages)
         return (
             <div className="cms-paginator">
                 {pages.map(this.renderItem.bind(this))}
@@ -71,22 +70,22 @@ class StreamList extends Component {
         errors: PropTypes.object.isRequired,
         items: PropTypes.arrayOf(PropTypes.object).isRequired,
         total: PropTypes.number.isRequired,
-        limit: PropTypes.number.isRequired,
-        offset: PropTypes.number.isRequired
+        pageSize: PropTypes.number.isRequired,
+        page: PropTypes.number.isRequired
     };
 
     componentWillMount() {
-        this.props.dispatch(updateStreamList(this.props.stream, 10));
+        const {stream, page, pageSize} = this.props;
+        this.props.dispatch(updateStreamList(stream, page, pageSize));
     }
 
     changePage(page) {
-        const {limit} = this.props;
-        const offset = (page - 1) * limit;
-        this.props.dispatch(updateStreamList('docs', limit, offset));
+        const {pageSize} = this.props;
+        this.props.dispatch(updateStreamList('docs', page, pageSize));
     }
 
     render() {
-        const {isLoading, title, items, total, limit, offset} = this.props;
+        const {isLoading, title, items, total, pageSize, page} = this.props;
         const content = items.map(item => <StreamListRow key={item.id} item={item}/>);
         if (isLoading) {
             return <Spinner/>;
@@ -107,7 +106,7 @@ class StreamList extends Component {
                     {content}
                     </tbody>
                 </table>
-                <Paginator total={total} limit={limit} offset={offset} change={this.changePage.bind(this)}/>
+                <Paginator total={total} page={page} pageSize={pageSize} change={this.changePage.bind(this)}/>
             </div>
         );
     }
@@ -123,8 +122,8 @@ function mapStateToProps(state, props) {
         filters: state.stream.filters,
         errors: state.stream.errors,
         total: state.stream.total,
-        limit: state.stream.limit,
-        offset: state.stream.offset
+        pageSize: state.stream.pageSize,
+        page: state.stream.page
     };
 }
 

@@ -23,12 +23,12 @@ export function updateStreamListFailure(reason) {
 }
 
 
-export function updateStreamList(stream, limit, offset) {
+export function updateStreamList(stream, page, pageSize) {
     return (dispatch, state, connection) => {
         const payload = {
             stream: stream,
-            page_size: limit,
-            offset: offset,
+            page_size: pageSize,
+            page: page,
             action: 'list',
             order: '+id'
         };
