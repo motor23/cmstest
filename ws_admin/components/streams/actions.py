@@ -48,14 +48,14 @@ class List(Base):
 
         if not 0 < page_size <= self.stream.max_limit:
             raise exc.MessageError('Page size error')
-        conn = await env.app.db(self.stream.mapper.db_id)
-        async with await conn.begin():
-            query = self.query(env, filters, [order])
-            total = await self.stream.mapper.count(conn, query)
+        async with await env.app.db(self.stream.mapper.db_id) as conn:
+            async with await conn.begin():
+                query = self.query(env, filters, [order])
+                total = await self.stream.mapper.count(conn, query)
 
-            query = self.page_query(query, page, page_size)
-            list_items = await self.stream.mapper.select(
-                conn, query=query, keys=set(list_form.keys()))
+                query = self.page_query(query, page, page_size)
+                list_items = await self.stream.mapper.select(
+                    conn, query=query, keys=set(list_form.keys()))
 
         raw_list_items = list_form.values_from_python(list_items)
 
@@ -113,11 +113,10 @@ class GetItem(Base):
     async def handle(self, env, message):
         message = self.MessageForm().to_python(message)
         item_id = message['item_id']
-        conn = await env.app.db(self.stream.mapper.db_id)
-        async with await conn.begin():
-            items = await self.stream.mapper.select(
-                conn, query=self.query(item_id))
-
+        async with await env.app.db(self.stream.mapper.db_id) as conn:
+            async with await conn.begin():
+                items = await self.stream.mapper.select(
+                    conn, query=self.query(item_id))
         if not items:
             raise exc.StreamItemNotFound(self.stream, item_id)
         assert len(items) == 1, \
@@ -173,9 +172,9 @@ class CreateItem(Base):
         raw_item = message['values']
         item, errors = item_fields_form.to_python(raw_item)
         if not errors:
-            conn = await env.app.db(self.stream.mapper.db_id)
-            async with await conn.begin():
-                item = await self.stream.mapper.insert(conn, item)
+            async with await env.app.db(self.stream.mapper.db_id) as conn:
+                async with await conn.begin():
+                    item = await self.stream.mapper.insert(conn, item)
             raw_item = item_fields_form.from_python(item)
         return {
             'item_fields': item_fields_form.get_cfg(),
@@ -202,17 +201,17 @@ class UpdateItem(Base):
         values, errors = item_fields_form.to_python(raw_values,
                                                     keys=raw_values.keys())
         if not errors:
-            conn = await env.app.db(self.stream.mapper.db_id)
-            async with await conn.begin():
-                try:
-                    item = await self.stream.mapper.update(
-                        conn,
-                        item_id,
-                        values,
-                        query=self.stream.query(),
-                        keys=list(values.keys()))
-                except exc.ItemNotFound:
-                    raise exc.StreamItemNotFound(self, item_id)
+            async with await env.app.db(self.stream.mapper.db_id) as conn:
+                async with await conn.begin():
+                    try:
+                        item = await self.stream.mapper.update(
+                            conn,
+                            item_id,
+                            values,
+                            query=self.stream.query(),
+                            keys=list(values.keys()))
+                    except exc.ItemNotFound:
+                        raise exc.StreamItemNotFound(self, item_id)
             raw_values = item_fields_form.from_python(item, keys=item.keys())
         return {
             'item_fields': item_fields_form.get_cfg(),
@@ -233,13 +232,13 @@ class DeleteItem(Base):
 
     async def handle(self, env, message):
         message = self.MessageForm().to_python(message)
-        conn = await env.app.db(self.stream.mapper.db_id)
-        async with await conn.begin():
-            try:
-                await self.stream.mapper.delete(
-                    conn, message['item_id'], query=self.stream.query())
-            except exc.ItemNotFound:
-                raise exc.StreamItemNotFound(self, message['item_id'])
+        async with await env.app.db(self.stream.mapper.db_id) as conn:
+            async with await conn.begin():
+                try:
+                    await self.stream.mapper.delete(
+                        conn, message['item_id'], query=self.stream.query())
+                except exc.ItemNotFound:
+                    raise exc.StreamItemNotFound(self, message['item_id'])
         return {
             'item_id': message['item_id'],
         }

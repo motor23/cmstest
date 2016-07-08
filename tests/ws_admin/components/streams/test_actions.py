@@ -140,6 +140,12 @@ class ActionsTestCase(TestCase, AssertsCompiledSQL):
                     self.db.tns.append(self.tn)
                     return self.tn
 
+                async def __aenter__(self, *args):
+                    return self
+
+                async def __aexit__(self, *args):
+                    pass
+
             async def __call__(self, db_id):
                 assert db_id == TEST_DB_ID
                 return self.ConnMock(self)
