@@ -58,4 +58,3 @@ class values(fields.RawDict):
     name = 'values'
     label = 'Значения'
     raw_required = True
-    required = True

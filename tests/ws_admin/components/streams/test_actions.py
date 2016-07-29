@@ -1,751 +1,488 @@
 import asyncio
 from unittest import TestCase
+from unittest import skipIf
 from unittest.mock import MagicMock
-from sqlalchemy.testing.assertions import AssertsCompiledSQL
+from sqlalchemy import sql
+#from sqlalchemy.testing.assertions import AssertsCompiledSQL
 
 from ws_admin.components.streams import actions
 from ws_admin.components.streams import exc
 
-from ikcms.orm import Mapper
+from ikcms import orm
 from ikcms.utils.asynctests import asynctest
+import ikcms.ws_components.db
 
 from ws_admin.components.streams.stream import Stream
 from ws_admin.components.streams.forms import list_fields
 from ws_admin.components.streams.forms import filter_fields
 from ws_admin.components.streams.forms import item_fields
-from tests.models import models1
+from ikcms.forms.widgets import Widget
+
+from tests.models import models1, models2, metadata
+from tests.cfg import cfg
 
 
-TEST_DB_ID = 'test_db_id'
+MYSQL_URL = getattr(cfg, 'MYSQL_URL', None)
+POSTGRESS_URL = getattr(cfg, 'POSTGRESS_URL', None)
+DB_URL = MYSQL_URL or POSTGRESS_URL
 
+@skipIf(not DB_URL, 'db url undefined')
+class ActionsTestCase(TestCase):
+    test_items = [
+        {'id': 1, 'title': '4-111t', 'title2': '111t2'},
+        {'id': 2, 'title': '3-222t', 'title2': '222t2'},
+        {'id': 3, 'title': '2-333t', 'title2': '333t2'},
+        {'id': 4, 'title': '1-444t', 'title2': '444t2'},
+    ]
 
-def with_transaction(test):
-    def wrapper1(coroutine):
-        def wrapper2(conn, *args, **kwargs):
-            test.assertIsInstance(conn, test.env.app.db.ConnMock)
-            test.assertEqual(conn.tn.state, 'begin')
-            return coroutine(conn, *args, **kwargs)
-        return wrapper2
-    return wrapper1
+    test_edit_items = test_list_items = [
+        {'id': 1, 'title': '4-111t'},
+        {'id': 2, 'title': '3-222t'},
+        {'id': 3, 'title': '2-333t'},
+        {'id': 4, 'title': '1-444t'},
+    ]
 
+    models1 = models1
+    models2 = models2
+    mapper_cls = orm.mappers.Base
 
-def not_call(*args, **kwargs):
-    raise AssertionError
+    async def asetup(self):
+        registry = orm.mappers.Registry(metadata)
+        self.mapper_cls.from_model(registry, 'Test', [self.models1.Test])
 
+        app = MagicMock()
+        app.cfg.DATABASES = {
+            'db1': DB_URL,
+            'db2': DB_URL,
+        }
+        del app.db
+        db = await ikcms.ws_components.db.component(mappers=registry).create(app)
+        async with await db() as session:
+            conn1 = await session.get_connection(db.engines['db1'])
+            await self.models1.reset(conn1)
+            conn2 = await session.get_connection(db.engines['db2'])
+            await self.models2.reset(conn2)
 
-class ActionsTestCase(TestCase, AssertsCompiledSQL):
+        class l_id(list_fields.id):
+            widget = MagicMock()
 
-    __dialect__ = 'default'
+        class l_title(list_fields.title):
+            widget = MagicMock()
 
-    def setUp(self):
+        class f_id(filter_fields.id):
+            widget = MagicMock()
 
-        class FormFieldMock:
-            enable_order = False
-            enable_filter = False
-            _widget = None
+        class f_title(filter_fields.title):
+            widget = MagicMock()
 
-            def __init__(self, **kwargs):
-                self.__dict__.update(kwargs)
+        class f_title2(filter_fields.title):
+            name = 'title2'
+            title = 'title2'
+            widget = MagicMock()
 
-            def __call__(self, context=None, parent=None):
-                self.context = context
-                return self
-
-            def to_python(self, values):
-                value = values.get(self.name)
-                if value is not None:
-                    if value==exc.ValidationError:
-                        raise value({self.name: 'error'})
-                    return {self.name: '{}-to_python'.format(value)}
-                else:
-                    return {}
-
-            def from_python(self, value):
-                return {self.name: '{}-from_python'.format(value.get(self.name))}
+        class i_id(item_fields.id):
+            widget = MagicMock()
 
             def get_initials(_self, test_kwarg='test_default'):
-                self.assertIn(test_kwarg, ['test_default', 'test_init'])
                 return '{}-{}-initials'.format(_self.name, test_kwarg)
 
-            order = list_fields.simple_order
-            filter = filter_fields.eq_filter
+        class i_title(item_fields.title):
+            widget = MagicMock()
 
-            @property
-            def widget(self):
-                return MagicMock(to_dict=MagicMock(return_value=self._widget))
-
+            def get_initials(_self, test_kwarg='test_default'):
+                return '{}-{}-initials'.format(_self.name, test_kwarg)
 
         class TestStream(Stream):
             max_limit = 50
             name = 'test_stream'
             title = 'test_stream_title'
-            mapper = Mapper(models1.test_table1, {}, TEST_DB_ID)
+            mapper = registry['db1']['Test']
 
             list_fields = [
-                    FormFieldMock(
-                        name='id',
-                        enable_order=True,
-                        _widget='ID_LIST_WIDGET',
-                    ),
-                    FormFieldMock(
-                        name='title',
-                        enable_order=True,
-                        _widget='TITLE_LIST_WIDGET',
-                    ),
+                l_id,
+                l_title,
             ]
             filter_fields = [
-                    FormFieldMock(
-                        name='id',
-                        enable_filter=True,
-                        _widget='ID_FILTER_WIDGET',
-                    ),
-                    FormFieldMock(
-                        name='title',
-                        enable_filter=True,
-                        _widget='TITLE_FILTER_WIDGET',
-                    ),
-                    FormFieldMock(
-                        name='title2',
-                        enable_filter=True,
-                        _widget='TITLE2_FILTER_WIDGET',
-                    ),
+                f_id,
+                f_title,
+                f_title2,
             ]
             item_fields = [
-                    FormFieldMock(name='id', _widget='ID_ITEM_WIDGET'),
-                    FormFieldMock(name='title', _widget='TITLE_ITEM_WIDGET'),
+                i_id,
+                i_title,
             ]
 
+        stream = TestStream(MagicMock())
+        env = MagicMock()
+        env.app = app
 
-        class TnMock:
-            state = 'new'
-            async def __aenter__(self):
-                assert self.state == 'new'
-                self.state = 'begin'
+        return {
+            'db': db,
+            'stream': stream,
+            'env': env,
+        }
 
-            async def __aexit__(self, *args):
-                assert self.state == 'begin'
-                self.state = 'close'
-
-
-        class DBMock:
-            tns = []
-
-            class ConnMock:
-                def __init__(self, db):
-                    self.db = db
-                    self.tn = None
-
-                async def begin(self):
-                    self.tn = TnMock()
-                    self.db.tns.append(self.tn)
-                    return self.tn
-
-                async def __aenter__(self, *args):
-                    return self
-
-                async def __aexit__(self, *args):
-                    pass
-
-            async def __call__(self, db_id):
-                assert db_id == TEST_DB_ID
-                return self.ConnMock(self)
+    async def aclose(self, db, stream, env):
+        db.close()
 
 
-            def is_all_tns_closed(self):
-                for tn in self.tns:
-                    if tn.state != 'closed':
-                        return False
-                return True
+    def _base_assert_list_action_response(self, resp, action, stream):
+        self.assertEqual(resp['stream'], 'test_stream')
+        self.assertEqual(resp['title'], 'test_stream_title')
+        self.assertEqual(resp['action'], action.name)
+        self.assertEqual(
+            resp['list_fields'],
+            [f.widget.to_dict(f) for f in stream.list_fields],
+        )
+        self.assertEqual(
+            resp['filters_fields'],
+            [f.widget.to_dict(f) for f in stream.filter_fields],
+        )
 
-        self.env = MagicMock()
-        self.env.app = MagicMock()
-        self.env.app.db = DBMock()
-
-        self.stream = TestStream(MagicMock())
 
     @asynctest
-    async def test_list(self):
-        test_items = [
-            {
-                'id': 'id1',
-                'title': 'title1',
-            },
-            {
-                'id': 'id2',
-                'title': 'title2',
-            },
+    async def test_list(self, db, stream, env):
+        action = actions.List(stream)
+        mapper = db.mappers['db1']['Test']
+        async with await db() as session:
+            q = sql.insert(self.models1.test_table1).values(self.test_items)
+            result = await session.execute(q)
+
+        list_item1 = {'id': 1, 'title': '4-111t'}
+        list_item2 = {'id': 2, 'title': '3-222t'}
+        list_item3 = {'id': 3, 'title': '2-333t'}
+        list_item4 = {'id': 4, 'title': '1-444t'}
+        list_items = [list_item1, list_item2, list_item3, list_item4]
+        list_items_desc = list_items[::-1]
+
+        # test order
+        order_values = [
+            (None, list_items),
+            ('+id', list_items),
+            ('-title', list_items),
+            ('+title', list_items[::-1]),
         ]
-        action = actions.List(self.stream)
+        filters_values = [
+            (None, lambda i: True),
+            ({}, lambda i: True),
+        ]
+        for id in [-5, 0, 1, 3, 10]:
+            def func(x):
+                return lambda i:i['id']==x
+            filters_values.append(({'id': id}, func(id)))
+        for title in ['1', 't', '2-333t', '24']:
+            def func(x):
+                return lambda i:i['title'].find(x)!=-1
+            filters_values.append(({'title': title}, func(title)))
+        for order, items in order_values:
+            _order = order or '+id'
+            for filters, filter_func in filters_values:
+                _filters = filters or {}
+                _items = list(filter(filter_func, items))
+                for page_size in [None, 1, 3, 4, 50]:
+                    _page_size = page_size or 1
+                    for page in [None, 1, 2, 3, 4, 10]:
+                        _page = page or 1
 
-        #test {}
-        @with_transaction(self)
-        async def count(conn, query):
-            self.assert_compile(
-                query,
-                "SELECT test_table1.id FROM test_table1 "
-                    "ORDER BY test_table1.id",
-                literal_binds=True,
-            )
-            return 'TOTAL'
-        self.stream.mapper.count = count
+                        kwargs = {}
+                        if order is not None:
+                            kwargs['order'] = order
+                        if filters is not None:
+                            kwargs['filters'] = filters
+                        if page_size is not None:
+                            kwargs['page_size'] = page_size
+                        if page is not None:
+                            kwargs['page'] = page
 
-        @with_transaction(self)
-        async def select(conn, ids=None, query=None, keys=None):
-            self.assert_compile(
-                query,
-                "SELECT test_table1.id FROM test_table1 "
-                   "ORDER BY test_table1.id LIMIT 1",
-                literal_binds=True,
-            )
-            self.assertEqual(keys, {'id', 'title'})
-            return test_items
-        self.stream.mapper.select = select
+                        resp = await action.handle(env, kwargs)
+                        self._base_assert_list_action_response(
+                            resp, action, stream)
+                        self.assertEqual(
+                            resp['items'],
+                            _items[(_page-1)*_page_size:_page*_page_size],
+                        )
+                        self.assertEqual(resp['filters_errors'], {})
+                        self.assertEqual(resp['filters'], _filters)
+                        self.assertEqual(resp['page_size'], _page_size)
+                        self.assertEqual(resp['page'], _page)
+                        self.assertEqual(resp['order'], _order)
+                        self.assertEqual(resp['total'], len(_items))
 
-        resp = await action.handle(self.env, {})
-        self.assertEqual(resp['stream'], 'test_stream')
-        self.assertEqual(resp['title'], 'test_stream_title')
-        self.assertEqual(resp['action'], action.name)
-        self.assertEqual(
-            resp['list_fields'],
-            ['ID_LIST_WIDGET', 'TITLE_LIST_WIDGET'],
-        )
-        self.assertEqual(resp['items'], [
-            {
-                'id': 'id1-from_python',
-                'title': 'title1-from_python',
-            },
-            {
-                'id': 'id2-from_python',
-                'title': 'title2-from_python',
-            },
 
-        ])
-        self.assertEqual(resp['total'], 'TOTAL')
-        self.assertEqual(
-            resp['filters_fields'],
-            ['ID_FILTER_WIDGET', 'TITLE_FILTER_WIDGET', 'TITLE2_FILTER_WIDGET'],
-        )
-        self.assertEqual(resp['filters_errors'], {})
-        self.assertEqual(resp['filters'], {})
-        self.assertEqual(resp['page_size'], 1)
-        self.assertEqual(resp['page'], 1)
-        self.assertEqual(resp['order'], '+id')
-
-        self.assertTrue(self.env.app.db_mock.is_all_tns_closed())
-
-        #test all
-        @with_transaction(self)
-        async def count(conn, query):
-            self.assert_compile(
-                query,
-                "SELECT test_table1.id FROM test_table1 "
-                    "WHERE test_table1.id = 'id_filter-to_python' "
-                    "AND test_table1.title = 'title_filter-to_python' "
-                    "ORDER BY test_table1.title DESC",
-                literal_binds=True,
-            )
-            return 'TOTAL'
-        self.stream.mapper.count = count
-
-        @with_transaction(self)
-        async def select(conn, ids=None, query=None, keys=None):
-            self.assert_compile(
-                query,
-                "SELECT test_table1.id FROM test_table1 "
-                    "WHERE test_table1.id = 'id_filter-to_python' "
-                    "AND test_table1.title = 'title_filter-to_python' "
-                    "ORDER BY test_table1.title DESC "
-                    "LIMIT 10 OFFSET 20",
-                literal_binds=True,
-            )
-            self.assertEqual(keys, {'id', 'title'})
-            return test_items
-        self.stream.mapper.select = select
-
-        resp = await action.handle(self.env, {
-            'filters': {'id': 'id_filter', 'title': 'title_filter'},
-            'order': '-title',
-            'page': 3,
-            'page_size': 10,
-        })
-
-        self.assertEqual(resp['stream'], 'test_stream')
-        self.assertEqual(resp['title'], 'test_stream_title')
-        self.assertEqual(resp['action'], action.name)
-        self.assertEqual(
-            resp['list_fields'],
-            ['ID_LIST_WIDGET', 'TITLE_LIST_WIDGET'],
-        )
-        self.assertEqual(resp['items'], [
-            {
-                'id': 'id1-from_python',
-                'title': 'title1-from_python',
-            },
-            {
-                'id': 'id2-from_python',
-                'title': 'title2-from_python',
-            },
-
-        ])
-        self.assertEqual(resp['total'], 'TOTAL')
-        self.assertEqual(
-            resp['filters_fields'],
-            ['ID_FILTER_WIDGET', 'TITLE_FILTER_WIDGET', 'TITLE2_FILTER_WIDGET'],
-        )
-        self.assertEqual(resp['filters_errors'], {})
-        self.assertEqual(
-                resp['filters'],
-                {'id': 'id_filter', 'title': 'title_filter'},
-        )
-        self.assertEqual(resp['page_size'], 10)
-        self.assertEqual(resp['page'], 3)
-        self.assertEqual(resp['order'], '-title')
-        # test MessageError
-        self.stream.mapper.count = not_call
-        self.stream.mapper.select = not_call
+        error_page_values = [-10, 0, 5.6, 'aaaa', '20', None]
+        for value in error_page_values:
+            with self.assertRaises(exc.MessageError):
+                await action.handle(env, {
+                    'page': value,
+               })
+        error_page_size_values = [-10, 0, 5.6, 'aaa', '20', None]
+        for value in error_page_size_values:
+            with self.assertRaises(exc.MessageError):
+                await action.handle(env, {
+                    'page': value,
+               })
 
         with self.assertRaises(exc.MessageError):
-            await action.handle(self.env, {
+            await action.handle(env, {
                 'filters': 56,
            })
         with self.assertRaises(exc.MessageError):
-            await action.handle(self.env, {
+            await action.handle(env, {
                 'order': {},
            }) 
         with self.assertRaises(exc.MessageError):
-            await action.handle(self.env, {
+            await action.handle(env, {
                 'page': 'xxx',
            })
         with self.assertRaises(exc.MessageError):
-            await action.handle(self.env, {
+            await action.handle(env, {
                 'page_size': 'xxx',
            })
         with self.assertRaises(exc.MessageError):
-            await action.handle(self.env, {
-                'page': 0,
-           })
-        with self.assertRaises(exc.MessageError):
-            await action.handle(self.env, {
+            await action.handle(env, {
                 'page_size': -5,
            })
         with self.assertRaises(exc.StreamFieldNotFound):
-            await action.handle(self.env, {
+            await action.handle(env, {
                 'order': '+error_field',
            })
         with self.assertRaises(exc.MessageError):
-            await action.handle(self.env, {
+            await action.handle(env, {
                 'page_size': 100,
            })
-        # test ValidationError
-        @with_transaction(self)
-        async def count(conn, query):
-            self.assert_compile(
-                query,
-                "SELECT test_table1.id FROM test_table1 "
-                    "WHERE test_table1.title = 'title_filter-to_python' "
-                    "ORDER BY test_table1.id",
-                literal_binds=True,
-            )
-            return 'TOTAL'
-        self.stream.mapper.count = count
 
-        @with_transaction(self)
-        async def select(conn, ids=None, query=None, keys=None):
-            self.assert_compile(
-                query,
-                "SELECT test_table1.id FROM test_table1 "
-                    "WHERE test_table1.title = 'title_filter-to_python' "
-                    "ORDER BY test_table1.id LIMIT 1",
-                literal_binds=True,
-            )
-            return test_items
-        self.stream.mapper.select = select
-
-        resp = await action.handle(self.env, {
-            'filters': {
-                'id': exc.ValidationError,
-                'title': 'title_filter',
-            },
-        })
-        self.assertEqual(resp['filters_errors'], {'id': 'error'})
-        self.assertEqual(
-                resp['filters'],
-                {'id': exc.ValidationError, 'title': 'title_filter'},
-        )
+        #XXX to do: test ValidationError
 
 
     @asynctest
-    async def test_get_item(self):
-        action = actions.GetItem(self.stream)
-        test_item = {
-            'id': 'id1',
-            'title': 'title1',
-        }
+    async def test_get_item(self, db, stream, env):
+        action = actions.GetItem(stream)
+        mapper = db.mappers['db1']['Test']
+        async with await db() as session:
+            q = sql.insert(self.models1.test_table1).values(self.test_items)
+            result = await session.execute(q)
 
-        @with_transaction(self)
-        async def select(conn, query, keys=None):
-            self.assert_compile(
-                query,
-                "SELECT test_table1.id FROM test_table1 "
-                    "WHERE test_table1.id = 500",
-                literal_binds=True,
+
+        for item in self.test_edit_items:
+            resp = await action.handle(env, {'item_id': item['id']})
+            self.assertEqual(
+                resp['item_fields'],
+                [f.widget.to_dict(f) for f in stream.item_fields],
             )
-            self.assertEqual(keys, None)
-            return [test_item]
-        self.stream.mapper.select = select
+            self.assertEqual(resp['item'], item)
 
-        resp = await action.handle(self.env, {'item_id': 500})
-        self.assertEqual(
-            resp['item_fields'],
-            ['ID_ITEM_WIDGET', 'TITLE_ITEM_WIDGET'],
-        )
-        self.assertEqual(resp['item'], {
-            'id': 'id1-from_python',
-            'title': 'title1-from_python',
-        })
-        # test Errors
-        self.stream.mapper.count = not_call
-        self.stream.mapper.select = not_call
+        for value in [-10, 0, 5, 500]:
+            with self.assertRaises(exc.StreamItemNotFound):
+                await action.handle(env, {'item_id': value})
 
         with self.assertRaises(exc.MessageError):
-            await action.handle(self.env, {
-                'item_id': {},
-            })
-        with self.assertRaises(exc.MessageError):
-            await action.handle(self.env, {})
+            await action.handle(env, {})
 
-        @with_transaction(self)
-        async def select(conn, ids=None, query=None, keys=None):
-            return []
-        self.stream.mapper.select = select
+        for value in [{}, None, [1,2]]:
+            with self.assertRaises(exc.MessageError):
+                await action.handle(env, {'item_id': value})
 
-        with self.assertRaises(exc.StreamItemNotFound):
-            await action.handle(self.env, {'item_id': 500})
-
-        @with_transaction(self)
-        async def select(conn, ids=None, query=None, keys=None):
-            return [1, 2]
-        self.stream.mapper.select = select
-
-        with self.assertRaises(AssertionError):
-            await action.handle(self.env, {'item_id': 500})
 
     @asynctest
-    async def test_new_item(self):
-        action = actions.NewItem(self.stream)
-        resp = await action.handle(self.env, {})
+    async def test_new_item(self, db, stream, env):
+        action = actions.NewItem(stream)
+
+        resp = await action.handle(env, {})
         self.assertEqual(
             resp['item_fields'],
-            ['ID_ITEM_WIDGET', 'TITLE_ITEM_WIDGET'],
+            [f.widget.to_dict(f) for f in stream.item_fields],
         )
-        self.assertEqual(
-            resp['item'],
+        self.assertEqual(resp['item'],
             {
-                'title': 'title-test_default-initials-from_python',
-                'id': 'id-test_default-initials-from_python',
+                'title': 'title-test_default-initials',
+                'id': 'id-test_default-initials',
             },
         )
 
-        resp = await action.handle(self.env,
+
+        resp = await action.handle(env,
             {'kwargs':{'test_kwarg': 'test_init'}})
         self.assertEqual(
             resp['item_fields'],
-            ['ID_ITEM_WIDGET', 'TITLE_ITEM_WIDGET'],
+            [f.widget.to_dict(f) for f in stream.item_fields],
         )
-        self.assertEqual(
-            resp['item'],
+        self.assertEqual(resp['item'],
             {
-                'title': 'title-test_init-initials-from_python',
-                'id': 'id-test_init-initials-from_python',
+                'title': 'title-test_init-initials',
+                'id': 'id-test_init-initials',
             },
         )
 
-        with self.assertRaises(exc.MessageError):
-            await action.handle(self.env, {
-                'kwargs': [],
-           })
+        for value in [None, 'xxx', [], 10]:
+            with self.assertRaises(exc.MessageError):
+                await action.handle(env, {
+                    'kwargs': value,
+               })
 
     @asynctest
-    async def test_create_item(self):
-        action = actions.CreateItem(self.stream)
-        @with_transaction(self)
-        async def insert(conn, item):
-            new_item = item.copy()
-            self.assertEqual(
-                item,
-                {'title': 'test_title-to_python'},
+    async def test_create_item(self, db, stream, env):
+        mapper = db.mappers['db1']['Test']
+        action = actions.CreateItem(stream)
+        items = [
+            {'id':1, 'title': 'test_title-1'},
+            {'id':2, 'title': 'test_title-2'},
+            {'id':3, 'title': 'test_title-3'},
+            {'id':10, 'title': 'test_title-10'},
+            {'id':30, 'title': 'test_title-30'},
+            {'id':121, 'title': 'test_title-121'},
+        ]
+        for item in items[:3]:
+            resp = await action.handle(
+                env,
+                {'values': {'title': item['title']}}
             )
-            new_item['id'] = 123
-            return new_item
-        self.stream.mapper.insert = insert
-
-        resp = await action.handle(self.env,
-            {'values': {'title': 'test_title'}})
-
-        self.assertEqual(
-            resp['item_fields'],
-            ['ID_ITEM_WIDGET', 'TITLE_ITEM_WIDGET'],
-        )
-        self.assertEqual(
-            resp['item'],
-            {
-                'id': '123-from_python',
-                'title': 'test_title-to_python-from_python',
-            },
-        )
-        self.assertEqual(resp['errors'], {})
-
-        @with_transaction(self)
-        async def insert(conn, item):
-            new_item = item.copy()
             self.assertEqual(
-                item,
-                {
-                    'id': '123-to_python',
-                    'title': 'test_title-to_python',
-                },
+                resp['item_fields'],
+                [f.widget.to_dict(f) for f in stream.item_fields],
             )
-            return new_item
-        self.stream.mapper.insert = insert
+            self.assertEqual(resp['item'], item)
+            self.assertEqual(resp['errors'], {})
 
-        resp = await action.handle(self.env,
-            {'values': {'id': 123, 'title': 'test_title'}})
+        for item in items[3:]:
+            resp = await action.handle(env, {'values': item})
+            self.assertEqual(
+                resp['item_fields'],
+                [f.widget.to_dict(f) for f in stream.item_fields],
+            )
+            self.assertEqual(resp['item'], item)
+            self.assertEqual(resp['errors'], {})
 
-        self.assertEqual(
-            resp['item_fields'],
-            ['ID_ITEM_WIDGET', 'TITLE_ITEM_WIDGET'],
-        )
-        self.assertEqual(
-            resp['item'],
-            {
-                'id': '123-to_python-from_python',
-                'title': 'test_title-to_python-from_python',
-            },
-        )
-        self.assertEqual(resp['errors'], {})
+        async with await db() as session:
+            q = sql.select([
+                self.models1.test_table1.c.id,
+                self.models1.test_table1.c.title,
+            ]).order_by(self.models1.test_table1.c.id)
+            result = await session.execute(q)
+            result = [dict(row) for row in result]
+            self.assertEqual(result, items)
 
         # errors
-        self.stream.mapper.insert = not_call
+        with self.assertRaises(exc.MessageError):
+            await action.handle(env, {})
 
         with self.assertRaises(exc.MessageError):
-            await action.handle(self.env, {})
+            await action.handle(env, {'values': []})
 
         with self.assertRaises(exc.MessageError):
-            await action.handle(self.env, {'values': []})
+            await action.handle(env, {'kwargs': None})
 
-        with self.assertRaises(exc.MessageError):
-            await action.handle(self.env, {'kwargs': None})
+        # XXX raises RawValueTypeError
+        #with self.assertRaises(exc.MessageError):
+        #    resp = await action.handle(env, {'values': {'id': ''}})
 
-
-        resp = await action.handle(
-            self.env,
-            {'values': {'id': 123, 'title': exc.ValidationError}},
-        )
-
-        self.assertEqual(
-            resp['item_fields'],
-            ['ID_ITEM_WIDGET', 'TITLE_ITEM_WIDGET'],
-        )
-        self.assertEqual(
-            resp['item'],
-            {
-                'id': 123,
-                'title': exc.ValidationError,
-            },
-        )
-        self.assertEqual(resp['errors'], {'title': 'error'})
-
-
-
-        # id tests
-        self.stream.item_fields = [
-            item_fields.id,
-        ]
-        @with_transaction(self)
-        async def insert(conn, item):
-            new_item = item.copy()
-            self.assertEqual(item, {})
-            new_item['id'] = 123
-            return new_item
-        self.stream.mapper.insert = insert
-        resp = await action.handle(self.env, {'values': {}})
-
-        @with_transaction(self)
-        async def insert(conn, item):
-            new_item = item.copy()
-            self.assertEqual(item, {'id': None})
-            new_item['id'] = 123
-            return new_item
-        self.stream.mapper.insert = insert
-        resp = await action.handle(self.env, {'values': {'id': None}})
-
-        with self.assertRaises(exc.RawValueTypeError):
-            resp = await action.handle(self.env, {'values': {'id': ''}})
-
-        # test kwargs
-        old_get_item_form = self.stream.get_item_form
-        def get_item_form(env, kwargs):
-            self.assertEqual(kwargs, {'test_kwarg': 'test'})
-            return old_get_item_form(env, kwargs)
-        self.stream.get_item_form=get_item_form
-        resp = await action.handle(
-            self.env,
-            {'values': {'id': None}, 'kwargs': {'test_kwarg': 'test'}},
-        )
+        #XXX to do: test kwargs
+        #XXX to do: test ValidationError
 
     @asynctest
-    async def test_update_item(self):
-        action = actions.UpdateItem(self.stream)
-        @with_transaction(self)
-        async def update(conn, id, item, query=None, keys=None):
-            self.assertEqual(id, 50)
-            self.assertEqual(item, {'title': 'new_title-to_python'})
-            self.assert_compile(
-                query,
-                "SELECT test_table1.id FROM test_table1",
-                literal_binds=True,
-            )
-            self.assertEqual(keys, ['title'])
-            return {
+    async def test_update_item(self, db, stream, env):
+        action = actions.UpdateItem(stream)
+        mapper = db.mappers['db1']['Test']
+        async with await db() as session:
+            q = sql.insert(self.models1.test_table1).values(self.test_items)
+            result = await session.execute(q)
+        result_items = self.test_edit_items.copy()
+
+        resp = await action.handle(
+            env,
+            {
+                'item_id': 3,
+                'values': {'title': 'updated_title'}
+            }
+        )
+        self.assertEqual(resp['item_id'], 3)
+        self.assertEqual(
+            resp['item_fields'],
+            [f.widget.to_dict(f) for f in stream.item_fields],
+        )
+        self.assertEqual(
+            resp['values'],
+            {
+                'id': 3,
+                'title': 'updated_title',
+            },
+        )
+        self.assertEqual(resp['errors'], {})
+        result_items[3-1] = dict(result_items[3-1], title='updated_title')
+
+
+        resp = await action.handle(
+            env,
+            {
+                'item_id': 4,
+                'values': {'id': 50, 'title': 'updated_title2'}
+            }
+        )
+        self.assertEqual(resp['item_id'], 50)
+        self.assertEqual(
+            resp['item_fields'],
+            [f.widget.to_dict(f) for f in stream.item_fields],
+        )
+        self.assertEqual(
+            resp['values'],
+            {
                 'id': 50,
-                'title': 'new_title',
-            }
-        self.stream.mapper.update = update
-        resp = await action.handle(
-            self.env,
-            {
-                'item_id': 50,
-                'values': {'title': 'new_title'}
-            }
-        )
-        self.assertEqual(resp['item_id'], 50)
-        self.assertEqual(
-            resp['item_fields'],
-            ['ID_ITEM_WIDGET', 'TITLE_ITEM_WIDGET'],
-        )
-        self.assertEqual(
-            resp['values'],
-            {
-                'id': '50-from_python',
-                'title': 'new_title-from_python',
+                'title': 'updated_title2',
             },
         )
         self.assertEqual(resp['errors'], {})
+        result_items[4-1] = dict(
+            result_items[4-1], id=50, title='updated_title2')
 
+        async with await db() as session:
+            q = sql.select([
+                self.models1.test_table1.c.id,
+                self.models1.test_table1.c.title,
+            ]).order_by(self.models1.test_table1.c.id)
+            result = await session.execute(q)
+            result = [dict(row) for row in result]
+            self.assertEqual(result, result_items)
 
-        @with_transaction(self)
-        async def update(conn, id, item, query=None, keys=None):
-            self.assertEqual(id, 50)
-            self.assertEqual(
-                item,
-                {'id': '51-to_python', 'title': 'new_title-to_python'},
-            )
-            self.assert_compile(
-                query,
-                "SELECT test_table1.id FROM test_table1",
-                literal_binds=True,
-            )
-            self.assertEqual(set(keys), {'id', 'title'})
-            return {
-                'id': 51,
-                'title': 'new_title',
-            }
-
-        self.stream.mapper.update = update
-        resp = await action.handle(
-            self.env,
-            {
-                'item_id': 50,
-                'values': {'id': 51, 'title': 'new_title'}
-            }
-        )
-        self.assertEqual(resp['item_id'], 50)
-        self.assertEqual(
-            resp['item_fields'],
-            ['ID_ITEM_WIDGET', 'TITLE_ITEM_WIDGET'],
-        )
-        self.assertEqual(
-            resp['values'],
-            {
-                'id': '51-from_python',
-                'title': 'new_title-from_python',
-            },
-        )
-        self.assertEqual(resp['errors'], {})
         # test errors
-        self.stream.mapper.update = not_call
         with self.assertRaises(exc.MessageError):
-            resp = await action.handle(
-                self.env,
-                {'values': {'id': 51, 'title': 'new_title'}},
-            )
+            resp = await action.handle(env, {})
         with self.assertRaises(exc.MessageError):
-            resp = await action.handle(self.env, {})
-        with self.assertRaises(exc.MessageError):
-            resp = await action.handle(self.env, {'item_id': 16})
+            resp = await action.handle(env, {'item_id': 16})
 
-        @with_transaction(self)
-        async def update(conn, id, item, query=None, keys=None):
-            raise exc.ItemNotFound
-        self.stream.mapper.update = update
         with self.assertRaises(exc.StreamItemNotFound):
             resp = await action.handle(
-                self.env,
+                env,
                 {
-                    'item_id': 50,
+                    'item_id': 11,
                     'values': {'id': 51, 'title': 'new_title'},
                 }
             )
-        resp = await action.handle(
-            self.env,
-            {
-                'item_id': 50,
-                'values': {'id': 51, 'title': exc.ValidationError},
-            }
-        )
-        self.assertEqual(resp['item_id'], 50)
-        self.assertEqual(
-            resp['item_fields'],
-            ['ID_ITEM_WIDGET', 'TITLE_ITEM_WIDGET'],
-        )
-        self.assertEqual(
-            resp['values'],
-            {
-                'id': 51,
-                'title': exc.ValidationError,
-            },
-        )
-        self.assertEqual(resp['errors'], {'title': 'error'})
+        #XXX TO DO: ValidationError, RawTypeError
 
 
     @asynctest
-    async def test_delete_item(self):
-        action = actions.DeleteItem(self.stream)
-        @with_transaction(self)
-        async def delete(conn, id, query=None):
-            self.assertEqual(id, 50)
-            self.assert_compile(
-                query,
-                "SELECT test_table1.id FROM test_table1",
-                literal_binds=True,
-            )
-        self.stream.mapper.delete = delete
+    async def test_delete_item(self, db, stream, env):
+        action = actions.DeleteItem(stream)
+        mapper = db.mappers['db1']['Test']
+        async with await db() as session:
+            q = sql.insert(self.models1.test_table1).values(self.test_items)
+            result = await session.execute(q)
 
-        resp = await action.handle(self.env, {'item_id': 50})
-        self.assertEqual(resp['item_id'], 50)
+
+        resp = await action.handle(env, {'item_id': 3})
+        self.assertEqual(resp['item_id'], 3)
 
         with self.assertRaises(exc.MessageError):
-            await action.handle(self.env, {})
+            await action.handle(env, {})
 
         invalid_values = [None, 'aaa', [], {}, set()]
         for value in invalid_values:
             with self.assertRaises(exc.MessageError):
-                await action.handle(self.env, {'item_id': value})
+                await action.handle(env, {'item_id': value})
 
-        @with_transaction(self)
-        async def delete(conn, id, query=None):
-            raise exc.ItemNotFound()
-        self.stream.mapper.delete = delete
         with self.assertRaises(exc.StreamItemNotFound):
-            await action.handle(self.env, {'item_id': 500})
+            await action.handle(env, {'item_id': 500})
+
+        #XXX TO_DO: sql check, RawTypeError
+
+
 

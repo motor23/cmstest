@@ -11,7 +11,6 @@ class BaseTestCase(TestCase):
     type_error_values = []
     to_python_values = [
         ('test_str', 'test_str'),
-        (None, None),
         (5, 5),
         ({'aa', 22}, {'aa', 22}),
         ([3, 6], [3, 6]),
@@ -33,8 +32,11 @@ class BaseTestCase(TestCase):
     def test_to_python(self):
         field = self.field()()
         for raw_value, python_value in self.to_python_values:
-            self.assertEqual(field.to_python(raw_value), python_value)
-
+            self.assertEqual(
+                field.to_python(raw_value),
+                python_value,
+                self._to_python_message(raw_value, python_value),
+            )
         for value in self.type_error_values:
             with self.assertRaises(exc.RawValueTypeError) as e:
                 field.to_python(value)
@@ -48,6 +50,8 @@ class BaseTestCase(TestCase):
                 with self.assertRaises(exc.ValidationError) as e:
                     field.to_python(value)
 
+
+
     def test_to_python_default(self):
         field = self.field()()
         self.assertEqual(field.to_python(fields.NOTSET), fields.NOTSET)
@@ -58,10 +62,9 @@ class BaseTestCase(TestCase):
 
     def test_raw_required(self):
         field = self.field(raw_required=True)()
-        with self.assertRaises(exc.RawValueTypeError) as e:
+        with self.assertRaises(exc.RawValueRequiredError) as e:
             field.to_python(fields.NOTSET)
         self.assertEqual(e.exception.field_name, field.name)
-        self.assertEqual(e.exception.field_type, None)
 
     def test_from_python(self):
         field = self.field()()
@@ -72,6 +75,19 @@ class BaseTestCase(TestCase):
         kwargs.setdefault('name', 'test')
         return type('TestField', (self.field_cls,), kwargs)
 
+    def _to_python_message(self, raw_value, value):
+        return "{}().to_python({})!={}".format(
+            self.field_cls.__name__,
+            raw_value,
+            value,
+        )
+
+    def _from_python_message(self, value, raw_value):
+        return "{}().from_python({})!={}".format(
+            self.field_cls.__name__,
+            value,
+            raw_value,
+        )
 
 class FieldTestCase(BaseTestCase):
 
@@ -113,10 +129,9 @@ class FieldTestCase(BaseTestCase):
 
     def test_raw_required(self):
         field = self.field(raw_required=True)()
-        with self.assertRaises(exc.RawValueTypeError) as e:
+        with self.assertRaises(exc.RawValueRequiredError) as e:
             field.to_python(self.test_dict())
         self.assertEqual(e.exception.field_name, field.name)
-        self.assertEqual(e.exception.field_type, None)
 
     def test_from_python(self):
         field = self.field()()
@@ -145,7 +160,6 @@ class StringTestCase(FieldTestCase):
 
     to_python_values = {
         ('test_str', 'test_str'),
-        (None, None),
         ('', ''),
     }
     from_python_values = to_python_values
@@ -153,12 +167,12 @@ class StringTestCase(FieldTestCase):
         5, {'d': 'teet'}, [2, 4], 66.2, set((4, 5, 6)), (3, 4), MagicMock(),
     ]
     validation_tests = [
-        ({'required': True}, ['test_str', '325566'], [None, '']),
-        ({'min_len': 3}, [None, 'test_str', '325', '333'*40], ['', '1', '23']),
-        ({'max_len': 3}, [None, '', '3', '32', '123'], ['1234', '23'*5]),
+        ({'required': True}, ['test_str', '325566'], ['']),
+        ({'min_len': 3}, ['test_str', '325', '333'*40], ['', '1', '23']),
+        ({'max_len': 3}, ['', '3', '32', '123'], ['1234', '23'*5]),
         (
             {'regex': '[abs]{3}$'},
-            [None, 'bsa', 'abs'],
+            ['bsa', 'abs'],
             ['ab', 'abd', 'absabs', ''],
         ),
     ]
@@ -172,7 +186,6 @@ class IntTestCase(FieldTestCase):
         (1, 1),
         (-4, -4),
         (500, 500),
-        (None, None),
         (0, 0),
     ]
     from_python_values = to_python_values
@@ -181,9 +194,9 @@ class IntTestCase(FieldTestCase):
         'dddddd',
     ]
     validation_tests = [
-        ({'required': True}, [5, 10, -6, 0], [None]),
-        ({'min_value': 3}, [None, 3, 325, 333*40], [-50, 0, 1, 2]),
-        ({'max_value': 3}, [None, -50, 0, 1, 2, 3], [4, 10, 104, 5*600]),
+        ({'required': True}, [5, 10, -6, 0], []),
+        ({'min_value': 3}, [3, 325, 333*40], [-50, 0, 1, 2]),
+        ({'max_value': 3}, [-50, 0, 1, 2, 3], [4, 10, 104, 5*600]),
     ]
 
 
@@ -192,7 +205,6 @@ class DictTestCase(FieldTestCase):
     field_cls = fields.Dict
     type_error_values = [5, [2, 4], "ddddd", MagicMock()]
     to_python_values = [
-        (None, None),
         ({}, {}),
         (
             {'f1': 'value1', 'f2': 'value2'},
@@ -233,10 +245,10 @@ class DictTestCase(FieldTestCase):
                 {'f1': 'value1'},
                 {
                     'f1': 'value1',
-                    'f2': None,
+                    'f2': 'value2',
                 },
             ],
-            [None, {}]
+            [{}]
         ),
     ]
 
@@ -254,26 +266,24 @@ class ListTestCase(FieldTestCase):
     field_cls = fields.List
     type_error_values = [5, {'x':'xxx'}, "ddddd", MagicMock()]
     to_python_values = [
-        (None, None),
         ([], []),
         ([1, 2, 3], [1, 2, 3]),
-        ([1, None, 3], [1, None, 3]),
+        ([1, 3], [1, 3]),
         ([{}, [], []], [{}, [], []]),
     ]
 
     from_python_values = [
-        (None, None),
         ([], []),
         ([1, 2, 3], [1, 2, 3]),
-        ([1, None, 3], [1, None, 3]),
+        ([1, 3], [1, 3]),
         ([{}, [], []], [{}, [], []]),
     ]
 
     validation_tests = [
         (
             {'required': True},
-            [[1, 2, 3], [None], [[]]],
-            [None, []],
+            [[1, 2, 3], [[]]],
+            [[]],
         ),
     ]
 
@@ -363,18 +373,12 @@ class BlockTestCase(BaseTestCase):
                 {
                     'test': {
                         'f1': 'value1',
-                    },
-                },
-                {
-                    'test': {
-                        'f1': 'value1',
-                        'f2': None,
+                        'f2': 'value2',
                     },
                 },
             ],
             [
-                {'test': None},
-                {'test': {}}
+                {'test': {}},
             ],
         ),
     ]
@@ -397,9 +401,8 @@ class BlockTestCase(BaseTestCase):
 
     def test_raw_required(self):
         field = self.field(raw_required=True)()
-        with self.assertRaises(exc.RawValueTypeError) as e:
+        with self.assertRaises(exc.RawValueRequiredError) as e:
             field.to_python({})
         self.assertEqual(e.exception.field_name, field.name)
-        self.assertEqual(e.exception.field_type, None)
 
 

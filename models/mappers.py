@@ -1,11 +1,11 @@
-from ikcms.orm import Mapper
-from ikcms.orm import model_to_mapper
+from ikcms.orm import mappers
 
-from models.main import Tag, Doc, User, User_Group, Group
+from models.main import metadata, Tag, Doc, User, User_Group, Group
 
+registry = mappers.Registry({'main': metadata})
 
-tags_mapper = model_to_mapper(Tag, Mapper, db_id='main')
-docs_mapper = model_to_mapper(Doc, Mapper, db_id='main')
-users_mapper = model_to_mapper(User, Mapper, db_id='main')
-group_mapper = model_to_mapper(Group, Mapper, db_id='main')
-user_group_mapper = model_to_mapper(User_Group, Mapper, db_id='main')
+mappers.Base.from_model(registry, 'Tag', [Tag])
+mappers.Base.from_model(registry, 'Doc', [Doc])
+mappers.Base.from_model(registry, 'User', [User])
+mappers.Base.from_model(registry, 'Group', [Group])
+mappers.Base.from_model(registry, 'UserGroup', [User_Group])

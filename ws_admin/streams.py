@@ -3,7 +3,7 @@ from ws_admin.components.streams.forms import list_fields
 from ws_admin.components.streams.forms import filter_fields
 from ws_admin.components.streams.forms import item_fields
 
-from models.mappers import docs_mapper
+from models.mappers import registry
 
 streams = {}
 
@@ -11,7 +11,7 @@ streams = {}
 class Docs(Stream):
     name = 'docs'
     title = 'Документы'
-    mapper = docs_mapper
+    mapper = registry['main']['Doc']
     list_fields = [
         list_fields.id,
         list_fields.title,

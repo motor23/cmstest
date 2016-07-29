@@ -48,4 +48,8 @@ class Models2(ModelsBase):
 models1 = Models1()
 models2 = Models2()
 
+metadata = {
+    'db1': models1.metadata,
+    'db2': models2.metadata,
+}
 
