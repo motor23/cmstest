@@ -16,3 +16,7 @@ class title(fields.String):
 
     name = 'title'
     label = 'Title'
+
+
+class Date(fields.Date):
+    pass

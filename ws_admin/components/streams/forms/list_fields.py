@@ -27,6 +27,10 @@ class Int(fields.Int):
     order = simple_order
 
 
+class Date(fields.Date):
+    order = simple_order
+
+
 class id(Int):
     name = 'id'
     label = 'ID'

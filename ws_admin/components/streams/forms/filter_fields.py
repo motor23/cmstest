@@ -6,6 +6,7 @@ __all__ = (
     'String',
     'Int',
     'Find',
+    'Date',
     'id',
     'title',
 )
@@ -26,13 +27,22 @@ def like_filter(field, query, value):
 
 class String(fields.String):
     filter = eq_filter
+    raw_required = False
+
 
 class Int(fields.Int):
     filter = eq_filter
+    raw_required = False
+
 
 class Find(String):
     filter = like_filter
+    raw_required = False
 
+
+class Date(fields.Date):
+    filter = eq_filter #XXX Filter mast been between
+    raw_required = False
 
 
 class id(Int):

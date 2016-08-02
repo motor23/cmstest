@@ -2,6 +2,7 @@ from sqlalchemy.schema import MetaData
 from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import String
+from sqlalchemy import Date
 from sqlalchemy import Table
 from sqlalchemy import sql
 from sqlalchemy.ext.declarative import declarative_base
@@ -28,6 +29,7 @@ class Models1(ModelsBase):
         id =  Column(Integer, primary_key=True)
         title = Column(String(60), nullable=True)
         title2 = Column(String(60), nullable=True)
+        date = Column(Date, nullable=True)
 
     test_table1 = Test.__table__
 

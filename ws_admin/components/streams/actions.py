@@ -165,7 +165,10 @@ class CreateItem(Base):
         item_fields_form = self.stream.get_item_form(
             env, kwargs=message['kwargs'])
         raw_item = message['values']
-        item, errors = item_fields_form.to_python(raw_item)
+        keys = list(item_fields_form)
+        if 'id' not in raw_item:
+            keys.remove('id')
+        item, errors = item_fields_form.to_python(raw_item, keys=keys)
         if not errors:
             async with await env.app.db() as session:
                 item = await self.stream.query().insert_item(
@@ -208,10 +211,9 @@ class UpdateItem(Base):
                     )
                 except orm.exc.ItemNotFoundError:
                     raise exc.StreamItemNotFound(self, item_id)
-        raw_values = item_fields_form.from_python(item, keys=item.keys())
         return {
             'item_fields': item_fields_form.get_cfg(),
-            'item_id': raw_values['id'],
+            'item_id': raw_values.get('id', item_id),
             'values': raw_values,
             'errors': errors,
         }

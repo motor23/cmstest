@@ -2,6 +2,8 @@ import asyncio
 from unittest import TestCase
 from unittest import skipIf
 from unittest.mock import MagicMock
+from datetime import date
+
 from sqlalchemy import sql
 #from sqlalchemy.testing.assertions import AssertsCompiledSQL
 
@@ -26,21 +28,74 @@ MYSQL_URL = getattr(cfg, 'MYSQL_URL', None)
 POSTGRESS_URL = getattr(cfg, 'POSTGRESS_URL', None)
 DB_URL = MYSQL_URL or POSTGRESS_URL
 
+
+def _items_from_keys(items, keys):
+    return [dict([(key, value) \
+            for key, value in item.items() if key in keys]) \
+                for item in items]
+
+
 @skipIf(not DB_URL, 'db url undefined')
 class ActionsTestCase(TestCase):
-    test_items = [
-        {'id': 1, 'title': '4-111t', 'title2': '111t2'},
-        {'id': 2, 'title': '3-222t', 'title2': '222t2'},
-        {'id': 3, 'title': '2-333t', 'title2': '333t2'},
-        {'id': 4, 'title': '1-444t', 'title2': '444t2'},
-    ]
+    item1 = {
+            'id': 1,
+            'title': '111t',
+            'title2': '111t2',
+            'date': date(2005, 4, 20),
+    }
+    item2 = {
+            'id': 2,
+            'title': '222t',
+            'title2': '222t2',
+            'date': date(1998, 7, 6),
+    }
+    item3 = {
+            'id': 3,
+            'title': '333t',
+            'title2': '333t2',
+            'date': date(2016, 12, 12),
+    }
+    item4 = {
+            'id': 4,
+            'title': '444t',
+            'title2': '444t2',
+            'date': date(2020, 1, 17),
+    }
+    items = [item1, item2, item3, item4]
+    edit_items = _items_from_keys(items, ['id', 'title', 'date'])
 
-    test_edit_items = test_list_items = [
-        {'id': 1, 'title': '4-111t'},
-        {'id': 2, 'title': '3-222t'},
-        {'id': 3, 'title': '2-333t'},
-        {'id': 4, 'title': '1-444t'},
-    ]
+    raw_item1 = {
+            'id': 1,
+            'title': '111t',
+            'title2': '111t2',
+            'date': '2005-04-20',
+    }
+    raw_item2 = {
+            'id': 2,
+            'title': '222t',
+            'title2': '222t2',
+            'date': '1998-07-06',
+    }
+    raw_item3 = {
+            'id': 3,
+            'title': '333t',
+            'title2': '333t2',
+            'date': '2016-12-12',
+    }
+    raw_item4 = {
+            'id': 4,
+            'title': '444t',
+            'title2': '444t2',
+            'date': '2020-01-17',
+    }
+    raw_items = [raw_item1, raw_item2, raw_item3, raw_item4]
+    raw_edit_items = _items_from_keys(raw_items, ['id', 'title', 'date'])
+
+
+
+    items_table_keys = {'id', 'title', 'title2', 'date'}
+    items_relation_keys = set()
+    items_allowed_keys = items_table_keys.union(items_relation_keys)
 
     models1 = models1
     models2 = models2
@@ -69,10 +124,20 @@ class ActionsTestCase(TestCase):
         class l_title(list_fields.title):
             widget = MagicMock()
 
+        class l_date(list_fields.Date):
+            name = 'date'
+            title = 'date'
+            widget = MagicMock()
+
         class f_id(filter_fields.id):
             widget = MagicMock()
 
         class f_title(filter_fields.title):
+            widget = MagicMock()
+
+        class f_date(filter_fields.Date):
+            name = 'date'
+            title = 'date'
             widget = MagicMock()
 
         class f_title2(filter_fields.title):
@@ -92,6 +157,15 @@ class ActionsTestCase(TestCase):
             def get_initials(_self, test_kwarg='test_default'):
                 return '{}-{}-initials'.format(_self.name, test_kwarg)
 
+        class i_date(item_fields.Date):
+            name = 'date'
+            title = 'date'
+            widget = MagicMock()
+
+            def get_initials(_self, test_kwarg='test_default'):
+                return date(2005, 5, 5)
+
+
         class TestStream(Stream):
             max_limit = 50
             name = 'test_stream'
@@ -101,16 +175,27 @@ class ActionsTestCase(TestCase):
             list_fields = [
                 l_id,
                 l_title,
+                l_date,
             ]
             filter_fields = [
                 f_id,
                 f_title,
                 f_title2,
+                f_date,
             ]
             item_fields = [
                 i_id,
                 i_title,
+                i_date,
             ]
+
+            def get_item_form(self, env, item=None, kwargs=None):
+                kwargs = kwargs or {}
+                raise_kwarg = kwargs.get('raise')
+                if raise_kwarg:
+                    raise raise_kwarg
+                return super().get_item_form(env, item, kwargs)
+
 
         stream = TestStream(MagicMock())
         env = MagicMock()
@@ -139,28 +224,34 @@ class ActionsTestCase(TestCase):
             [f.widget.to_dict(f) for f in stream.filter_fields],
         )
 
+    async def _set_table_state(self, db, table, state):
+        async with await db() as session:
+            query = sql.insert(table).values(state)
+            result = await session.execute(query)
+
+    async def _assert_table_state(self, db, table, state, keys=None):
+        if keys:
+            columns = [table.c[key] for key in keys]
+        else:
+            columns = table.c
+        async with await db() as session:
+            query = sql.select(columns).order_by(table.c.id)
+            result = await session.execute(query)
+            db_state = [dict(row) for row in result]
+            self.assertEqual(state, db_state)
 
     @asynctest
     async def test_list(self, db, stream, env):
         action = actions.List(stream)
         mapper = db.mappers['db1']['Test']
-        async with await db() as session:
-            q = sql.insert(self.models1.test_table1).values(self.test_items)
-            result = await session.execute(q)
-
-        list_item1 = {'id': 1, 'title': '4-111t'}
-        list_item2 = {'id': 2, 'title': '3-222t'}
-        list_item3 = {'id': 3, 'title': '2-333t'}
-        list_item4 = {'id': 4, 'title': '1-444t'}
-        list_items = [list_item1, list_item2, list_item3, list_item4]
-        list_items_desc = list_items[::-1]
+        await self._set_table_state(db, self.models1.test_table1, self.items)
 
         # test order
         order_values = [
-            (None, list_items),
-            ('+id', list_items),
-            ('-title', list_items),
-            ('+title', list_items[::-1]),
+            (None, self.raw_edit_items),
+            ('+id', self.raw_edit_items),
+            ('+title', self.raw_edit_items),
+            ('-title', self.raw_edit_items[::-1]),
         ]
         filters_values = [
             (None, lambda i: True),
@@ -174,11 +265,11 @@ class ActionsTestCase(TestCase):
             def func(x):
                 return lambda i:i['title'].find(x)!=-1
             filters_values.append(({'title': title}, func(title)))
-        for order, items in order_values:
+        for order, raw_items in order_values:
             _order = order or '+id'
             for filters, filter_func in filters_values:
                 _filters = filters or {}
-                _items = list(filter(filter_func, items))
+                _raw_items = list(filter(filter_func, raw_items))
                 for page_size in [None, 1, 3, 4, 50]:
                     _page_size = page_size or 1
                     for page in [None, 1, 2, 3, 4, 10]:
@@ -199,14 +290,16 @@ class ActionsTestCase(TestCase):
                             resp, action, stream)
                         self.assertEqual(
                             resp['items'],
-                            _items[(_page-1)*_page_size:_page*_page_size],
+                            _raw_items[(_page-1)*_page_size:_page*_page_size],
+                            {'order': order, 'filters': filters,
+                            'page_size': page_size, 'page': page}
                         )
                         self.assertEqual(resp['filters_errors'], {})
                         self.assertEqual(resp['filters'], _filters)
                         self.assertEqual(resp['page_size'], _page_size)
                         self.assertEqual(resp['page'], _page)
                         self.assertEqual(resp['order'], _order)
-                        self.assertEqual(resp['total'], len(_items))
+                        self.assertEqual(resp['total'], len(_raw_items))
 
 
         error_page_values = [-10, 0, 5.6, 'aaaa', '20', None]
@@ -258,18 +351,15 @@ class ActionsTestCase(TestCase):
     async def test_get_item(self, db, stream, env):
         action = actions.GetItem(stream)
         mapper = db.mappers['db1']['Test']
-        async with await db() as session:
-            q = sql.insert(self.models1.test_table1).values(self.test_items)
-            result = await session.execute(q)
+        await self._set_table_state(db, self.models1.test_table1, self.items)
 
-
-        for item in self.test_edit_items:
-            resp = await action.handle(env, {'item_id': item['id']})
+        for raw_item in self.raw_edit_items:
+            resp = await action.handle(env, {'item_id': raw_item['id']})
             self.assertEqual(
                 resp['item_fields'],
                 [f.widget.to_dict(f) for f in stream.item_fields],
             )
-            self.assertEqual(resp['item'], item)
+            self.assertEqual(resp['item'], raw_item)
 
         for value in [-10, 0, 5, 500]:
             with self.assertRaises(exc.StreamItemNotFound):
@@ -292,14 +382,15 @@ class ActionsTestCase(TestCase):
             resp['item_fields'],
             [f.widget.to_dict(f) for f in stream.item_fields],
         )
-        self.assertEqual(resp['item'],
+        self.assertEqual(
+            resp['item'],
             {
-                'title': 'title-test_default-initials',
                 'id': 'id-test_default-initials',
+                'title': 'title-test_default-initials',
+                'date': '2005-05-05',
             },
         )
-
-
+        #test initials
         resp = await action.handle(env,
             {'kwargs':{'test_kwarg': 'test_init'}})
         self.assertEqual(
@@ -308,10 +399,21 @@ class ActionsTestCase(TestCase):
         )
         self.assertEqual(resp['item'],
             {
-                'title': 'title-test_init-initials',
                 'id': 'id-test_init-initials',
+                'title': 'title-test_init-initials',
+                'date': '2005-05-05',
             },
         )
+
+        #test kwargs
+        test_exc = Exception('test')
+        with self.assertRaises(Exception) as e:
+            resp = await action.handle(
+                env,
+                {'kwargs': {'raise': test_exc}}
+            )
+        self.assertEqual(e.exception, test_exc)
+
 
         for value in [None, 'xxx', [], 10]:
             with self.assertRaises(exc.MessageError):
@@ -323,18 +425,12 @@ class ActionsTestCase(TestCase):
     async def test_create_item(self, db, stream, env):
         mapper = db.mappers['db1']['Test']
         action = actions.CreateItem(stream)
-        items = [
-            {'id':1, 'title': 'test_title-1'},
-            {'id':2, 'title': 'test_title-2'},
-            {'id':3, 'title': 'test_title-3'},
-            {'id':10, 'title': 'test_title-10'},
-            {'id':30, 'title': 'test_title-30'},
-            {'id':121, 'title': 'test_title-121'},
-        ]
-        for item in items[:3]:
+        for item in self.raw_edit_items[:2]:
+            _item = item.copy()
+            _item.pop('id')
             resp = await action.handle(
                 env,
-                {'values': {'title': item['title']}}
+                {'values': _item}
             )
             self.assertEqual(
                 resp['item_fields'],
@@ -343,7 +439,7 @@ class ActionsTestCase(TestCase):
             self.assertEqual(resp['item'], item)
             self.assertEqual(resp['errors'], {})
 
-        for item in items[3:]:
+        for item in self.raw_edit_items[:-3:-1]:
             resp = await action.handle(env, {'values': item})
             self.assertEqual(
                 resp['item_fields'],
@@ -352,14 +448,29 @@ class ActionsTestCase(TestCase):
             self.assertEqual(resp['item'], item)
             self.assertEqual(resp['errors'], {})
 
-        async with await db() as session:
-            q = sql.select([
-                self.models1.test_table1.c.id,
-                self.models1.test_table1.c.title,
-            ]).order_by(self.models1.test_table1.c.id)
-            result = await session.execute(q)
-            result = [dict(row) for row in result]
-            self.assertEqual(result, items)
+        await self._assert_table_state(
+            db,
+            self.models1.test_table1,
+            self.edit_items,
+            keys = ['id', 'title', 'date'],
+        )
+
+        # validation error
+        _item = item.copy()
+        _item['date'] = 'validation error'
+        resp = await action.handle(
+            env,
+            {'values': _item}
+        )
+        self.assertEqual(
+            resp['item_fields'],
+            [f.widget.to_dict(f) for f in stream.item_fields],
+        )
+        self.assertEqual(resp['item'], _item)
+        self.assertEqual(
+            resp['errors'],
+            {'date': stream.item_fields[2].conv.error_not_valid},\
+        )
 
         # errors
         with self.assertRaises(exc.MessageError):
@@ -371,21 +482,24 @@ class ActionsTestCase(TestCase):
         with self.assertRaises(exc.MessageError):
             await action.handle(env, {'kwargs': None})
 
-        # XXX raises RawValueTypeError
-        #with self.assertRaises(exc.MessageError):
-        #    resp = await action.handle(env, {'values': {'id': ''}})
+        with self.assertRaises(exc.MessageError):
+            resp = await action.handle(env, {'values': {'id': ''}})
 
-        #XXX to do: test kwargs
-        #XXX to do: test ValidationError
+        #test kwargs
+        test_exc = Exception('test')
+        with self.assertRaises(Exception) as e:
+            resp = await action.handle(
+                env,
+                {'values': _item, 'kwargs': {'raise': test_exc}}
+            )
+        self.assertEqual(e.exception, test_exc)
 
     @asynctest
     async def test_update_item(self, db, stream, env):
         action = actions.UpdateItem(stream)
         mapper = db.mappers['db1']['Test']
-        async with await db() as session:
-            q = sql.insert(self.models1.test_table1).values(self.test_items)
-            result = await session.execute(q)
-        result_items = self.test_edit_items.copy()
+        await self._set_table_state(db, self.models1.test_table1, self.items)
+        items = self.edit_items.copy()
 
         resp = await action.handle(
             env,
@@ -402,12 +516,11 @@ class ActionsTestCase(TestCase):
         self.assertEqual(
             resp['values'],
             {
-                'id': 3,
                 'title': 'updated_title',
             },
         )
         self.assertEqual(resp['errors'], {})
-        result_items[3-1] = dict(result_items[3-1], title='updated_title')
+        items[3-1] = dict(items[3-1], title='updated_title')
 
 
         resp = await action.handle(
@@ -430,23 +543,25 @@ class ActionsTestCase(TestCase):
             },
         )
         self.assertEqual(resp['errors'], {})
-        result_items[4-1] = dict(
-            result_items[4-1], id=50, title='updated_title2')
+        items[4-1] = dict(
+            items[4-1], id=50, title='updated_title2')
 
-        async with await db() as session:
-            q = sql.select([
-                self.models1.test_table1.c.id,
-                self.models1.test_table1.c.title,
-            ]).order_by(self.models1.test_table1.c.id)
-            result = await session.execute(q)
-            result = [dict(row) for row in result]
-            self.assertEqual(result, result_items)
+        await self._assert_table_state(
+            db,
+            self.models1.test_table1,
+            items,
+            keys=['id', 'title', 'date'],
+        )
 
         # test errors
         with self.assertRaises(exc.MessageError):
             resp = await action.handle(env, {})
+
         with self.assertRaises(exc.MessageError):
             resp = await action.handle(env, {'item_id': 16})
+
+        with self.assertRaises(exc.MessageError):
+            resp = await action.handle(env, {'item_id': 'error type'})
 
         with self.assertRaises(exc.StreamItemNotFound):
             resp = await action.handle(
@@ -456,20 +571,38 @@ class ActionsTestCase(TestCase):
                     'values': {'id': 51, 'title': 'new_title'},
                 }
             )
-        #XXX TO DO: ValidationError, RawTypeError
+
+        # validation error
+        resp = await action.handle(
+            env,
+            {
+                'item_id': 11,
+                'values': {'id': 51, 'date': 'validation error'},
+            }
+        )
+        self.assertEqual(
+            resp['item_fields'],
+            [f.widget.to_dict(f) for f in stream.item_fields],
+        )
+        self.assertEqual(
+            resp['errors'],
+            {'date': stream.item_fields[2].conv.error_not_valid},\
+        )
 
 
     @asynctest
     async def test_delete_item(self, db, stream, env):
         action = actions.DeleteItem(stream)
         mapper = db.mappers['db1']['Test']
-        async with await db() as session:
-            q = sql.insert(self.models1.test_table1).values(self.test_items)
-            result = await session.execute(q)
-
+        await self._set_table_state(db, self.models1.test_table1, self.items)
 
         resp = await action.handle(env, {'item_id': 3})
         self.assertEqual(resp['item_id'], 3)
+        await self._assert_table_state(
+            db,
+            self.models1.test_table1,
+            [self.item1, self.item2, self.item4],
+        )
 
         with self.assertRaises(exc.MessageError):
             await action.handle(env, {})
@@ -481,8 +614,5 @@ class ActionsTestCase(TestCase):
 
         with self.assertRaises(exc.StreamItemNotFound):
             await action.handle(env, {'item_id': 500})
-
-        #XXX TO_DO: sql check, RawTypeError
-
 
 

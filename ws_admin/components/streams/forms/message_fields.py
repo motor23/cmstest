@@ -11,11 +11,9 @@ __all__ = (
     'values',
 )
 
-
 class item_id(fields.Int):
     name = 'item_id'
     label = 'Идентификатор документа'
-    raw_required = True
     required = True
 
 
@@ -23,6 +21,7 @@ class filters(fields.RawDict):
     name = 'filters'
     label = 'Словарь фильтров'
     to_python_default = {}
+    raw_required = False
 
 
 class page(fields.Int):
@@ -30,6 +29,7 @@ class page(fields.Int):
     label = 'Номер страницы'
     to_python_default = 1
     min_value = 1
+    raw_required = False
 
 
 class page_size(fields.Int):
@@ -37,6 +37,7 @@ class page_size(fields.Int):
     label = 'Размер страницы'
     to_python_default = 1
     min_value = 1
+    raw_required = False
 
 
 class order(fields.String):
@@ -46,12 +47,14 @@ class order(fields.String):
     required = True
     regex = r'[+\-]{1}'
     regex_error = 'Order value must startswith "+" or "-"',
+    raw_required = False
 
 
 class kwargs(fields.RawDict):
     name = 'kwargs'
     label = 'Ключевые аргументы'
     to_python_default = {}
+    raw_required = False
 
 
 class values(fields.RawDict):

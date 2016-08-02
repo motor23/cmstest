@@ -1,5 +1,4 @@
-from ikcms.forms import Form
-
+from .forms import Form
 from . import actions
 from . import exc
 

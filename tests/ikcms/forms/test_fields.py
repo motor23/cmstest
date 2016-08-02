@@ -50,18 +50,15 @@ class BaseTestCase(TestCase):
                 with self.assertRaises(exc.ValidationError) as e:
                     field.to_python(value)
 
-
-
     def test_to_python_default(self):
-        field = self.field()()
+        field = self.field(raw_required=False)()
         self.assertEqual(field.to_python(fields.NOTSET), fields.NOTSET)
-
         for value in self.to_python_default_values:
-            field = self.field(to_python_default=value)()
+            field = self.field(to_python_default=value, raw_required=False)()
             self.assertEqual(field.to_python(fields.NOTSET), value)
 
     def test_raw_required(self):
-        field = self.field(raw_required=True)()
+        field = self.field()()
         with self.assertRaises(exc.RawValueRequiredError) as e:
             field.to_python(fields.NOTSET)
         self.assertEqual(e.exception.field_name, field.name)
@@ -117,11 +114,11 @@ class FieldTestCase(BaseTestCase):
 
 
     def test_to_python_default(self):
-        field = self.field()()
+        field = self.field(raw_required=False)()
         self.assertEqual(field.to_python(self.test_dict()), {})
 
         for value in self.to_python_default_values:
-            field = self.field(to_python_default=value)()
+            field = self.field(to_python_default=value, raw_required=False)()
             self.assertEqual(
                 field.to_python(self.test_dict()),
                 {field.name: value},
@@ -205,7 +202,6 @@ class DictTestCase(FieldTestCase):
     field_cls = fields.Dict
     type_error_values = [5, [2, 4], "ddddd", MagicMock()]
     to_python_values = [
-        ({}, {}),
         (
             {'f1': 'value1', 'f2': 'value2'},
             {'f1': 'value1', 'f2': 'value2'},
@@ -223,15 +219,14 @@ class DictTestCase(FieldTestCase):
         ),
     ]
     from_python_values = [
-        ({'f1': 'value1', 'f2': 'value2'}, {'f1': 'value1', 'f2': 'value2'}),
-        ({
-            'f1': 'value1',
-            'f2': 'value2',
-            'other': 'value3',
-        }, {
-            'f1': 'value1',
-            'f2': 'value2',
-        }),
+        (
+            {'f1': 'value1', 'f2': 'value2'},
+            {'f1': 'value1', 'f2': 'value2'}
+        ),
+        (
+            {'f1': 'value1', 'f2': 'value2','other': 'value3',},
+            {'f1': 'value1', 'f2': 'value2',},
+        ),
     ]
     validation_tests = [
         (
@@ -242,13 +237,12 @@ class DictTestCase(FieldTestCase):
                     'f2': 'value2',
                     'other4': 'value3',
                 },
-                {'f1': 'value1'},
                 {
                     'f1': 'value1',
                     'f2': 'value2',
                 },
             ],
-            [{}]
+            []
         ),
     ]
 
@@ -377,9 +371,7 @@ class BlockTestCase(BaseTestCase):
                     },
                 },
             ],
-            [
-                {'test': {}},
-            ],
+            [],
         ),
     ]
 
@@ -392,7 +384,7 @@ class BlockTestCase(BaseTestCase):
         return super().field(**kwargs)
 
     def test_to_python_default(self):
-        field = self.field()()
+        field = self.field(raw_required=False)()
         self.assertEqual(field.to_python({}), {})
 
         for value in self.to_python_default_values:
