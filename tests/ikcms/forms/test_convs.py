@@ -9,23 +9,27 @@ from ikcms.forms import fields
 class _BaseConvTestCase(TestCase):
 
     conv_class = None
-    to_python_test_values = []
-    raw_value_type_error_values = []
-    from_python_test_values = []
+    test_values = []
+    raw_type_error_values = []
+    python_type_error_values = []
+    validation_error_values = []
 
     def setUp(self):
         field = MagicMock(not_null=False, name='test_name')
         self.conv = self.conv_class(field)
 
     def test_to_python(self):
-        for raw_value, python_value in self.to_python_test_values:
+        for python_value, raw_value in self.test_values:
             self.assertEqual(
                 python_value,
                 self.conv.to_python(raw_value),
-                self._to_python_message(raw_value, python_value),
+                self._to_python_message(python_value, raw_value),
             )
-        for value in self.raw_value_type_error_values:
+        for value in self.raw_type_error_values:
             self.assertRaises(exc.RawValueTypeError, self.conv.to_python, value)
+
+        for value in self.validation_error_values:
+            self.assertRaises(exc.ValidationError, self.conv.to_python, value)
 
     def test_not_none(self):
         self.assertRaises(
@@ -33,7 +37,11 @@ class _BaseConvTestCase(TestCase):
             self.conv.to_python,
             None,
         )
-        self.assertRaises(AssertionError, self.conv.from_python, None)
+        self.assertRaises(
+            exc.PythonValueNoneNotAllowedError,
+            self.conv.from_python,
+            None,
+        )
         self.conv.field.not_none = False
         self.assertEqual(
             None,
@@ -47,11 +55,17 @@ class _BaseConvTestCase(TestCase):
         )
 
     def test_from_python(self):
-        for python_value, raw_value in self.from_python_test_values:
+        for python_value, raw_value in self.test_values:
             self.assertEqual(
                 raw_value,
                 self.conv.from_python(python_value),
                 self._from_python_message(python_value, raw_value),
+            )
+        for value in self.python_type_error_values:
+            self.assertRaises(
+                exc.PythonValueTypeError,
+                self.conv.from_python,
+                value,
             )
 
     def _to_python_message(self, raw_value, value):
@@ -72,63 +86,60 @@ class _BaseConvTestCase(TestCase):
 class BoolConvTestCase(_BaseConvTestCase):
 
     conv_class = Bool
-    to_python_test_values = [
+    test_values = [
         (True, True),
         (False, False),
     ]
-    raw_value_type_error_values = [0, 1, -5, 7.6, '', 'aaa', [], {}, [1,3]]
-    from_python_test_values = [
-        (True, True),
-        (False, False),
-    ]
+    raw_type_error_values = [0, 1, -5, 7.6, '', 'aaa', [], {}, [1,3]]
+    python_type_error_values = raw_type_error_values
 
 
 class IntConvTestCase(_BaseConvTestCase):
     conv_class = Int
-    to_python_test_values = [
+    test_values = [
         (-1, -1),
         (0, 0),
         (10, 10),
     ]
-    raw_value_type_error_values = ['', 'aaa', [], {}, [1,3]]
-    from_python_test_values = [
-        (-1, -1),
-        (0, 0),
-        (10, 10),
+    raw_type_error_values = ['23', 'sss', 4.5, [1,2], {1:1}]
+    python_type_error_values = raw_type_error_values
+
+
+class IntStrConvTestCase(_BaseConvTestCase):
+    conv_class = IntStr
+    test_values = [
+        (-1, '-1'),
+        (0, '0'),
+        (10, '10'),
     ]
+    raw_type_error_values = [23, 4.5, [1,2], {1:1}]
+    python_type_error_values = ['23', 'sss', 4.5, [1,2], {1:1}]
+    validation_error_values = ["2.2", "dddd", "fr45g", "-7-"]
 
 
 class StrConvTestCase(_BaseConvTestCase):
     conv_class = Str
-    to_python_test_values = [
+    test_values = [
         ("", ""),
         ("11", "11"),
         ("aaa123", "aaa123"),
     ]
-    raw_value_type_error_values = [True, False, 5, 5.6, [], {}, [1,3]]
-    from_python_test_values = [
-        (-1, -1),
-        (0, 0),
-        (10, 10),
-    ]
+    raw_type_error_values = [True, False, 5, 5.6, [], {}, [1,3]]
+    python_type_error_values = raw_type_error_values
 
 
 class ListConvTestCase(_BaseConvTestCase):
 
     conv_class = List
-    to_python_test_values = [
+    test_values = [
         ([], []),
         ([1], [1]),
         ([1, 2], [1,2]),
     ]
-    raw_value_type_error_values = [
-        True, False, 5, 5.6, "test", {}, ["ss","ss"], [[2,4], 5], {"test":[]},
+    raw_type_error_values = [
+        True, False, 5, 5.6, "test", {}, {"test":[]},
     ]
-    from_python_test_values = [
-        ([], []),
-        ([1], [1]),
-        ([1, 2], [1,2]),
-    ]
+    python_type_error_values = raw_type_error_values
 
     def setUp(self):
         field = MagicMock(
@@ -142,20 +153,15 @@ class ListConvTestCase(_BaseConvTestCase):
 class DictConvTestCase(_BaseConvTestCase):
 
     conv_class = Dict
-    to_python_test_values = [
-        ({}, {'str_field': 'str_default', 'int_field': 'int_default'}),
+    test_values = [
         (
             {'str_field': 'str', 'int_field': 1},
             {'str_field': 'str', 'int_field': 1},
         ),
     ]
-    raw_value_type_error_values = []
-    from_python_test_values = [
-        (
-            {'str_field': 'str', 'int_field': 1},
-            {'str_field': 'str', 'int_field': 1},
-        ),
-    ]
+    raw_type_error_values = []
+    python_type_error_values = raw_type_error_values
+
 
     def setUp(self):
         str_field = fields.Field()
@@ -176,13 +182,12 @@ class DictConvTestCase(_BaseConvTestCase):
 
 class DateConvTestCase(_BaseConvTestCase):
     conv_class = Date
-    to_python_test_values = [
-        ('2016-06-15', date(2016, 6, 15)),
-    ]
-    raw_value_type_error_values = [True, False, 5, 5.6, [], {}, [1,3]]
-    from_python_test_values = [
+    test_values = [
         (date(2016, 6, 15), '2016-06-15'),
     ]
+
+    raw_type_error_values = [True, False, 5, 5.6, [], {}, [1,3]]
+    python_type_error_values = raw_type_error_values
 
     def setUp(self):
         field = MagicMock(

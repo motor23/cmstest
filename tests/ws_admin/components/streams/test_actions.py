@@ -149,7 +149,7 @@ class ActionsTestCase(TestCase):
             widget = MagicMock()
 
             def get_initials(_self, test_kwarg='test_default'):
-                return '{}-{}-initials'.format(_self.name, test_kwarg)
+                return 50000
 
         class i_title(item_fields.title):
             widget = MagicMock()
@@ -385,7 +385,7 @@ class ActionsTestCase(TestCase):
         self.assertEqual(
             resp['item'],
             {
-                'id': 'id-test_default-initials',
+                'id': 50000,
                 'title': 'title-test_default-initials',
                 'date': '2005-05-05',
             },
@@ -399,7 +399,7 @@ class ActionsTestCase(TestCase):
         )
         self.assertEqual(resp['item'],
             {
-                'id': 'id-test_init-initials',
+                'id': 50000,
                 'title': 'title-test_init-initials',
                 'date': '2005-05-05',
             },

@@ -9,13 +9,12 @@ class BaseTestCase(TestCase):
 
     field_cls = fields.Base
     type_error_values = []
-    to_python_values = [
+    test_values = [
         ('test_str', 'test_str'),
         (5, 5),
         ({'aa', 22}, {'aa', 22}),
         ([3, 6], [3, 6]),
     ]
-    from_python_values = to_python_values
     to_python_default_values = ['test_str', None, 5, [3, 6]]
 
 
@@ -31,7 +30,7 @@ class BaseTestCase(TestCase):
 
     def test_to_python(self):
         field = self.field()()
-        for raw_value, python_value in self.to_python_values:
+        for python_value, raw_value in self.test_values:
             self.assertEqual(
                 field.to_python(raw_value),
                 python_value,
@@ -65,7 +64,7 @@ class BaseTestCase(TestCase):
 
     def test_from_python(self):
         field = self.field()()
-        for python_value, raw_value in self.from_python_values:
+        for python_value, raw_value in self.test_values:
             self.assertEqual(field.from_python(python_value), raw_value)
 
     def field(self, **kwargs):
@@ -86,13 +85,14 @@ class BaseTestCase(TestCase):
             raw_value,
         )
 
+
 class FieldTestCase(BaseTestCase):
 
     field_cls = fields.Field
 
     def test_to_python(self):
         field = self.field()()
-        for raw_value, python_value in self.to_python_values:
+        for python_value, raw_value in self.test_values:
             self.assertEqual(
                 field.to_python(self.test_dict(field.name, raw_value)),
                 {field.name: python_value},
@@ -132,7 +132,7 @@ class FieldTestCase(BaseTestCase):
 
     def test_from_python(self):
         field = self.field()()
-        for python_value, raw_value in self.from_python_values:
+        for python_value, raw_value in self.test_values:
             self.assertEqual(
                 field.from_python(self.test_dict(field.name, python_value)),
                 {field.name: raw_value},
@@ -155,11 +155,10 @@ class StringTestCase(FieldTestCase):
 
     field_cls = fields.String
 
-    to_python_values = {
+    test_values = {
         ('test_str', 'test_str'),
         ('', ''),
     }
-    from_python_values = to_python_values
     type_error_values = [
         5, {'d': 'teet'}, [2, 4], 66.2, set((4, 5, 6)), (3, 4), MagicMock(),
     ]
@@ -179,13 +178,12 @@ class IntTestCase(FieldTestCase):
 
     field_cls = fields.Int
 
-    to_python_values = [
+    test_values = [
         (1, 1),
         (-4, -4),
         (500, 500),
         (0, 0),
     ]
-    from_python_values = to_python_values
     type_error_values = [
         '5', {'d': 'teet'}, [2, 4], 66.2, set((4, 5, 6)), (3, 4), MagicMock(),
         'dddddd',
@@ -197,36 +195,42 @@ class IntTestCase(FieldTestCase):
     ]
 
 
+class IntStrTestCase(FieldTestCase):
+
+    field_cls = fields.IntStr
+
+    test_values = [
+        (1, '1'),
+        (-4, '-4'),
+        (500, '500'),
+        (0, '0'),
+    ]
+    type_error_values = [
+        5, 0, -6, 66.2,
+        {'d': 'teet'}, [2, 4], set((4, 5, 6)), (3, 4), MagicMock(),
+    ]
+    validation_tests = [
+        ({'required': True}, ['5', '10', '-6', '0'], ['asss', '5.5', '66sx']),
+        ({'min_value': 3}, ['3', '325'], ['-50', '0', '1', '2']),
+        ({'max_value': 3}, ['-50', '0', '1', '2', '3'], ['4', '10', '104']),
+    ]
+
+
+
 class DictTestCase(FieldTestCase):
 
     field_cls = fields.Dict
     type_error_values = [5, [2, 4], "ddddd", MagicMock()]
-    to_python_values = [
+    test_values = [
         (
             {'f1': 'value1', 'f2': 'value2'},
             {'f1': 'value1', 'f2': 'value2'},
         ),
         (
-            {
-                'f1': 'value1',
-                'f2': 'value2',
-                'other4': 'value3',
-            },
-            {
-                'f1': 'value1',
-                'f2': 'value2',
-            }
+            {'f1': 'value1', 'f2': None},
+            {'f1': 'value1', 'f2': None},
         ),
-    ]
-    from_python_values = [
-        (
-            {'f1': 'value1', 'f2': 'value2'},
-            {'f1': 'value1', 'f2': 'value2'}
-        ),
-        (
-            {'f1': 'value1', 'f2': 'value2','other': 'value3',},
-            {'f1': 'value1', 'f2': 'value2',},
-        ),
+
     ]
     validation_tests = [
         (
@@ -251,6 +255,7 @@ class DictTestCase(FieldTestCase):
             name = 'f1'
         class f2(fields.Field):
             name = 'f2'
+            not_none = False
         kwargs.setdefault('fields', [f1, f2])
         return super().field(**kwargs)
 
@@ -259,14 +264,7 @@ class ListTestCase(FieldTestCase):
 
     field_cls = fields.List
     type_error_values = [5, {'x':'xxx'}, "ddddd", MagicMock()]
-    to_python_values = [
-        ([], []),
-        ([1, 2, 3], [1, 2, 3]),
-        ([1, 3], [1, 3]),
-        ([{}, [], []], [{}, [], []]),
-    ]
-
-    from_python_values = [
+    test_values = [
         ([], []),
         ([1, 2, 3], [1, 2, 3]),
         ([1, 3], [1, 3]),
@@ -296,35 +294,8 @@ class BlockTestCase(BaseTestCase):
         {'test': MagicMock()},
     ]
     to_python_default_values = []
-    to_python_values = [
-        (
-            {
-                'test':{
-                    'f1': 'value1',
-                    'f2': 'value2',
-                }
-            },
-            {
-                'f1': 'value1',
-                'f2': 'value2',
-            }
-        ),
-        (
-            {
-                'test': {
-                    'f1': 'value1',
-                    'f2': 'value2',
-                    'other': 'value3',
-                }
-            },
-            {
-                'f1': 'value1',
-                'f2': 'value2',
-            }
-        ),
-    ]
 
-    from_python_values = [
+    test_values = [
         (
             {
                 'f1': 'value1',
@@ -340,13 +311,12 @@ class BlockTestCase(BaseTestCase):
         (
             {
                 'f1': 'value1',
-                'f2': 'value2',
-                'other4': 'value3',
+                'f2': None,
             },
             {
                 'test': {
                     'f1': 'value1',
-                    'f2': 'value2',
+                    'f2': None,
                 }
             }
         ),
@@ -380,6 +350,7 @@ class BlockTestCase(BaseTestCase):
             name = 'f1'
         class f2(fields.Field):
             name = 'f2'
+            not_none = False
         kwargs.setdefault('fields', [f1, f2])
         return super().field(**kwargs)
 
