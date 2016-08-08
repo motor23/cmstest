@@ -20,7 +20,7 @@ from ws_admin.components.streams.forms import filter_fields
 from ws_admin.components.streams.forms import item_fields
 from ikcms.forms.widgets import Widget
 
-from tests.models import models1, models2, metadata
+from tests.models import create_models1, create_models2, create_metadata
 from tests.cfg import cfg
 
 
@@ -97,13 +97,14 @@ class ActionsTestCase(TestCase):
     items_relation_keys = set()
     items_allowed_keys = items_table_keys.union(items_relation_keys)
 
-    models1 = models1
-    models2 = models2
+    models1 = create_models1()
+    models2 = create_models2()
     mapper_cls = orm.mappers.Base
 
     async def asetup(self):
-        registry = orm.mappers.Registry(metadata)
-        self.mapper_cls.from_model(registry, 'Test', [self.models1.Test])
+        registry = orm.mappers.Registry(
+            create_metadata([self.models1, self.models2]))
+        self.mapper_cls.from_model(registry, [self.models1.Test])
 
         app = MagicMock()
         app.cfg.DATABASES = {

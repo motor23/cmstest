@@ -10,7 +10,7 @@ from ikcms.orm.session import Session
 from ikcms.orm import exc
 
 from tests.cfg import cfg
-from tests.models import models1, models2, metadata
+from tests.models import create_models1, create_models2
 
 try:
     import aiomysql
@@ -29,8 +29,8 @@ except ImportError:
 class SessionTestCaseBase:
 
     test_models = {
-        'db1': models1,
-        'db2': models2,
+        'db1': create_models1(),
+        'db2': create_models2(),
     }
 
     async def asetup(self):

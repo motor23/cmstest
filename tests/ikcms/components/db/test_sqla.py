@@ -5,7 +5,7 @@ from sqlalchemy import sql
 from ikcms.components.db.sqla import component
 
 from tests.cfg import cfg
-from tests.models import models1, models2
+from tests.models import create_models1, create_models2
 
 
 try:
@@ -25,8 +25,8 @@ except ImportError:
 class SQLAComponentTestCase(TestCase):
 
     test_models = {
-        'db1': models1,
-        'db2': models2,
+        'db1': create_models1(),
+        'db2': create_models2(),
     }
 
     @skipIf(mysql_skip, 'MySQLdb not installed')
@@ -55,8 +55,8 @@ class SQLAComponentTestCase(TestCase):
         self.assertEqual(db.models, self.test_models)
         engine1 = db.engines['db1']
         engine2 = db.engines['db2']
-        self.assertEqual(db.binds[models1.test_table1], engine1)
-        self.assertEqual(db.binds[models2.test_table2], engine2)
+        self.assertEqual(db.binds[self.test_models['db1'].test_table1], engine1)
+        self.assertEqual(db.binds[self.test_models['db2'].test_table2], engine2)
         test_table1 = self.test_models['db1'].test_table1
 
         session = db()

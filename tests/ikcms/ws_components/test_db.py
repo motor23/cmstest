@@ -9,7 +9,7 @@ from ikcms.utils.asynctests import asynctest
 from ikcms.orm import mappers
 
 from tests.cfg import cfg
-from tests.models import models1, models2, metadata
+from tests.models import create_models1, create_models2, create_metadata
 
 try:
     import aiomysql
@@ -28,8 +28,8 @@ except ImportError:
 class SQLAComponentTestCase(TestCase):
 
     test_models = {
-        'db1': models1,
-        'db2': models2,
+        'db1': create_models1(),
+        'db2': create_models2(),
     }
 
     @skipIf(mysql_skip, 'Aiomysql not installed')
@@ -52,7 +52,7 @@ class SQLAComponentTestCase(TestCase):
 
         session_cls_mock = MagicMock()
         Component = component(
-            mappers=mappers.Registry(metadata),
+            mappers=mappers.Registry(create_metadata(self.test_models.values())),
             session_cls=session_cls_mock,
         )
         db = await Component.create(app)
