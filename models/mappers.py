@@ -9,3 +9,6 @@ mappers.Base.from_model(registry, [Doc])
 mappers.Base.from_model(registry, [User])
 mappers.Base.from_model(registry, [Group])
 mappers.Base.from_model(registry, [User_Group])
+
+registry.create_schema()
+
