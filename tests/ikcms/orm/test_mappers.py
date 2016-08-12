@@ -445,13 +445,13 @@ class I18nMapperTestCase(TestCase):
         query_en = mapper_en.query().order_by(mapper_en.c['id'])
         async with await db() as session:
             await query_ru.insert_item(session, self.item1)
-            await mapper_en.create_lang_version(session, self.item1['id'])
+            await mapper_en.i18n_create_version(session, self.item1['id'])
             cnt = await query_ru.count_items(session)
             self.assertEqual(cnt, 1)
             cnt = await query_en.count_items(session)
             self.assertEqual(cnt, 1)
             await query_en.insert_item(session, self.item2)
-            await mapper_ru.create_lang_version(session, self.item2['id'])
+            await mapper_ru.i18n_create_version(session, self.item2['id'])
             cnt = await query_ru.count_items(session)
             self.assertEqual(cnt, 2)
             cnt = await query_en.count_items(session)
@@ -467,9 +467,9 @@ class I18nMapperTestCase(TestCase):
 
         async with await db() as session:
             await query_ru.insert_item(session, self.item1)
-            await mapper_en.create_lang_version(session, self.item1['id'])
+            await mapper_en.i18n_create_version(session, self.item1['id'])
             await query_ru.insert_item(session, self.item2)
-            await mapper_en.create_lang_version(session, self.item2['id'])
+            await mapper_en.i18n_create_version(session, self.item2['id'])
             item1_ru = dict(self.item1, state='normal')
             item2_ru = dict(self.item2, state='normal')
             item1_en = dict(self.item1, title2=None, state='normal')
@@ -502,9 +502,9 @@ class I18nMapperTestCase(TestCase):
 
         async with await db() as session:
             await query_ru.insert_item(session, self.item1)
-            await mapper_en.create_lang_version(session, self.item1['id'])
+            await mapper_en.i18n_create_version(session, self.item1['id'])
             await query_ru.insert_item(session, self.item2)
-            await mapper_en.create_lang_version(session, self.item2['id'])
+            await mapper_en.i18n_create_version(session, self.item2['id'])
             item1_ru = dict(self.item1, state='normal')
             item2_ru = dict(self.item2, state='normal')
             item1_en = dict(self.item1, title2=None, state='normal')
