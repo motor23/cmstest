@@ -222,7 +222,7 @@ class BaseMapperTestCase(TestBase, TestCase):
             db_state['Test'].append(item4)
             await db_state.assert_state(self, session)
 
-            with self.assertRaises(Exception): # XXX Exception??
+            with self.assertRaises(exc.IntegrityError):
                 await mapper.insert_item(session, item3)
             await db_state.assert_state(self, session)
 
@@ -625,7 +625,7 @@ class PubMapperTestCase(TestBase, TestCase):
                 await db_state.assert_state(self, session)
 
             for item in test_items:
-                with self.assertRaises(Exception) as e: #XXX
+                with self.assertRaises(exc.IntegrityError):
                     await query1.insert_item(session, item)
                 await db_state.assert_state(self, session)
                 with self.assertRaises(AssertionError) as e:
@@ -924,7 +924,7 @@ class I18nPubMapperTestCase(TestBase, TestCase):
                     await db_state.assert_state(self, session)
 
                 for query in [query_admin_ru, query_admin_en]:
-                    with self.assertRaises(Exception) as e: #XXX
+                    with self.assertRaises(exc.IntegrityError):
                         await query.insert_item(session, item)
                     await db_state.assert_state(self, session)
 
