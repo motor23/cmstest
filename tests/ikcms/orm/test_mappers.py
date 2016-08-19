@@ -2,13 +2,18 @@ from unittest import TestCase
 from unittest import skipIf
 from unittest.mock import MagicMock
 from datetime import date
+from random import randint
 
 import sqlalchemy as sa
+from iktomi.utils import cached_property
 
-from ikcms.ws_components.db import component
 from ikcms import orm
 from ikcms.orm import exc
 from ikcms.utils.asynctests import asynctest
+from ikcms.utils.asynctests import TableState
+from ikcms.utils.asynctests import DbState
+from ikcms.utils.asynctests import create_db_component
+from ikcms.ws_components.db import component
 
 from tests.cfg import cfg
 from tests.models import create_models1, create_models2, create_metadata
@@ -18,91 +23,120 @@ DB_URL1 = cfg.MYSQL_URL or cfg.POSTGRESS_URL
 DB_URL2 = cfg.MYSQL_URL2 or cfg.POSTGRESS_URL2
 
 
-@skipIf(not DB_URL1, 'db url undefined')
-class BaseMapperTestCase(TestCase):
+class TestBase:
 
-    item1 = {
-            'id': 1,
-            'title': '111t',
-            'title2': '111t2',
-            'date': date(2005, 4, 20),
-    }
-    item2 = {
-            'id': 2,
-            'title': '222t',
-            'title2': '222t2',
-            'date': date(1998, 7, 6),
-    }
-    item3 = {
-            'id': 3,
-            'title': '333t',
-            'title2': '333t2',
-            'date': date(2016, 12, 12),
-    }
-    item4 = {
-            'id': 4,
-            'title': '444t',
-            'title2': '444t2',
-            'date': date(2020, 1, 17),
-    }
-    items = [item1, item2, item3, item4]
+    base_mapper_cls = orm.mappers.Base
+    DATABASES = {}
+
     items_table_keys = {'id', 'title', 'title2', 'date'}
     items_relation_keys = set()
     items_allowed_keys = items_table_keys.union(items_relation_keys)
-    mapper_cls = orm.mappers.Base
-
-    class CustomMapperClass(mapper_cls):
-
-        name = 'CustomTest'
-
-        def create_columns(self):
-            return [
-                sa.Column('title', sa.String(255)),
-                sa.Column('title2', sa.String(255)),
-            ]
-
 
     async def asetup(self):
-        self.models1 = create_models1()
-        self.models2 = create_models2()
-        registry = orm.mappers.Registry(
-            create_metadata([self.models1, self.models2]))
-        self.mapper_cls.from_model(registry, [self.models1.Test])
-
-        app = MagicMock()
-        del app.db
-        app.cfg.DATABASES = {
-            'db1': DB_URL1,
-            'db2': DB_URL2,
-        }
-
-        Component = component(mappers=registry)
-
-        db = await Component.create(app)
-        async with await db() as session:
-            conn1 = await session.get_connection(db.engines['db1'])
-            await self.models1.reset(conn1)
-            conn2 = await session.get_connection(db.engines['db2'])
-            await self.models2.reset(conn2)
+        registry = orm.mappers.Registry.from_db_ids(self.DATABASES)
+        self.create_mapper(registry)
+        registry.create_schema()
+        db = await create_db_component(self.DATABASES, registry)
+        db_states = self.create_db_states(db)
+        await db_states['empty'].reset(db)
         return {
             'db': db,
+            'db_states': db_states,
         }
 
-    async def aclose(self, db):
+    @cached_property
+    def mapper_cls(self):
+        class MapperClass(self.base_mapper_cls):
+
+            name = 'Test'
+
+            def create_columns(self):
+                return [
+                    sa.Column('title', sa.String(255)),
+                    sa.Column('title2', sa.String(255)),
+                    sa.Column('date', sa.Date),
+                ]
+        return MapperClass
+
+
+    def create_mapper(self, registry):
+        self.mapper_cls.create(registry, db_id='admin')
+
+    def create_db_states(self, db):
+        raise NotImplementedError
+
+    def create_test_items(self):
+        return [
+            {
+                'id': 1,
+                'title': '111t',
+                'title2': '111t2',
+                'date': date(2005, 4, 20),
+            },
+            {
+                'id': 2,
+                'title': '222t',
+                'title2': '222t2',
+                'date': date(1998, 7, 6),
+            },
+            {
+                'id': 3,
+                'title': '333t',
+                'title2': '333t2',
+                'date': date(2016, 12, 12),
+            },
+            {
+                'id': 4,
+                'title': '444t',
+                'title2': '444t2',
+                'date': date(2020, 1, 17),
+            },
+        ]
+
+    def with_states(self, items, states):
+        return [dict(item, state=state) for item, state in zip(items, states)]
+
+    async def aclose(self, db, db_states):
         db.close()
 
+    def random_item(self, id):
+        return dict(
+            id=id,
+            title='title {}'.format(randint(0, 1000)),
+            title2='title {}'.format(randint(0, 1000)),
+            date=date(randint(1990, 2020), randint(1, 12), randint(1, 28)),
+        )
+
+
+@skipIf(not DB_URL1, 'db url undefined')
+class BaseMapperTestCase(TestBase, TestCase):
+
+    DATABASES = {'admin': DB_URL1}
+    base_mapper_cls = orm.mappers.Base
+
+    def create_db_states(self, db):
+        empty_state = DbState()
+        empty_state.add_table('Test', db.mappers['admin']['Test'].table)
+
+        full_state = empty_state.copy()
+        full_state['Test'].set_state(self.create_test_items())
+        return {
+            'empty': empty_state,
+            'full': full_state,
+        }
+
     @asynctest
-    async def test_init(self, db):
-        mapper = db.mappers['db1']['Test']
+    async def test_init(self, db, db_states):
+        mapper = db.mappers['admin']['Test']
         self.assertEqual(mapper.registry, db.mappers)
-        self.assertEqual(mapper.db_id, 'db1')
+        self.assertEqual(mapper.db_id, 'admin')
         self.assertEqual(mapper.table_keys, self.items_table_keys)
         self.assertEqual(mapper.relation_keys, self.items_relation_keys)
         self.assertEqual(mapper.allowed_keys, self.items_allowed_keys)
 
     @asynctest
-    async def test_div_keys(self, db):
-        mapper = db.mappers['db1']['Test']
+    async def test_div_keys(self, db, db_states):
+        mapper = db.mappers['admin']['Test']
         table_keys, relation_keys = mapper.div_keys()
         self.assertEqual(table_keys, self.items_table_keys)
         self.assertEqual(relation_keys, self.items_relation_keys)
@@ -111,603 +145,886 @@ class BaseMapperTestCase(TestCase):
         self.assertEqual(relation_keys, set())
 
     @asynctest
-    async def test_create_table(self, db):
-        self.CustomMapperClass.create(db.mappers, db_id='db1')
-        db.mappers.create_schema()
-        async with await db() as session:
-            conn1 = await session.get_connection(db.engines['db1'])
-            await self.models1.reset(conn1)
+    async def test_create_table(self, db, db_states):
         self.assertEqual(
-            db.mappers.metadata['db1'].tables['CustomTest'].c.keys(),
-            ['id', 'title', 'title2'],
+            db.mappers.metadata['admin'].tables['Test'].c.keys(),
+            ['id', 'title', 'title2', 'date'],
         )
         self.assertEqual(
-            db.mappers['db1']['CustomTest'].table,
-            db.mappers.metadata['db1'].tables['CustomTest'],
+            db.mappers['admin']['Test'].table,
+            db.mappers.metadata['admin'].tables['Test'],
         )
 
     @asynctest
-    async def test_select(self, db):
-        mapper = db.mappers['db1']['Test']
+    async def test_select(self, db, db_states):
+        mapper = db.mappers['admin']['Test']
+        db_state = db_states['full']
         query = mapper.query()
         async with await db() as session:
-            q = sa.sql.insert(self.models1.test_table1).values(self.items)
-            result = await session.execute(q)
-
+            await db_state.syncdb(session)
+            item2 = db_state['Test'][2]
+            item3 = db_state['Test'][3]
+            item4 = db_state['Test'][4]
             # ids arg
             items = await query.id(2, 4).select_items(session)
-            self.assertEqual(items, [self.item2, self.item4])
+            self.assertEqual(items, [item2, item4])
             items = await query.id(2, 4).select_items(session, keys=['title'])
             self.assertEqual(items, [
-                {'id': 2, 'title': '222t'},
-                {'id': 4, 'title': '444t'},
+                {'id': item2['id'], 'title': item2['title']},
+                {'id': item4['id'], 'title': item4['title']},
             ])
 
             # query arg
-            _query = query.filter_by(title='333t')
+            _query = query.filter_by(title=item3['title'])
             items = await _query.select_items(session)
-            self.assertEqual(items, [self.item3])
+            self.assertEqual(items, [item3])
 
             items = await _query.select_items(session, keys=['title2'])
-            self.assertEqual(items, [{'id': 3, 'title2': '333t2'}])
+            self.assertEqual(
+                items,
+                [{'id': item3['id'], 'title2': item3['title2']}],
+            )
 
             # ids and query args
             items = await query.id(4,2).select_items(session)
-            self.assertEqual(items, [self.item2, self.item4])
+            self.assertEqual(items, [item2, item4])
 
-            _query = query.filter_by(title='333t').id(44)
+            _query = query.filter_by(title=item3['title']).id(44)
             items = await _query.select_items(session)
             self.assertEqual(items, [])
+            await db_state.assert_state(self, session)
 
     @asynctest
-    async def test_insert(self, db):
-        mapper = db.mappers['db1']['Test']
-        _item1 = dict(self.item1, title2=None, date=None)
-        _item4 = dict(self.item4, id=None)
+    async def test_insert(self, db, db_states):
+        mapper = db.mappers['admin']['Test']
+        db_state = db_states['empty']
 
         query = mapper.query().order_by(mapper.c['id'])
         async with await db() as session:
-            result = await query.insert_item(session, self.item3)
-            self.assertEqual(result, self.item3)
-            items = await query.select_items(session)
-            self.assertEqual(items, [self.item3])
+            await db_state.syncdb(session)
+            item3 = db_states['full']['Test'][3]
+            item1 = db_states['full']['Test'][1]
+            item4 = db_states['full']['Test'][4]
+
+            result = await query.insert_item(session, item3)
+            self.assertEqual(result, item3)
+            db_state['Test'].append(item3)
+            await db_state.assert_state(self, session)
 
             result = await query.insert_item(
-                session, self.item1, keys=['id', 'title'])
-            self.assertEqual(result, self.item1)
-            items = await query.select_items(session)
-            self.assertEqual(items, [_item1, self.item3])
+                session, item1, keys=['id', 'title'])
+            self.assertEqual(result, item1)
+            db_state['Test'].append(dict(item1, title2=None, date=None))
+            await db_state.assert_state(self, session)
 
-            result = await query.insert_item(session, _item4)
-            self.assertEqual(result, self.item4)
-            items = await query.select_items(session)
-            self.assertEqual(items, [_item1, self.item3, self.item4])
+            result = await query.insert_item(session, dict(item4, id=None))
+            self.assertEqual(result, item4)
+            db_state['Test'].append(item4)
+            await db_state.assert_state(self, session)
 
             with self.assertRaises(Exception): # XXX Exception??
                 await mapper.insert_item(session, item3)
+            await db_state.assert_state(self, session)
 
     @asynctest
-    async def test_update(self, db):
-        mapper = db.mappers['db1']['Test']
+    async def test_update(self, db, db_states):
+        mapper = db.mappers['admin']['Test']
+        db_state = db_states['full']
         query = mapper.query().order_by(mapper.c['id'])
         async with await db() as session:
-            q = sa.sql.insert(self.models1.test_table1).values(self.items)
-            result = await session.execute(q)
+            await db_state.syncdb(session)
+            item2 = db_state['Test'][2]
+            item4 = db_state['Test'][4]
             # test without 'keys' key arg
-            _item2 = dict(self.item2, title='updated')
-            item = await query.update_item(session, 2, _item2)
-            self.assertEqual(item, _item2)
-            items = await query.id(2).select_items(session)
-            self.assertEqual(items, [_item2])
-            items = await query.id(1, 2, 3, 4).select_items(session)
-            self.assertEqual(items, [
-                self.item1,
-                _item2,
-                self.item3,
-                self.item4,
-            ])
+            item = await query.update_item(
+                session, 2, dict(item2, title='updated'))
+            item2['title'] = 'updated'
+            self.assertEqual(item, item2)
+            await db_state.assert_state(self, session)
+
             # test with 'keys' key arg
-            _item4 = dict(self.item4, title2='updated2')
             item = await query.update_item(
                 session,
-                4,
+                item4['id'],
                 {'title2': 'updated2'},
                 keys = ['title2'],
             )
-            self.assertEqual(item, {'id':4, 'title2': 'updated2'})
-            items = await query.id(4).select_items(session)
-            self.assertEqual(items, [_item4])
-            items = await query.id(1, 2, 3, 4).select_items(session)
-            self.assertEqual(items, [
-                self.item1,
-                _item2,
-                self.item3,
-                _item4,
-            ])
+            item4['title2'] = 'updated2'
+            self.assertEqual(item, {'id': 4, 'title2': 'updated2'})
+            await db_state.assert_state(self, session)
+
             query = query.filter_by(title='zzz')
             with self.assertRaises(exc.ItemNotFoundError) as e:
                 await query.update_item(
                     session,
-                    4,
-                    {'id':4, 'title2': 'updated2'},
+                    item4['id'],
+                    {'id': 4, 'title2': 'updated2'},
                     keys=['title2'],
                 )
                 self.assertEqual(e.args[0], 4)
+            await db_state.assert_state(self, session)
 
     @asynctest
-    async def test_delete(self, db):
-        mapper = db.mappers['db1']['Test']
+    async def test_delete(self, db, db_states):
+        mapper = db.mappers['admin']['Test']
         query = mapper.query().order_by(mapper.c['id'])
+        db_state = db_states['full']
         async with await db() as session:
-            q = sa.sql.insert(self.models1.test_table1).values(self.items)
-            result = await session.execute(q)
+            await db_state.syncdb(session)
             # id arg
             await query.delete_item(session, 2)
-            self.assertEqual(await query.id(2).select_items(session), [])
+            del db_state['Test'][2]
+            await db_state.assert_state(self, session)
             with self.assertRaises(exc.ItemNotFoundError) as e:
                 await query.delete_item(session, 2)
             self.assertEqual(e.exception.args[0], 2)
-            items = await query.id(1, 3, 4).select_items(session)
-            self.assertEqual(items, [self.item1, self.item3, self.item4])
-            _query = query.filter_by(title='zzz').id(4)
-            items = await _query.select_items(session)
-            self.assertEqual(items, [])
+            await db_state.assert_state(self, session)
 
             await query.delete_item(session, 4)
-            items = await query.select_items(session)
-            self.assertEqual(items, [self.item1,  self.item3])
+            del db_state['Test'][4]
+            await db_state.assert_state(self, session)
 
     @asynctest
-    async def test_count(self, db):
-        mapper = db.mappers['db1']['Test']
+    async def test_count(self, db, db_states):
+        mapper = db.mappers['admin']['Test']
         query = mapper.query()
         async with await db() as session:
+            await db_states['empty'].syncdb(session)
             result = await query.count_items(session)
             self.assertEqual(result, 0)
 
-            q = sa.sql.insert(self.models1.test_table1).values(self.items)
-            await session.execute(q)
+            await db_states['full'].syncdb(session)
             result = await query.count_items(session)
-            self.assertEqual(result, len(self.items))
+            self.assertEqual(result, len(db_states['full']['Test'].keys()))
             result = await query.filter_by(id=1).count_items(session)
             self.assertEqual(result, 1)
+            await db_states['full'].assert_state(self, session)
 
 
 
 @skipIf(not DB_URL1, 'db url undefined')
-class I18nMapperTestCase(TestCase):
+class I18nMapperTestCase(TestBase, TestCase):
 
-    item1 = {
-            'id': 1,
-            'title': '111t',
-            'title2': '111t2',
+    DATABASES = {
+        'admin': DB_URL1,
     }
-    item2 = {
-            'id': 2,
-            'title': '222t',
-            'title2': '222t2',
-    }
-    item3 = {
-            'id': 3,
-            'title': '333t',
-            'title2': '333t2',
-    }
-    item4 = {
-            'id': 4,
-            'title': '444t',
-            'title2': '444t2',
-    }
-    items = [item1, item2, item3, item4]
-    items_table_keys = {'id', 'title', 'title2'}
+
+    class base_mapper_cls(orm.mappers.I18n):
+        common_keys = ['title']
+
+    items_table_keys = {'id', 'title', 'title2', 'date', 'state'}
     items_relation_keys = set()
     items_allowed_keys = items_table_keys.union(items_relation_keys)
 
-    class I18nMapperClass(orm.mappers.I18n):
+    def create_db_states(self, db):
+        empty_state = DbState()
+        empty_state.add_table('TestRu', db.mappers['admin']['ru']['Test'].table)
+        empty_state.add_table('TestEn', db.mappers['admin']['en']['Test'].table)
 
-        name = 'Test'
-        common_keys = ['title']
-
-        def create_columns(self):
-            return [
-                sa.Column('title', sa.String(255)),
-                sa.Column('title2', sa.String(255)),
-            ]
-
-    async def asetup(self):
-        self.models1 = create_models1()
-        registry = orm.mappers.Registry(create_metadata([self.models1]))
-
-        self.I18nMapperClass.create(registry, db_id='db1')
-        registry.create_schema()
-
-        app = MagicMock()
-        del app.db
-        app.cfg.DATABASES = {
-            'db1': DB_URL1,
-            'db2': DB_URL2,
-        }
-
-        Component = component(mappers=registry)
-
-        db = await Component.create(app)
-        async with await db() as session:
-            conn1 = await session.get_connection(db.engines['db1'])
-            await self.models1.reset(conn1)
+        full_state = empty_state.copy()
+        items = self.with_states(
+            self.create_test_items(),
+            ['normal', 'absent', 'normal', 'absent'],
+        )
+        full_state['TestRu'].set_state(items)
+        items = self.with_states(
+            self.create_test_items(),
+            ['absent', 'normal', 'normal', 'absent'],
+        )
+        full_state['TestEn'].set_state(items)
         return {
-            'db': db,
+            'empty': empty_state,
+            'full': full_state,
         }
 
-    async def aclose(self, db):
-        db.close()
-
     @asynctest
-    async def test_create_table(self, db):
+    async def test_create_table(self, db, db_states):
         self.assertEqual(
-            db.mappers.metadata['db1'].tables['TestRu'].c.keys(),
-            ['id', 'state', 'title', 'title2'],
+            set(db.mappers.metadata['admin'].tables['TestRu'].c.keys()),
+            self.items_table_keys,
         )
         self.assertEqual(
-            db.mappers.metadata['db1'].tables['TestEn'].c.keys(),
-            ['id', 'state', 'title', 'title2'],
+            set(db.mappers.metadata['admin'].tables['TestEn'].c.keys()),
+            self.items_table_keys,
         )
         self.assertEqual(
-            db.mappers['db1']['ru']['Test'].table,
-            db.mappers.metadata['db1'].tables['TestRu'],
+            db.mappers['admin']['ru']['Test'].table,
+            db.mappers.metadata['admin'].tables['TestRu'],
         )
         self.assertEqual(
-            db.mappers['db1']['en']['Test'].table,
-            db.mappers.metadata['db1'].tables['TestEn'],
+            db.mappers['admin']['en']['Test'].table,
+            db.mappers.metadata['admin'].tables['TestEn'],
         )
 
     @asynctest
-    async def test_insert(self, db):
-        mapper_ru = db.mappers['db1']['ru']['Test']
-        mapper_en = db.mappers['db1']['en']['Test']
+    async def test_insert(self, db, db_states):
+        mapper_ru = db.mappers['admin']['ru']['Test']
+        mapper_en = db.mappers['admin']['en']['Test']
         query_ru = mapper_ru.query().order_by(mapper_ru.c['id'])
         query_en = mapper_en.query().order_by(mapper_en.c['id'])
-        query_ru_abs = mapper_ru.absent_query().order_by(mapper_ru.c['id'])
-        query_en_abs = mapper_en.absent_query().order_by(mapper_en.c['id'])
 
-
-        _item1_ru = dict(self.item1, state='normal')
-        _item1_en = dict(self.item1, state='absent', title2=None)
-
-        _item2_ru = dict(self.item2, state='absent', title2=None)
-        _item2_en = dict(self.item2, state='normal')
-
-        _item4_ru = dict(self.item4, state='normal')
-        _item4_en = dict(self.item4, state='absent', title2=None)
-
-        _item3_ru = dict(self.item3, state='absent', title2=None)
-        _item3_en = dict(self.item3, state='normal')
+        db_state = db_states['empty']
+        test_items = self.create_test_items()
+        test_item1 = test_items[0]
+        test_item2 = test_items[1]
+        test_item3 = test_items[2]
+        test_item4 = test_items[3]
 
         async with await db() as session:
+            await db_state.syncdb(session)
             result = await query_ru.insert_item(
                 session,
-                dict(self.item1, id=None),
+                dict(test_item1, id=None),
             )
-            await session.commit()
-            self.assertEqual(result, _item1_ru)
-            items = await query_ru.select_items(session)
-            self.assertEqual(items, [_item1_ru])
-            items = await query_ru_abs.select_items(session)
-            self.assertEqual(items, [])
-            items = await query_en.select_items(session)
-            self.assertEqual(items, [])
-            items = await query_en_abs.select_items(session)
-            self.assertEqual(items, [_item1_en])
+            self.assertEqual(result, dict(test_item1, state='normal'))
+            db_state['TestRu'].append(dict(test_item1, state='normal'))
+            db_state['TestEn'].append(
+                dict(test_item1, state='absent', date=None, title2=None))
+            await db_state.assert_state(self, session)
 
             result = await query_en.insert_item(
                 session,
-                dict(self.item2, id=None),
+                dict(test_item2, id=None),
             )
-            await session.commit()
-            self.assertEqual(result, _item2_en)
-            items = await query_en.select_items(session)
-            self.assertEqual(items, [_item2_en])
-            items = await query_en_abs.select_items(session)
-            self.assertEqual(items, [_item1_en])
-            items = await query_ru.select_items(session)
-            self.assertEqual(items, [_item1_ru])
-            items = await query_ru_abs.select_items(session)
-            self.assertEqual(items, [_item2_ru])
+            self.assertEqual(result, dict(test_item2, state='normal'))
+            db_state['TestEn'].append(dict(test_item2, state='normal'))
+            db_state['TestRu'].append(
+                dict(test_item2, state='absent', date=None, title2=None))
+            await db_state.assert_state(self, session)
 
-            result = await query_ru.insert_item(session, self.item4)
-            await session.commit()
-            self.assertEqual(result, _item4_ru)
-            items = await query_ru.select_items(session)
-            self.assertEqual(items, [_item1_ru, _item4_ru])
-            items = await query_ru_abs.select_items(session)
-            self.assertEqual(items, [_item2_ru])
-            items = await query_en.select_items(session)
-            self.assertEqual(items, [_item2_en])
-            items = await query_en_abs.select_items(session)
-            self.assertEqual(items, [_item1_en, _item4_en])
+            result = await query_ru.insert_item(session, test_item4)
+            self.assertEqual(result, dict(test_item4, state='normal'))
+            db_state['TestRu'].append(dict(test_item4, state='normal'))
+            db_state['TestEn'].append(
+                dict(test_item4, state='absent', date=None, title2=None))
+            await db_state.assert_state(self, session)
 
-            result = await query_en.insert_item(session, self.item3)
-            await session.commit()
-            self.assertEqual(result, _item3_en)
-            items = await query_en.select_items(session)
-            self.assertEqual(items, [_item2_en,_item3_en])
-            items = await query_en_abs.select_items(session)
-            self.assertEqual(items, [_item1_en, _item4_en])
-            items = await query_ru.select_items(session)
-            self.assertEqual(items, [_item1_ru, _item4_ru])
-            items = await query_ru_abs.select_items(session)
-            self.assertEqual(items, [_item2_ru, _item3_ru])
+
+            result = await query_en.insert_item(session, test_item3)
+            self.assertEqual(result, dict(test_item3, state='normal'))
+            db_state['TestEn'].append(dict(test_item3, state='normal'))
+            db_state['TestRu'].append(
+                dict(test_item3, state='absent', date=None, title2=None))
+            await db_state.assert_state(self, session)
 
 
     @asynctest
-    async def test_create_i18n_version(self, db):
-        mapper_ru = db.mappers['db1']['ru']['Test']
-        mapper_en = db.mappers['db1']['en']['Test']
+    async def test_create_i18n_version(self, db, db_states):
+        mapper_ru = db.mappers['admin']['ru']['Test']
+        mapper_en = db.mappers['admin']['en']['Test']
         query_ru = mapper_ru.query().order_by(mapper_ru.c['id'])
         query_en = mapper_en.query().order_by(mapper_en.c['id'])
+
+        db_state = db_states['empty']
+        test_items = self.create_test_items()
+        test_item1 = test_items[0]
+        test_item2 = test_items[1]
         async with await db() as session:
-            await query_ru.insert_item(session, self.item1)
-            await mapper_en.i18n_create_version(session, self.item1['id'])
-            cnt = await query_ru.count_items(session)
-            self.assertEqual(cnt, 1)
-            cnt = await query_en.count_items(session)
-            self.assertEqual(cnt, 1)
-            await query_en.insert_item(session, self.item2)
-            await mapper_ru.i18n_create_version(session, self.item2['id'])
-            cnt = await query_ru.count_items(session)
-            self.assertEqual(cnt, 2)
-            cnt = await query_en.count_items(session)
-            self.assertEqual(cnt, 2)
+            db_state = db_states['full'].copy()
+            await db_state.syncdb(session)
+            for id, item in db_state['TestRu'].items():
+                if item['state'] == 'normal':
+                    with self.assertRaises(exc.ItemNotFoundError) as e: #XXX?
+                        await mapper_ru.i18n_create_version(session, id)
+                    self.assertEqual(e.exception.args[0], id)
+                else:
+                    await mapper_ru.i18n_create_version(session, id)
+                    item['state'] = 'normal'
+                await db_state.assert_state(self, session)
+
+            db_state = db_states['full'].copy()
+            await db_state.syncdb(session)
+            for id, item in db_state['TestEn'].items():
+                if item['state']=='normal':
+                    with self.assertRaises(exc.ItemNotFoundError) as e:
+                        await mapper_en.i18n_create_version(session, id)
+                    self.assertEqual(e.exception.args[0], id)
+                else:
+                    await mapper_en.i18n_create_version(session, id)
+                    item['state'] = 'normal'
+                await db_state.assert_state(self, session)
 
 
     @asynctest
-    async def test_update_item(self, db):
-        mapper_ru = db.mappers['db1']['ru']['Test']
-        mapper_en = db.mappers['db1']['en']['Test']
+    async def test_update_item(self, db, db_states):
+        mapper_ru = db.mappers['admin']['ru']['Test']
+        mapper_en = db.mappers['admin']['en']['Test']
         query_ru = mapper_ru.query().order_by(mapper_ru.c['id'])
         query_en = mapper_en.query().order_by(mapper_en.c['id'])
 
         async with await db() as session:
-            await query_ru.insert_item(session, self.item1)
-            await mapper_en.i18n_create_version(session, self.item1['id'])
-            await query_ru.insert_item(session, self.item2)
-            await mapper_en.i18n_create_version(session, self.item2['id'])
-            item1_ru = dict(self.item1, state='normal')
-            item2_ru = dict(self.item2, state='normal')
-            item1_en = dict(self.item1, title2=None, state='normal')
-            item2_en = dict(self.item2, title2=None, state='normal')
-            values = {'title': 'updated_title', 'title2': 'updated_title2'}
-            await query_ru.update_item(session, item1_ru['id'], values=values);
-            item1_ru.update(values)
-            item1_en['title'] = values['title']
-            items = await query_ru.select_items(session)
-            self.assertEqual(items, [item1_ru, item2_ru])
-            items = await query_en.select_items(session)
-            self.assertEqual(items, [item1_en, item2_en])
+            db_state = db_states['full'].copy()
+            await db_state.syncdb(session)
+            for id, item in db_state['TestRu'].items():
+                values = dict(
+                    title='updated_title_{}'.format(id),
+                    title2='updated_title2_{}'.format(id),
+                )
+                if item['state'] == 'normal':
+                    await query_ru.update_item(session, id, values)
+                    db_state['TestRu'][id].update(values)
+                    db_state['TestEn'][id]['title'] = values['title']
+                else:
+                    with self.assertRaises(exc.ItemNotFoundError) as e:
+                        await query_ru.update_item(session, id, values)
+                    self.assertEqual(e.exception.args[0], id)
+                await db_state.assert_state(self, session)
 
-            values = {'title': 'en_updated_title', 'title2': 'en_updated_title2'}
-            await query_en.update_item(session, item2_en['id'], values=values);
-            item2_en.update(values)
-            item2_ru['title'] = values['title']
-            items = await query_ru.select_items(session)
-            self.assertEqual(items, [item1_ru, item2_ru])
-            items = await query_en.select_items(session)
-            self.assertEqual(items, [item1_en, item2_en])
+            db_state = db_states['full'].copy()
+            await db_state.syncdb(session)
+            for id, item in db_state['TestEn'].items():
+                values = dict(
+                    title='updated_title_{}'.format(id),
+                    title2='updated_title2_{}'.format(id),
+                )
+                if item['state'] == 'normal':
+                    await query_en.update_item(session, id, values=values)
+                    db_state['TestEn'][id].update(values)
+                    db_state['TestRu'][id]['title'] = values['title']
+                else:
+                    with self.assertRaises(exc.ItemNotFoundError) as e:
+                        await query_en.update_item(session, id, values)
+                    self.assertEqual(e.exception.args[0], id)
+                await db_state.assert_state(self, session)
+
 
     @asynctest
-    async def test_delete_item(self, db):
-        mapper_ru = db.mappers['db1']['ru']['Test']
-        mapper_en = db.mappers['db1']['en']['Test']
+    async def test_delete_item(self, db, db_states):
+        mapper_ru = db.mappers['admin']['ru']['Test']
+        mapper_en = db.mappers['admin']['en']['Test']
         query_ru = mapper_ru.query().order_by(mapper_ru.c['id'])
         query_en = mapper_en.query().order_by(mapper_en.c['id'])
-        abs_query_en = mapper_en.absent_query().order_by(mapper_en.c['id'])
 
         async with await db() as session:
-            await query_ru.insert_item(session, self.item1)
-            await mapper_en.i18n_create_version(session, self.item1['id'])
-            await query_ru.insert_item(session, self.item2)
-            await mapper_en.i18n_create_version(session, self.item2['id'])
-            item1_ru = dict(self.item1, state='normal')
-            item2_ru = dict(self.item2, state='normal')
-            item1_en = dict(self.item1, title2=None, state='normal')
-            item2_en = dict(self.item2, title2=None, state='normal')
-            await query_ru.delete_item(session, item1_ru['id'])
-            items = await query_ru.select_items(session)
-            self.assertEqual(items, [item2_ru])
-            items = await query_en.select_items(session)
-            self.assertEqual(items, [item2_en])
-            await query_en.delete_item(session, item2_en['id'])
-            items = await query_ru.select_items(session)
-            self.assertEqual(items, [])
-            items = await query_en.select_items(session)
-            self.assertEqual(items, [])
+            db_state = db_states['full'].copy()
+            await db_state.syncdb(session)
+            for id in list(db_state['TestRu']):
+                if db_state['TestRu'][id]['state'] == 'normal':
+                    await query_ru.delete_item(session, id)
+                    del db_state['TestRu'][id]
+                    del db_state['TestEn'][id]
+                else:
+                    with self.assertRaises(exc.ItemNotFoundError) as e:
+                        await query_ru.delete_item(session, id)
+                    self.assertEqual(e.exception.args[0], id)
+                await db_state.assert_state(self, session)
 
-            await query_ru.insert_item(session, self.item1)
-            await query_ru.insert_item(session, self.item2)
-            item1_ru = dict(self.item1, state='normal')
-            item2_ru = dict(self.item2, state='normal')
-            item1_en = dict(self.item1, title2=None, state='absent')
-            item2_en = dict(self.item2, title2=None, state='absent')
-
-            await query_ru.delete_item(session, item1_ru['id'])
-            items = await query_ru.select_items(session)
-            self.assertEqual(items, [item2_ru])
-            items = await abs_query_en.select_items(session)
-            self.assertEqual(items, [item2_en])
-            await abs_query_en.delete_item(session, item2_en['id'])
-            items = await query_ru.select_items(session)
-            self.assertEqual(items, [])
-            items = await abs_query_en.select_items(session)
-            self.assertEqual(items, [])
+            db_state = db_states['full'].copy()
+            await db_state.syncdb(session)
+            for id in list(db_state['TestEn']):
+                if db_state['TestEn'][id]['state'] == 'normal':
+                    await query_en.delete_item(session, id)
+                    del db_state['TestRu'][id]
+                    del db_state['TestEn'][id]
+                else:
+                    with self.assertRaises(exc.ItemNotFoundError) as e:
+                        await query_en.delete_item(session, id)
+                    self.assertEqual(e.exception.args[0], id)
+                await db_state.assert_state(self, session)
 
 
 
-@skipIf(not (DB_URL1 and DB_URL2), 'db url or db urk2 undefined')
-class PubMapperTestCase(TestCase):
+@skipIf(not (DB_URL1 and DB_URL2), 'db url or db url2 undefined')
+class PubMapperTestCase(TestBase, TestCase):
 
-    item1 = {
-            'id': 1,
-            'title': '111t',
-            'title2': '111t2',
+    DATABASES = {
+        'admin': DB_URL1,
+        'front': DB_URL2,
     }
-    item2 = {
-            'id': 2,
-            'title': '222t',
-            'title2': '222t2',
-    }
-    item3 = {
-            'id': 3,
-            'title': '333t',
-            'title2': '333t2',
-    }
-    item4 = {
-            'id': 4,
-            'title': '444t',
-            'title2': '444t2',
-    }
-    items = [item1, item2, item3, item4]
-    items_table_keys = {'id', 'title', 'title2'}
+    base_mapper_cls = orm.mappers.Pub
+
+    items_table_keys = {'id', 'title', 'title2', 'date', 'state'}
     items_relation_keys = set()
     items_allowed_keys = items_table_keys.union(items_relation_keys)
 
-    class PubMapperClass(orm.mappers.Pub):
+    def create_mapper(self, registry):
+        self.mapper_cls.create(registry)
 
-        name = 'PubTest'
+    def create_db_states(self, db):
+        empty_state = DbState()
+        empty_state.add_table('TestAdmin', db.mappers['admin']['Test'].table)
+        empty_state.add_table('TestFront', db.mappers['front']['Test'].table)
 
-        def create_columns(self):
-            return [
-                sa.Column('title', sa.String(255)),
-                sa.Column('title2', sa.String(255)),
-            ]
-
-    async def asetup(self):
-        self.models1 = create_models1()
-        self.models2 = create_models2()
-        registry = orm.mappers.Registry({
-            'admin': self.models1.metadata,
-            'front': self.models2.metadata,
-        })
-
-        self.PubMapperClass.create(registry)
-        registry.create_schema()
-
-        app = MagicMock()
-        del app.db
-        app.cfg.DATABASES = {
-            'admin': DB_URL1,
-            'front': DB_URL2,
-        }
-
-        Component = component(mappers=registry)
-
-        db = await Component.create(app)
-        async with await db() as session:
-            conn1 = await session.get_connection(db.engines['admin'])
-            await self.models1.reset(conn1)
-            conn1 = await session.get_connection(db.engines['front'])
-            await self.models1.reset(conn1)
+        full_state = empty_state.copy()
+        items = self.with_states(
+            self.create_test_items(),
+            ['private', 'public', 'private', 'public'],
+        )
+        full_state['TestAdmin'].set_state(items)
+        items = self.with_states(
+            self.create_test_items(),
+            ['private', 'public', 'private', 'public'],
+        )
+        full_state['TestFront'].set_state(items)
         return {
-            'db': db,
+            'empty': empty_state,
+            'full': full_state,
         }
 
-    async def aclose(self, db):
-        db.close()
 
     @asynctest
-    async def test_create_table(self, db):
+    async def test_create_table(self, db, db_states):
         self.assertEqual(
-            db.mappers.metadata['admin'].tables['PubTest'].c.keys(),
-            ['id', 'state', 'title', 'title2'],
+            set(db.mappers.metadata['admin'].tables['Test'].c.keys()),
+            self.items_table_keys,
         )
         self.assertEqual(
-            db.mappers.metadata['front'].tables['PubTest'].c.keys(),
-            ['id', 'state', 'title', 'title2'],
+            set(db.mappers.metadata['front'].tables['Test'].c.keys()),
+            self.items_table_keys,
         )
         self.assertEqual(
-            db.mappers['admin']['PubTest'].table,
-            db.mappers.metadata['admin'].tables['PubTest'],
+            db.mappers['admin']['Test'].table,
+            db.mappers.metadata['admin'].tables['Test'],
         )
         self.assertEqual(
-            db.mappers['front']['PubTest'].table,
-            db.mappers.metadata['front'].tables['PubTest'],
+            db.mappers['front']['Test'].table,
+            db.mappers.metadata['front'].tables['Test'],
         )
 
     @asynctest
-    async def test_insert_item(self, db):
-        mapper1 = db.mappers['admin']['PubTest']
-        mapper2 = db.mappers['front']['PubTest']
+    async def test_insert_item(self, db, db_states):
+        mapper1 = db.mappers['admin']['Test']
+        mapper2 = db.mappers['front']['Test']
         query1 = mapper1.query().order_by(mapper1.c['id'])
         query2 = mapper2.query().order_by(mapper2.c['id'])
 
-        item1_1 = dict(self.item1, state='private')
-        item1_2 = dict(self.item1, state='private', title=None, title2=None)
-
-        item2_1 = dict(self.item2, state='private')
-        item2_2 = dict(self.item2, state='private', title=None, title2=None)
+        db_state = db_states['empty']
+        test_items = self.create_test_items()
 
         async with await db() as session:
-            result = await query1.insert_item(
-                session,
-                dict(self.item1, id=None),
+            db_state = db_states['empty'].copy()
+            await db_state.syncdb(session)
+            for num, item in enumerate(test_items):
+                id = num + 1
+                result = await query1.insert_item(session, dict(item, id=None))
+                self.assertEqual(result, dict(item, id=id, state='private'))
+                db_state['TestAdmin'].append(dict(item, id=id, state='private'))
+                db_state['TestFront'].append(dict(
+                    item,
+                    id=id,
+                    state='private',
+                    title=None,
+                    title2=None,
+                    date=None),
+                )
+                await db_state.assert_state(self, session)
+
+            db_state = db_states['empty'].copy()
+            await db_state.syncdb(session)
+            for item in test_items[::-1]:
+                result = await query1.insert_item(session, item)
+                self.assertEqual(result, dict(item, state='private'))
+                db_state['TestAdmin'].append(dict(item, state='private'))
+                db_state['TestFront'].append(dict(
+                    item,
+                    state='private',
+                    title=None,
+                    title2=None,
+                    date=None),
+                )
+                await db_state.assert_state(self, session)
+
+            for item in test_items:
+                with self.assertRaises(Exception) as e: #XXX
+                    await query1.insert_item(session, item)
+                await db_state.assert_state(self, session)
+                with self.assertRaises(AssertionError) as e:
+                    await query2.insert_item(session, item)
+                await db_state.assert_state(self, session)
+
+    @asynctest
+    async def test_delete_item(self, db, db_states):
+        mapper1 = db.mappers['admin']['Test']
+        mapper2 = db.mappers['front']['Test']
+        query1 = mapper1.query().order_by(mapper1.c['id'])
+        query2 = mapper2.query().order_by(mapper2.c['id'])
+
+        db_state = db_states['full']
+
+        async with await db() as session:
+            await db_state.syncdb(session)
+            for id in list(db_state['TestAdmin'].keys()):
+                await query1.delete_item(session, id)
+                del db_state['TestAdmin'][id]
+                del db_state['TestFront'][id]
+                await db_state.assert_state(self, session)
+                with self.assertRaises(exc.ItemNotFoundError) as e:
+                    await query1.delete_item(session, id)
+                self.assertEqual(e.exception.args[0], id)
+                await db_state.assert_state(self, session)
+                with self.assertRaises(AssertionError) as e:
+                    await query2.delete_item(session, id)
+                await db_state.assert_state(self, session)
+
+    @asynctest
+    async def test_publish(self, db, db_states):
+        mapper1 = db.mappers['admin']['Test']
+        mapper2 = db.mappers['front']['Test']
+        query1 = mapper1.query().order_by(mapper1.c['id'])
+        query2 = mapper2.query().order_by(mapper2.c['id'])
+
+        db_state = db_states['full']
+        for front_item in db_state['TestFront'].values():
+            front_item['title'] = 'different title'
+            front_item['title2'] = 'different title2'
+        async with await db() as session:
+            await db_state.syncdb(session)
+            items = zip(
+                db_state['TestAdmin'].values(),
+                db_state['TestFront'].values(),
             )
-            await session.commit()
-            items = await query1.select_items(session)
-            self.assertEqual(items, [item1_1])
-            items = await query2.select_items(session)
-            self.assertEqual(items, [item1_2])
-            result = await query1.insert_item(
-                session,
-                dict(self.item2),
+            for admin_item, front_item in items:
+                if admin_item['state'] == 'private':
+                    print(admin_item['id'], admin_item)
+                    await query1.publish(session, admin_item['id'])
+                    admin_item['state'] = 'public'
+                    front_item.update(admin_item)
+                else:
+                    with self.assertRaises(AssertionError) as e:
+                        await query1.publish(session, admin_item['id'])
+                with self.assertRaises(AssertionError) as e:
+                    await query2.publish(session, front_item['id'])
+                await db_state.assert_state(self, session)
+
+
+@skipIf(not (DB_URL1 and DB_URL2), 'db url or db url2 undefined')
+class I18nPubMapperTestCase(TestBase, TestCase):
+
+    DATABASES = {
+        'admin': DB_URL1,
+        'front': DB_URL2,
+    }
+    class base_mapper_cls(orm.mappers.I18nPub):
+        common_keys = ['title']
+
+    items_table_keys = {'id', 'title', 'title2', 'date', 'state'}
+    items_relation_keys = set()
+    items_allowed_keys = items_table_keys.union(items_relation_keys)
+
+    def create_mapper(self, registry):
+        self.mapper_cls.create(registry)
+
+    def create_db_states(self, db):
+        empty_state = DbState()
+        empty_state.add_table(
+            'TestAdminRu',
+            db.mappers['admin']['ru']['Test'].table,
+        )
+        empty_state.add_table(
+            'TestAdminEn',
+            db.mappers['admin']['en']['Test'].table,
+        )
+        empty_state.add_table(
+            'TestFrontRu',
+            db.mappers['front']['ru']['Test'].table,
+        )
+        empty_state.add_table(
+            'TestFrontEn',
+            db.mappers['front']['en']['Test'].table,
+        )
+
+        full_state = empty_state.copy()
+        item_states = ['absent', 'private', 'public']
+        id = 0
+        for admin_ru_item_state in item_states:
+            for admin_en_item_state in item_states:
+                for front_ru_item_state in item_states:
+                    for front_en_item_state in item_states:
+                        id = id + 1
+                        item = dict(
+                            self.random_item(id),
+                            state=admin_ru_item_state,
+                        )
+                        full_state['TestAdminRu'].append(item)
+                        item = dict(
+                            self.random_item(id),
+                            state=admin_en_item_state,
+                        )
+                        full_state['TestAdminEn'].append(item)
+                        item = dict(
+                            self.random_item(id),
+                            state=front_ru_item_state,
+                        )
+                        full_state['TestFrontRu'].append(item)
+                        item = dict(
+                            self.random_item(id),
+                            state=front_en_item_state,
+                        )
+                        full_state['TestFrontEn'].append(item)
+
+        return {
+            'empty': empty_state,
+            'full': full_state,
+        }
+
+    @asynctest
+    async def test_create_table(self, db, db_states):
+        for db_id in self.mapper_cls.db_ids:
+            for lang in self.mapper_cls.langs:
+                metadata = db.mappers.metadata[db_id]
+                table = metadata.tables['Test'+lang.capitalize()]
+                self.assertEqual(
+                    set(table.c.keys()),
+                    self.items_table_keys,
+                )
+                self.assertEqual(
+                    db.mappers[db_id][lang]['Test'].table,
+                    table,
+                )
+
+    @asynctest
+    async def test_insert_item(self, db, db_states):
+        mapper_admin_ru = db.mappers['admin']['ru']['Test']
+        mapper_admin_en = db.mappers['admin']['en']['Test']
+        mapper_front_ru = db.mappers['front']['ru']['Test']
+        mapper_front_en = db.mappers['front']['en']['Test']
+
+        query_admin_ru = mapper_admin_ru.query()\
+                                    .order_by(mapper_admin_ru.c['id'])
+        query_admin_en = mapper_admin_en.query()\
+                                    .order_by(mapper_admin_en.c['id'])
+        query_front_ru = mapper_front_ru.query()\
+                                    .order_by(mapper_front_ru.c['id'])
+        query_front_en = mapper_front_en.query()\
+                                    .order_by(mapper_front_en.c['id'])
+
+        db_state = db_states['empty']
+        test_items = self.create_test_items()
+
+        async with await db() as session:
+            db_state = db_states['empty'].copy()
+            await db_state.syncdb(session)
+            for id in (1, 2, 3):
+                item = self.random_item(id)
+                result = await query_admin_ru.insert_item(
+                    session,
+                    dict(item, id=None),
+                )
+                self.assertEqual(result, dict(item, state='private'))
+                db_state['TestAdminRu'].append(dict(item, state='private'))
+                db_state['TestFrontRu'].append(dict(
+                    item,
+                    state='private',
+                    title=None,
+                    title2=None,
+                    date=None,
+                ))
+                db_state['TestAdminEn'].append(dict(
+                    item,
+                    state='absent',
+                    title2=None,
+                    date=None,
+                ))
+                db_state['TestFrontEn'].append(dict(
+                    item,
+                    state='absent',
+                    title=None,
+                    title2=None,
+                    date=None,
+                ))
+                await db_state.assert_state(self, session)
+
+            for id in (4, 5, 6):
+                item = self.random_item(id)
+                result = await query_admin_en.insert_item(
+                    session,
+                    dict(item, id=None),
+                )
+                self.assertEqual(result, dict(item, state='private'))
+                db_state['TestAdminEn'].append(dict(
+                    item,
+                    id=id,
+                    state='private',
+                ))
+                db_state['TestFrontEn'].append(dict(
+                    item,
+                    id=id,
+                    state='private',
+                    title=None,
+                    title2=None,
+                    date=None,
+                ))
+                db_state['TestAdminRu'].append(dict(
+                    item,
+                    id=id,
+                    state='absent',
+                    title2=None,
+                    date=None,
+                ))
+                db_state['TestFrontRu'].append(dict(
+                    item,
+                    id=id,
+                    state='absent',
+                    title=None,
+                    title2=None,
+                    date=None,
+                ))
+                await db_state.assert_state(self, session)
+
+            db_state = db_states['empty'].copy()
+            await db_state.syncdb(session)
+            for id in (3, 1, 2):
+                item = self.random_item(id)
+                result = await query_admin_ru.insert_item(session, item)
+                self.assertEqual(result, dict(item, state='private'))
+                db_state['TestAdminRu'].append(dict(item, state='private'))
+                db_state['TestFrontRu'].append(dict(
+                    item,
+                    state='private',
+                    title=None,
+                    title2=None,
+                    date=None,
+                ))
+                db_state['TestAdminEn'].append(dict(
+                    item,
+                    state='absent',
+                    title2=None,
+                    date=None,
+                ))
+                db_state['TestFrontEn'].append(dict(
+                    item,
+                    state='absent',
+                    title=None,
+                    title2=None,
+                    date=None,
+                ))
+                await db_state.assert_state(self, session)
+
+            for id in (6, 4, 5):
+                item = self.random_item(id)
+                result = await query_admin_en.insert_item(session, item)
+                self.assertEqual(result, dict(item, state='private'))
+                db_state['TestAdminEn'].append(dict(item, state='private'))
+                db_state['TestFrontEn'].append(dict(
+                    item,
+                    state='private',
+                    title=None,
+                    title2=None,
+                    date=None,
+                ))
+                db_state['TestAdminRu'].append(dict(
+                    item,
+                    state='absent',
+                    title2=None,
+                    date=None,
+                ))
+                db_state['TestFrontRu'].append(dict(
+                    item,
+                    state='absent',
+                    title=None,
+                    title2=None,
+                    date=None,
+                ))
+                await db_state.assert_state(self, session)
+
+            for item in test_items:
+                for query in [query_front_ru, query_front_en]:
+                    with self.assertRaises(AssertionError) as e:
+                        await query.insert_item(session, item)
+                    await db_state.assert_state(self, session)
+
+                for query in [query_admin_ru, query_admin_en]:
+                    with self.assertRaises(Exception) as e: #XXX
+                        await query.insert_item(session, item)
+                    await db_state.assert_state(self, session)
+
+    @asynctest
+    async def test_delete_item(self, db, db_states):
+        mapper_admin_ru = db.mappers['admin']['ru']['Test']
+        mapper_admin_en = db.mappers['admin']['en']['Test']
+        mapper_front_ru = db.mappers['front']['ru']['Test']
+        mapper_front_en = db.mappers['front']['en']['Test']
+
+        query_admin_ru = mapper_admin_ru.query()\
+                                    .order_by(mapper_admin_ru.c['id'])
+        query_admin_en = mapper_admin_en.query()\
+                                    .order_by(mapper_admin_en.c['id'])
+        query_front_ru = mapper_front_ru.query()\
+                                    .order_by(mapper_front_ru.c['id'])
+        query_front_en = mapper_front_en.query()\
+                                    .order_by(mapper_front_en.c['id'])
+
+        async with await db() as session:
+            db_state = db_states['full'].copy()
+            await db_state.syncdb(session)
+            for id, item in list(db_state['TestAdminRu'].items()):
+                if item['state'] == 'absent':
+                    with self.assertRaises(exc.ItemNotFoundError) as e:
+                        await query_admin_ru.delete_item(session, id)
+                    self.assertEqual(e.exception.args[0], id)
+                else:
+                    print(item)
+                    await query_admin_ru.delete_item(session, id)
+                    del db_state['TestAdminRu'][id]
+                    del db_state['TestAdminEn'][id]
+                    del db_state['TestFrontRu'][id]
+                    del db_state['TestFrontEn'][id]
+                await db_state.assert_state(self, session)
+
+                with self.assertRaises(AssertionError) as e:
+                    await query_front_ru.delete_item(session, id)
+                await db_state.assert_state(self, session)
+
+            db_state = db_states['full'].copy()
+            await db_state.syncdb(session)
+            for id, item in list(db_state['TestAdminEn'].items()):
+                if item['state'] == 'absent':
+                    with self.assertRaises(exc.ItemNotFoundError) as e:
+                        await query_admin_en.delete_item(session, id)
+                    self.assertEqual(e.exception.args[0], id)
+                else:
+                    await query_admin_en.delete_item(session, id)
+                    del db_state['TestAdminRu'][id]
+                    del db_state['TestAdminEn'][id]
+                    del db_state['TestFrontRu'][id]
+                    del db_state['TestFrontEn'][id]
+                await db_state.assert_state(self, session)
+
+                with self.assertRaises(AssertionError) as e:
+                    await query_front_en.delete_item(session, id)
+                await db_state.assert_state(self, session)
+
+    @asynctest
+    async def test_publish(self, db, db_states):
+        mapper_admin_ru = db.mappers['admin']['ru']['Test']
+        mapper_admin_en = db.mappers['admin']['en']['Test']
+        mapper_front_ru = db.mappers['front']['ru']['Test']
+        mapper_front_en = db.mappers['front']['en']['Test']
+
+        query_admin_ru = mapper_admin_ru.query()\
+                                    .order_by(mapper_admin_ru.c['id'])
+        query_admin_en = mapper_admin_en.query()\
+                                    .order_by(mapper_admin_en.c['id'])
+        query_front_ru = mapper_front_ru.query()\
+                                    .order_by(mapper_front_ru.c['id'])
+        query_front_en = mapper_front_en.query()\
+                                    .order_by(mapper_front_en.c['id'])
+
+        db_state = db_states['full']
+        async with await db() as session:
+            await db_state.syncdb(session)
+            items = zip(
+                db_state['TestAdminRu'].values(),
+                db_state['TestAdminEn'].values(),
+                db_state['TestFrontRu'].values(),
+                db_state['TestFrontEn'].values(),
             )
-            await session.commit()
-            items = await query1.select_items(session)
-            self.assertEqual(items, [item1_1, item2_1])
-            items = await query2.select_items(session)
-            self.assertEqual(items, [item1_2, item2_2])
-
-
-    @asynctest
-    async def test_delete_item(self, db):
-        mapper1 = db.mappers['admin']['PubTest']
-        mapper2 = db.mappers['front']['PubTest']
-        query1 = mapper1.query().order_by(mapper1.c['id'])
-        query2 = mapper2.query().order_by(mapper2.c['id'])
-
-        item1_1 = dict(self.item1, state='private')
-        item1_2 = dict(self.item1, state='private', title=None, title2=None)
-
-        item2_1 = dict(self.item2, state='private')
-        item2_2 = dict(self.item2, state='private', title=None, title2=None)
-
-        async with await db() as session:
-            result = await query1.insert_item(session, self.item1)
-            result = await query1.insert_item(session, self.item2)
-            await session.commit()
-            await query1.delete_item(session, item1_1['id'])
-            items = await query1.select_items(session)
-            self.assertEqual(items, [item2_1])
-            items = await query2.select_items(session)
-            self.assertEqual(items, [item2_2])
-
-
-    @asynctest
-    async def test_publish(self, db):
-        mapper1 = db.mappers['admin']['PubTest']
-        mapper2 = db.mappers['front']['PubTest']
-        query1 = mapper1.query().order_by(mapper1.c['id'])
-        query2 = mapper2.query().order_by(mapper2.c['id'])
-
-        item1_1 = dict(self.item1, state='public')
-        item1_2 = dict(self.item1, state='public')
-
-        item2_1 = dict(self.item2, state='private')
-        item2_2 = dict(self.item2, state='private', title=None, title2=None)
-
-        async with await db() as session:
-            result = await query1.insert_item(session, self.item1)
-            result = await query1.insert_item(session, self.item2)
-            await session.commit()
-            result = await query1.publish(session, item1_1['id'])
-            items = await query1.select_items(session)
-            self.assertEqual(items, [item1_1, item2_1])
-            items = await query2.select_items(session)
-            self.assertEqual(items, [item1_2, item2_2])
+            for admin_ru_item, admin_en_item, front_ru_item, front_en_item \
+                    in items:
+                id = admin_ru_item['id']
+                if admin_ru_item['state'] == 'private':
+                    await query_admin_ru.publish(session, id)
+                    admin_ru_item['state'] = 'public'
+                    front_ru_item.update(admin_ru_item)
+                    front_en_item['title'] = admin_ru_item['title']
+                elif admin_ru_item['state'] == 'absent':
+                    with self.assertRaises(exc.ItemNotFoundError) as e:
+                        await query_admin_ru.publish(session, id)
+                    self.assertEqual(e.exception.args[0], id)
+                else:
+                    with self.assertRaises(AssertionError) as e:
+                        await query_admin_ru.publish(session, id)
+                with self.assertRaises(AssertionError) as e:
+                    await query_front_ru.publish(session, id)
+                await db_state.assert_state(self, session)
 
