@@ -3,7 +3,6 @@ from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Date
-from sqlalchemy import Table
 from sqlalchemy import sql
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -29,7 +28,7 @@ def create_models1():
 
         class Test(Base):
             __tablename__ = 'Test'
-            id =  Column(Integer, primary_key=True)
+            id = Column(Integer, primary_key=True)
             title = Column(String(60), nullable=True)
             title2 = Column(String(60), nullable=True)
             date = Column(Date, nullable=True)
@@ -45,7 +44,7 @@ def create_models2():
 
         class Test2(Base):
             __tablename__ = 'Test2'
-            id =  Column(Integer, primary_key=True)
+            id = Column(Integer, primary_key=True)
             title = Column(String(60), nullable=True)
             title2 = Column(String(60), nullable=True)
 

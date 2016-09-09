@@ -1,9 +1,6 @@
-import asyncio
 from unittest import TestCase, skipIf
 from unittest.mock import MagicMock
 
-from sqlalchemy import sql
-from iktomi.utils import cached_property
 from ikcms.ws_components.db import component
 from ikcms.utils.asynctests import asynctest
 from ikcms.orm import mappers

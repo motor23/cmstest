@@ -1,17 +1,15 @@
-import asyncio
 from unittest import TestCase
 from unittest import skipIf
 from unittest.mock import MagicMock
 
 from ikcms.utils.asynctests import asynctest
-
-from tests.cfg import cfg
-
 try:
     from ikcms.ws_components.cache.aiomcache import component
     skip_test = False
 except ImportError:
     skip_test = True
+
+from tests.cfg import cfg
 
 
 @skipIf(skip_test, 'Aiomcache not installed')

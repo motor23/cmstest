@@ -1,20 +1,19 @@
 from unittest import TestCase
 from unittest import skipIf
 from unittest.mock import MagicMock
-from datetime import date
 
 import sqlalchemy as sa
 
 from ikcms.ws_components.db import component
 from ikcms import orm
-from ikcms.orm import exc
 from ikcms.orm import relations
 from ikcms.utils.asynctests import asynctest
 from ikcms.utils.asynctests import TableState
 from ikcms.utils.asynctests import DbState
 
 from tests.cfg import cfg
-from tests.models import create_models1, create_models2, create_metadata
+from tests.models import create_models1
+from tests.models import create_metadata
 
 
 DB_URL = cfg.MYSQL_URL or cfg.POSTGRESS_URL
@@ -67,25 +66,25 @@ class M2MRelationTestCase(TestCase):
         state1['local'] = TableState(local_mapper.table)
         state1['remote'] = TableState(remote_mapper.table)
         state1['m2m'] = TableState(
-                local_mapper.relations['m2m'].table,
-                primary_keys=['local_id', 'remote_id'],
+            local_mapper.relations['m2m'].table,
+            primary_keys=['local_id', 'remote_id'],
         )
         state1['m2m_ordered'] = TableState(
-                local_mapper.relations['m2m_ordered'].table,
-                primary_keys=['local_id', 'remote_id'],
+            local_mapper.relations['m2m_ordered'].table,
+            primary_keys=['local_id', 'remote_id'],
         )
         state1['remote'].append({'id': 1, 'title': 'title1'})
         state1['remote'].append({'id': 2, 'title': 'title2'})
         state1['remote'].append({'id': 3, 'title': 'title3'})
 
         state2 = state1.copy()
-        state2['local'].append({'id':1, 'title': 'title1'})
-        state2['m2m'].append({'local_id':1, 'remote_id': 1})
-        state2['m2m'].append({'local_id':1, 'remote_id': 2})
-        state2['m2m'].append({'local_id':1, 'remote_id': 3})
-        state2['m2m_ordered'].append({'local_id':1, 'remote_id': 1, 'order': 2})
-        state2['m2m_ordered'].append({'local_id':1, 'remote_id': 2, 'order': 1})
-        state2['m2m_ordered'].append({'local_id':1, 'remote_id': 3, 'order': 3})
+        state2['local'].append({'id': 1, 'title': 'title1'})
+        state2['m2m'].append({'local_id': 1, 'remote_id': 1})
+        state2['m2m'].append({'local_id': 1, 'remote_id': 2})
+        state2['m2m'].append({'local_id': 1, 'remote_id': 3})
+        state2['m2m_ordered'].append({'local_id': 1, 'remote_id': 1, 'order': 2})
+        state2['m2m_ordered'].append({'local_id': 1, 'remote_id': 2, 'order': 1})
+        state2['m2m_ordered'].append({'local_id': 1, 'remote_id': 3, 'order': 3})
 
         app = MagicMock()
         del app.db
@@ -119,8 +118,8 @@ class M2MRelationTestCase(TestCase):
                 {
                     'id': 1,
                     'title': 'title1',
-                    'm2m': [1,2,3],
-                    'm2m_ordered': [2,1,3],
+                    'm2m': [1, 2, 3],
+                    'm2m_ordered': [2, 1, 3],
                 },
             )
             await state2.assert_state(self, session)
@@ -131,12 +130,13 @@ class M2MRelationTestCase(TestCase):
         async with await db() as session:
             await state2.syncdb(session)
             items = await local_mapper.query().select_items(session)
-            self.assertEqual(items,
+            self.assertEqual(
+                items,
                 [{
                     'id': 1,
                     'title': 'title1',
-                    'm2m': [1,2,3],
-                    'm2m_ordered': [2,1,3],
+                    'm2m': [1, 2, 3],
+                    'm2m_ordered': [2, 1, 3],
                 }],
             )
             await state2.assert_state(self, session)

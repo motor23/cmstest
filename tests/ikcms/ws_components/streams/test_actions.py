@@ -1,4 +1,3 @@
-import asyncio
 from unittest import TestCase
 from unittest import skipIf
 from unittest.mock import MagicMock
@@ -18,7 +17,6 @@ from ikcms.ws_components.streams.stream import Stream
 from ikcms.ws_components.streams.forms import list_fields
 from ikcms.ws_components.streams.forms import filter_fields
 from ikcms.ws_components.streams.forms import item_fields
-from ikcms.forms.widgets import Widget
 
 from tests.models import create_models1, create_models2, create_metadata
 from tests.cfg import cfg
@@ -38,55 +36,55 @@ def _items_from_keys(items, keys):
 @skipIf(not DB_URL, 'db url undefined')
 class ActionsTestCase(TestCase):
     item1 = {
-            'id': 1,
-            'title': '111t',
-            'title2': '111t2',
-            'date': date(2005, 4, 20),
+        'id': 1,
+        'title': '111t',
+        'title2': '111t2',
+        'date': date(2005, 4, 20),
     }
     item2 = {
-            'id': 2,
-            'title': '222t',
-            'title2': '222t2',
-            'date': date(1998, 7, 6),
+        'id': 2,
+        'title': '222t',
+        'title2': '222t2',
+        'date': date(1998, 7, 6),
     }
     item3 = {
-            'id': 3,
-            'title': '333t',
-            'title2': '333t2',
-            'date': date(2016, 12, 12),
+        'id': 3,
+        'title': '333t',
+        'title2': '333t2',
+        'date': date(2016, 12, 12),
     }
     item4 = {
-            'id': 4,
-            'title': '444t',
-            'title2': '444t2',
-            'date': date(2020, 1, 17),
+        'id': 4,
+        'title': '444t',
+        'title2': '444t2',
+        'date': date(2020, 1, 17),
     }
     items = [item1, item2, item3, item4]
     edit_items = _items_from_keys(items, ['id', 'title', 'date'])
 
     raw_item1 = {
-            'id': 1,
-            'title': '111t',
-            'title2': '111t2',
-            'date': '2005-04-20',
+        'id': 1,
+        'title': '111t',
+        'title2': '111t2',
+        'date': '2005-04-20',
     }
     raw_item2 = {
-            'id': 2,
-            'title': '222t',
-            'title2': '222t2',
-            'date': '1998-07-06',
+        'id': 2,
+        'title': '222t',
+        'title2': '222t2',
+        'date': '1998-07-06',
     }
     raw_item3 = {
-            'id': 3,
-            'title': '333t',
-            'title2': '333t2',
-            'date': '2016-12-12',
+        'id': 3,
+        'title': '333t',
+        'title2': '333t2',
+        'date': '2016-12-12',
     }
     raw_item4 = {
-            'id': 4,
-            'title': '444t',
-            'title2': '444t2',
-            'date': '2020-01-17',
+        'id': 4,
+        'title': '444t',
+        'title2': '444t2',
+        'date': '2020-01-17',
     }
     raw_items = [raw_item1, raw_item2, raw_item3, raw_item4]
     raw_edit_items = _items_from_keys(raw_items, ['id', 'title', 'date'])
@@ -149,13 +147,14 @@ class ActionsTestCase(TestCase):
         class i_id(item_fields.id):
             widget = MagicMock()
 
-            def get_initials(_self, test_kwarg='test_default'):
+            def get_initials(_self, **kwargs):
                 return 50000
 
         class i_title(item_fields.title):
             widget = MagicMock()
 
-            def get_initials(_self, test_kwarg='test_default'):
+            def get_initials(_self, **kwargs):
+                test_kwarg = kwargs.get('test_kwarg', 'test_default')
                 return '{}-{}-initials'.format(_self.name, test_kwarg)
 
         class i_date(item_fields.Date):
@@ -163,7 +162,7 @@ class ActionsTestCase(TestCase):
             title = 'date'
             widget = MagicMock()
 
-            def get_initials(_self, test_kwarg='test_default'):
+            def get_initials(_self, **kwargs):
                 return date(2005, 5, 5)
 
 
@@ -199,7 +198,8 @@ class ActionsTestCase(TestCase):
                     raise raise_kwarg
                 return super().get_item_form(env, item, kwargs)
 
-            def check_perms(self, user, perms): pass
+            def check_perms(self, user, perms):
+                pass
 
 
         stream = TestStream(MagicMock(app=app))
@@ -264,17 +264,17 @@ class ActionsTestCase(TestCase):
         ]
         for id in [-5, 0, 1, 3, 10]:
             def func(x):
-                return lambda i:i['id']==x
+                return lambda i: i['id'] == x
             filters_values.append(({'id': id}, func(id)))
         for title in ['1', 't', '2-333t', '24']:
             def func(x):
-                return lambda i:i['title'].find(x)!=-1
+                return lambda i: i['title'].find(x) != -1
             filters_values.append(({'title': title}, func(title)))
         for order, raw_items in order_values:
             _order = order or '+id'
             for filters, filter_func in filters_values:
                 _filters = filters or {}
-                _raw_items = list(filter(filter_func, raw_items))
+                _raw_items = [i for i in raw_items if filter_func(i)]
                 for page_size in [None, 1, 3, 4, 50]:
                     _page_size = page_size or 1
                     for page in [None, 1, 2, 3, 4, 10]:
@@ -296,8 +296,12 @@ class ActionsTestCase(TestCase):
                         self.assertEqual(
                             resp['items'],
                             _raw_items[(_page-1)*_page_size:_page*_page_size],
-                            {'order': order, 'filters': filters,
-                            'page_size': page_size, 'page': page}
+                            {
+                                'order': order,
+                                'filters': filters,
+                                'page_size': page_size,
+                                'page': page,
+                            }
                         )
                         self.assertEqual(resp['filters_errors'], {})
                         self.assertEqual(resp['filters'], _filters)
@@ -312,42 +316,42 @@ class ActionsTestCase(TestCase):
             with self.assertRaises(exc.MessageError):
                 await action.handle(env, {
                     'page': value,
-               })
+                })
         error_page_size_values = [-10, 0, 5.6, 'aaa', '20', None]
         for value in error_page_size_values:
             with self.assertRaises(exc.MessageError):
                 await action.handle(env, {
                     'page': value,
-               })
+                })
 
         with self.assertRaises(exc.MessageError):
             await action.handle(env, {
                 'filters': 56,
-           })
+            })
         with self.assertRaises(exc.MessageError):
             await action.handle(env, {
                 'order': {},
-           }) 
+            })
         with self.assertRaises(exc.MessageError):
             await action.handle(env, {
                 'page': 'xxx',
-           })
+            })
         with self.assertRaises(exc.MessageError):
             await action.handle(env, {
                 'page_size': 'xxx',
-           })
+            })
         with self.assertRaises(exc.MessageError):
             await action.handle(env, {
                 'page_size': -5,
-           })
+            })
         with self.assertRaises(exc.StreamFieldNotFound):
             await action.handle(env, {
                 'order': '+error_field',
-           })
+            })
         with self.assertRaises(exc.MessageError):
             await action.handle(env, {
                 'page_size': 100,
-           })
+            })
 
         #XXX to do: test ValidationError
 
@@ -373,7 +377,7 @@ class ActionsTestCase(TestCase):
         with self.assertRaises(exc.MessageError):
             await action.handle(env, {})
 
-        for value in [{}, None, [1,2]]:
+        for value in [{}, None, [1, 2]]:
             with self.assertRaises(exc.MessageError):
                 await action.handle(env, {'item_id': value})
 
@@ -396,13 +400,13 @@ class ActionsTestCase(TestCase):
             },
         )
         #test initials
-        resp = await action.handle(env,
-            {'kwargs':{'test_kwarg': 'test_init'}})
+        resp = await action.handle(env, {'kwargs': {'test_kwarg': 'test_init'}})
         self.assertEqual(
             resp['item_fields'],
             [f.widget.to_dict(f) for f in stream.item_fields],
         )
-        self.assertEqual(resp['item'],
+        self.assertEqual(
+            resp['item'],
             {
                 'id': 50000,
                 'title': 'title-test_init-initials',
@@ -422,9 +426,7 @@ class ActionsTestCase(TestCase):
 
         for value in [None, 'xxx', [], 10]:
             with self.assertRaises(exc.MessageError):
-                await action.handle(env, {
-                    'kwargs': value,
-               })
+                await action.handle(env, {'kwargs': value})
 
     @asynctest
     async def test_create_item(self, db, stream, env):
@@ -457,7 +459,7 @@ class ActionsTestCase(TestCase):
             db,
             self.models1.test_table1,
             self.edit_items,
-            keys = ['id', 'title', 'date'],
+            keys=['id', 'title', 'date'],
         )
 
         # validation error

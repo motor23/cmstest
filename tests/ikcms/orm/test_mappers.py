@@ -1,6 +1,5 @@
 from unittest import TestCase
 from unittest import skipIf
-from unittest.mock import MagicMock
 from datetime import date
 from random import randint
 
@@ -10,13 +9,10 @@ from iktomi.utils import cached_property
 from ikcms import orm
 from ikcms.orm import exc
 from ikcms.utils.asynctests import asynctest
-from ikcms.utils.asynctests import TableState
 from ikcms.utils.asynctests import DbState
 from ikcms.utils.asynctests import create_db_component
-from ikcms.ws_components.db import component
 
 from tests.cfg import cfg
-from tests.models import create_models1, create_models2, create_metadata
 
 
 DB_URL1 = cfg.MYSQL_URL or cfg.POSTGRESS_URL
@@ -186,7 +182,7 @@ class BaseMapperTestCase(TestBase, TestCase):
             )
 
             # ids and query args
-            items = await query.id(4,2).select_items(session)
+            items = await query.id(4, 2).select_items(session)
             self.assertEqual(items, [item2, item4])
 
             _query = query.filter_by(title=item3['title']).id(44)
@@ -247,7 +243,7 @@ class BaseMapperTestCase(TestBase, TestCase):
                 session,
                 item4['id'],
                 {'title2': 'updated2'},
-                keys = ['title2'],
+                keys=['title2'],
             )
             item4['title2'] = 'updated2'
             self.assertEqual(item, {'id': 4, 'title2': 'updated2'})
@@ -435,7 +431,7 @@ class I18nMapperTestCase(TestBase, TestCase):
             db_state = db_states['full'].copy()
             await db_state.syncdb(session)
             for id, item in db_state['TestEn'].items():
-                if item['state']=='normal':
+                if item['state'] == 'normal':
                     with self.assertRaises(exc.ItemNotFoundError) as e:
                         await mapper_en.i18n_create_version(session, id)
                     self.assertEqual(e.exception.args[0], id)
@@ -605,8 +601,8 @@ class PubMapperTestCase(TestBase, TestCase):
                     state='private',
                     title=None,
                     title2=None,
-                    date=None),
-                )
+                    date=None,
+                ))
                 await db_state.assert_state(self, session)
 
             db_state = db_states['empty'].copy()
@@ -620,8 +616,8 @@ class PubMapperTestCase(TestBase, TestCase):
                     state='private',
                     title=None,
                     title2=None,
-                    date=None),
-                )
+                    date=None,
+                ))
                 await db_state.assert_state(self, session)
 
             for item in test_items:

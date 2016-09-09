@@ -1,18 +1,15 @@
-import asyncio
 from unittest import TestCase
 from unittest.mock import MagicMock
 from unittest import skipIf
 
 from ikcms.utils.asynctests import asynctest
-
-from tests.cfg import cfg
-
 try:
     from ikcms.ws_components.cache.aioredis import component
     skip_test = False
 except ImportError:
     skip_test = True
 
+from tests.cfg import cfg
 
 @skipIf(skip_test, 'Aioredis not installed')
 class AIORedisTestCase(TestCase):

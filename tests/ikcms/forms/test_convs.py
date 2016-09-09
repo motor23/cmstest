@@ -90,7 +90,7 @@ class BoolConvTestCase(_BaseConvTestCase):
         (True, True),
         (False, False),
     ]
-    raw_type_error_values = [0, 1, -5, 7.6, '', 'aaa', [], {}, [1,3]]
+    raw_type_error_values = [0, 1, -5, 7.6, '', 'aaa', [], {}, [1, 3]]
     python_type_error_values = raw_type_error_values
 
 
@@ -101,7 +101,7 @@ class IntConvTestCase(_BaseConvTestCase):
         (0, 0),
         (10, 10),
     ]
-    raw_type_error_values = ['23', 'sss', 4.5, [1,2], {1:1}]
+    raw_type_error_values = ['23', 'sss', 4.5, [1, 2], {1: 1}]
     python_type_error_values = raw_type_error_values
 
 
@@ -112,8 +112,8 @@ class IntStrConvTestCase(_BaseConvTestCase):
         (0, '0'),
         (10, '10'),
     ]
-    raw_type_error_values = [23, 4.5, [1,2], {1:1}]
-    python_type_error_values = ['23', 'sss', 4.5, [1,2], {1:1}]
+    raw_type_error_values = [23, 4.5, [1, 2], {1: 1}]
+    python_type_error_values = ['23', 'sss', 4.5, [1, 2], {1: 1}]
     validation_error_values = ["2.2", "dddd", "fr45g", "-7-"]
 
 
@@ -124,7 +124,7 @@ class StrConvTestCase(_BaseConvTestCase):
         ("11", "11"),
         ("aaa123", "aaa123"),
     ]
-    raw_type_error_values = [True, False, 5, 5.6, [], {}, [1,3]]
+    raw_type_error_values = [True, False, 5, 5.6, [], {}, [1, 3]]
     python_type_error_values = raw_type_error_values
 
 
@@ -134,7 +134,7 @@ class ListConvTestCase(_BaseConvTestCase):
     test_values = [
         ([], []),
         ([1], [1]),
-        ([1, 2], [1,2]),
+        ([1, 2], [1, 2]),
     ]
     raw_type_error_values = [
         True, False, 5, 5.6, "test", {}, {"test":[]},
@@ -186,7 +186,7 @@ class DateConvTestCase(_BaseConvTestCase):
         (date(2016, 6, 15), '2016-06-15'),
     ]
 
-    raw_type_error_values = [True, False, 5, 5.6, [], {}, [1,3]]
+    raw_type_error_values = [True, False, 5, 5.6, [], {}, [1, 3]]
     python_type_error_values = raw_type_error_values
 
     def setUp(self):

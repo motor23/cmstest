@@ -1,9 +1,6 @@
-import asyncio
 from unittest import TestCase, skipIf
-from unittest.mock import MagicMock
 
 from sqlalchemy import sql
-from iktomi.utils import cached_property
 from ikcms.utils.asynctests import asynctest
 from ikcms.ws_components.db import Component
 from ikcms.orm.session import Session
@@ -26,7 +23,7 @@ except ImportError:
     pg_skip = True
 
 
-class SessionTestCaseBase:
+class _SessionTestCaseBase(TestCase):
 
     test_models = {
         'db1': create_models1(),
@@ -88,30 +85,30 @@ class SessionTestCaseBase:
             q = sql.insert(test_table1).values(id=5, title='test_title')
             result = await session.execute(q)
             self.assertEqual(result.lastrowid, 5)
-            q = sql.select(test_table1.c).where(test_table1.c.id==5)
+            q = sql.select(test_table1.c).where(test_table1.c.id == 5)
             result = await session.execute(q)
             self.assertEqual(result.rowcount, 1)
             result = list(result)
             self.assertEqual(result[0]['id'], 5)
             self.assertEqual(result[0]['title'], 'test_title')
 
-            q = sql.update(test_table1).where(test_table1.c.id==5).\
+            q = sql.update(test_table1).where(test_table1.c.id == 5).\
                     values(title='test_title2')
             result = await session.execute(q)
             self.assertEqual(result.rowcount, 1)
             q = sql.select(test_table1.c).\
-                    where(test_table1.c.id==5)
+                    where(test_table1.c.id == 5)
             result = await session.execute(q)
             self.assertEqual(result.rowcount, 1)
             result = list(result)
             self.assertEqual(result[0]['id'], 5)
             self.assertEqual(result[0]['title'], 'test_title2')
 
-            q = sql.delete(test_table1).where(test_table1.c.id==5)
+            q = sql.delete(test_table1).where(test_table1.c.id == 5)
             result = await session.execute(q)
             self.assertEqual(result.rowcount, 1)
             q = sql.select(test_table1.c).\
-                    where(test_table1.c.id==5)
+                    where(test_table1.c.id == 5)
             result = await session.execute(q)
             self.assertEqual(result.rowcount, 0)
 
@@ -126,10 +123,10 @@ class SessionTestCaseBase:
             await session.execute(q)
             await session.rollback()
         async with Session(engines, binds) as session:
-            q = sql.select(test_table1.c).where(test_table1.c.id==5)
+            q = sql.select(test_table1.c).where(test_table1.c.id == 5)
             rows = await session.execute(q)
             self.assertEqual(rows.rowcount, 0)
-            q = sql.select(test_table2.c).where(test_table2.c.id==10)
+            q = sql.select(test_table2.c).where(test_table2.c.id == 10)
             rows = await session.execute(q)
             self.assertEqual(rows.rowcount, 0)
 
@@ -144,10 +141,10 @@ class SessionTestCaseBase:
             pass
 
         async with Session(engines, binds) as session:
-            q = sql.select(test_table1.c).where(test_table1.c.id==5)
+            q = sql.select(test_table1.c).where(test_table1.c.id == 5)
             rows = await session.execute(q)
             self.assertEqual(rows.rowcount, 0)
-            q = sql.select(test_table2.c).where(test_table1.c.id==10)
+            q = sql.select(test_table2.c).where(test_table1.c.id == 10)
             rows = await session.execute(q)
             self.assertEqual(rows.rowcount, 0)
 
@@ -161,10 +158,10 @@ class SessionTestCaseBase:
             q = sql.insert(test_table2).values(id=10, title='test_title2')
             await session.execute(q)
         async with Session(engines, binds) as session:
-            q = sql.select(test_table1.c).where(test_table1.c.id==5)
+            q = sql.select(test_table1.c).where(test_table1.c.id == 5)
             rows = await session.execute(q)
             self.assertEqual(rows.rowcount, 1)
-            q = sql.select(test_table2.c).where(test_table2.c.id==10)
+            q = sql.select(test_table2.c).where(test_table2.c.id == 10)
             rows = await session.execute(q)
             self.assertEqual(rows.rowcount, 1)
 
@@ -181,21 +178,21 @@ class SessionTestCaseBase:
             pass
 
         async with Session(engines, binds) as session:
-            q = sql.select(test_table1.c).where(test_table1.c.id==5)
+            q = sql.select(test_table1.c).where(test_table1.c.id == 5)
             rows = await session.execute(q)
             self.assertEqual(rows.rowcount, 1)
-            q = sql.select(test_table2.c).where(test_table2.c.id==10)
+            q = sql.select(test_table2.c).where(test_table2.c.id == 10)
             rows = await session.execute(q)
             self.assertEqual(rows.rowcount, 1)
 
 
 @skipIf(mysql_skip, 'Aiomysql not installed')
-class MysqlSessionTestCase(SessionTestCaseBase, TestCase):
+class MysqlSessionTestCase(_SessionTestCaseBase):
     db_url = cfg.MYSQL_URL
 
 
 @skipIf(pg_skip, 'Postgress not installed')
-class MysqlSessionTestCase(SessionTestCaseBase, TestCase):
+class PgSessionTestCase(_SessionTestCaseBase):
     db_url = cfg.POSTGRESS_URL
 
 
