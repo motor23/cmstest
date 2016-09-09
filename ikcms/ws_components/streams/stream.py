@@ -1,3 +1,5 @@
+from iktomi.utils import cached_property
+
 from .forms import Form
 from . import actions
 from . import exc
@@ -17,12 +19,18 @@ class StreamBase:
     def __init__(self, component):
         assert self.name is not None
         self.component = component
+        self.streams = component.streams
         self.actions = [action(self) for action in self.actions]
+        self.id = self.get_id()
 
     @classmethod
-    def register(cls, registry):
+    def create(cls, component, registry, **kwargs):
         assert cls.name is not None
-        registry[cls.name] = cls
+        stream = cls(component, **kwargs)
+        registry[stream.id] = stream
+
+    def get_id(self, **kwargs):
+        return kwargs.get('name', self.name)
 
     def h_action(self, env, message):
         action_name = message.get('action')
@@ -46,7 +54,9 @@ class StreamBase:
 
 
 class Stream(StreamBase):
-    mapper = None
+    mapper_name = None
+    db_id = 'main'
+
     widget = 'Stream'
     max_limit = 100
 
@@ -57,6 +67,11 @@ class Stream(StreamBase):
     list_fields = []
     filter_fields = []
     item_fields = []
+
+    permissions = {
+        'streams.read': 'rx',
+        'streams.edit': 'rxwcd',
+    }
 
     default_order = ['+id']
 
@@ -78,8 +93,11 @@ class Stream(StreamBase):
 
     def __init__(self, component):
         super().__init__(component)
-        assert self.mapper
-        self.db_id = self.mapper.db_id
+        assert self.mapper_name
+
+    @cached_property
+    def mapper(self):
+        return self.component.app.db.mappers[self.db_id][self.mapper_name]
 
     def tnx(self):
         return self.component.app.db(self.db_id)
@@ -117,6 +135,8 @@ class Stream(StreamBase):
             max_limit=self.max_limit,
             list_fields=list_form.get_cfg(),
             filter_fields=filter_form.get_cfg(),
+            permissions=self.component.app.auth.get_user_perms(
+                user, self.permissions),
         )
 
     async def get_item(self, db, item_id, required=False):
@@ -150,3 +170,77 @@ class Stream(StreamBase):
         if not cnt:
             raise exc.StreamItemNotFound(self, item_id)
         assert cnt == 1, 'There are {} items with id={}'.format(cnt, item_id)
+
+    def check_perms(self, user, perms):
+        user_perms = self.component.app.auth.\
+            get_user_perms(user, self.permissions)
+        if not set(perms).issubset(user_perms):
+            raise exc.AccessDeniedError
+
+
+class I18nMixin:
+
+    langs = ['ru', 'en']
+
+    def __init__(self, component, lang, **kwargs):
+        assert lang in langs
+        self.lang = lang
+        super().__init__(component, **kwargs)
+
+    def get_id(self, **kwargs):
+        lang = kwargs.get('lang', self.lang)
+        id = super.get_id(**kwargs)
+        return '.'.join(lang, id)
+
+    @classmethod
+    def create(cls, component, registry, **kwargs):
+        assert 'lang' not in kwargs
+        for lang in cls.langs:
+            super().create(component, registry, lang=lang, **kwargs)
+
+    @cached_property
+    def i18n_streams(self):
+        return {lang: self.streams[self.get_id(lang=lang)] \
+                for lang in self.langs}
+
+    def get_mapper(self):
+        return self.component.db.mappers[self.db_id][self.lang][self.mapper_name]
+
+
+class PublicationMixin:
+
+    db_ids = ['admin', 'front']
+    db_id = None
+    allowed_perms = ['rwxdcp', 'rx']
+
+    def __init__(self, component, db_id, **kwargs):
+        assert db_id in self.db_ids
+        self.db_id = db_id
+        self.is_src = db_id == self.db_ids[0]
+        self.is_dest = db_id == self.db_ids[1]
+        super().__init__(component, **kwargs)
+        self.set_permissions()
+
+    def get_id(self, **kwargs):
+        db_id = kwargs.get('db_id', self.db_id)
+        id = super.get_id(**kwargs)
+        return '.'.join(db_id, id)
+
+    @classmethod
+    def create(cls, component, registry, **kwargs):
+        assert 'db_id' not in kwargs
+        for db_id in cls.db_ids:
+            super().create(component, registry, db_id=db_id, **kwargs)
+
+    @cached_property
+    def i18n_streams(self):
+        return {lang: self.streams[self.get_id(lang=lang)] \
+                for lang in self.langs}
+
+    def get_mapper(self):
+        return self.component.db.mappers[self.db_id][self.lang][self.mapper_name]
+
+    def set_permissions(self):
+        allowed_perms = set(self.allowed_perms[self.db_ids.index(self.db_id)])
+        self.permissions = {role: set(perms).intersection(allowed_perms) \
+            for role, perms in self.permissions}

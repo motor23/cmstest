@@ -6,9 +6,6 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from iktomi.db.sqla.declarative import AutoTableNameMeta, TableArgsMeta
-from ikcms.ws_components.auth.models import create_user
-from ikcms.ws_components.auth.models import create_group
-from ikcms.ws_components.auth.models import create_user_group
 
 
 metadata = MetaData()
@@ -51,7 +48,3 @@ class Doc(Base):
     title = Column(String(500), default='')
     tags = relationship(Tag, secondary=Doc_Tag.__table__)
 
-
-User = create_user(Base)
-Group = create_group(Base)
-User_Group = create_user_group(Base)

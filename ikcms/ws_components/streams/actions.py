@@ -8,12 +8,18 @@ from . import exc
 
 class Base:
     name = None
+    require_perms = ''
 
     def __init__(self, stream):
         assert self.name is not None
         self.stream = stream
 
-    async def handle(self, env, message):
+    async def handle(self, env, raw_message):
+        self.stream.check_perms(env.user, self.require_perms)
+        message = self.MessageForm().to_python(raw_message)
+        return await self._handle(env, message)
+
+    async def _handle(self, env, message):
         raise NotImplementedError
 
     def get_cfg(self, env):
@@ -25,6 +31,7 @@ class Base:
 
 class List(Base):
     name = 'list'
+    require_perms = 'x'
 
     class MessageForm(MessageFormBase):
         fields = [
@@ -34,8 +41,7 @@ class List(Base):
             message_fields.page_size,
         ]
 
-    async def handle(self, env, raw_message):
-        message = self.MessageForm().to_python(raw_message)
+    async def _handle(self, env, message):
         list_form = self.stream.get_list_form(env)
         filter_form = self.stream.get_filter_form(env)
         order_form = self.stream.get_order_form(env)
@@ -105,14 +111,14 @@ class List(Base):
 class GetItem(Base):
 
     name = 'get_item'
+    require_perms = 'r'
 
     class MessageForm(MessageFormBase):
         fields = [
             message_fields.item_id,
         ]
 
-    async def handle(self, env, message):
-        message = self.MessageForm().to_python(message)
+    async def _handle(self, env, message):
         item_id = message['item_id']
         async with await env.app.db() as session:
             items = await self.stream.query().id(item_id).select_items(session)
@@ -132,14 +138,14 @@ class GetItem(Base):
 class NewItem(Base):
 
     name = 'new_item'
+    require_perms = 'c'
 
     class MessageForm(MessageFormBase):
         fields = [
             message_fields.kwargs,
         ]
 
-    async def handle(self, env, message):
-        message = self.MessageForm().to_python(message)
+    async def _handle(self, env, message):
         item_fields_form = self.stream.get_item_form(
             env, kwargs=message['kwargs'])
         raw_item = item_fields_form.from_python(
@@ -153,6 +159,7 @@ class NewItem(Base):
 class CreateItem(Base):
 
     name = 'create_item'
+    require_perms = 'c'
 
     class MessageForm(MessageFormBase):
         fields = [
@@ -160,8 +167,7 @@ class CreateItem(Base):
             message_fields.kwargs,
         ]
 
-    async def handle(self, env, message):
-        message = self.MessageForm().to_python(message)
+    async def _handle(self, env, message):
         item_fields_form = self.stream.get_item_form(
             env, kwargs=message['kwargs'])
         raw_item = message['values']
@@ -186,6 +192,7 @@ class CreateItem(Base):
 class UpdateItem(Base):
 
     name = 'update_item'
+    require_perms = 'e'
 
     class MessageForm(MessageFormBase):
         fields = [
@@ -193,8 +200,7 @@ class UpdateItem(Base):
             message_fields.values,
         ]
 
-    async def handle(self, env, message):
-        message = self.MessageForm().to_python(message)
+    async def _handle(self, env, message):
         item_fields_form = self.stream.get_item_form(env)
         item_id = message['item_id']
         raw_values = message['values']
@@ -222,14 +228,14 @@ class UpdateItem(Base):
 class DeleteItem(Base):
 
     name = 'delete_item'
+    require_perms = 'd'
 
     class MessageForm(MessageFormBase):
         fields = [
             message_fields.item_id,
         ]
 
-    async def handle(self, env, message):
-        message = self.MessageForm().to_python(message)
+    async def _handle(self, env, message):
         async with await env.app.db() as session:
             try:
                 await self.stream.query().delete_item(

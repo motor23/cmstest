@@ -3,6 +3,7 @@ from ikcms.ws_apps.base.exc import MessageError
 from ikcms.forms.exc import ValidationError
 from ikcms.forms.exc import RawValueError
 from ikcms.forms.exc import RawValueTypeError
+from ikcms.ws_components.auth.exc import AccessDeniedError
 
 
 __all__ = (
@@ -10,6 +11,7 @@ __all__ = (
     'ValidationError',
     'RawValueError',
     'RawValueTypeError',
+    'AccessDeniedError',
     'StreamBaseError',
     'StreamNotFound',
     'StreamActionNotFound',

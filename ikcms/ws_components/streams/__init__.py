@@ -9,13 +9,21 @@ __all__ = (
 
 
 class Component(ikcms.ws_components.base.Component):
+
     name = 'streams'
     streams = {}
 
+    roles = {
+        'streams.read': 'Потоки: чтение',
+        'streams.edit': 'Потоки: редактирование',
+    }
+
     def __init__(self, app):
         super().__init__(app)
-        self.streams = dict([(name, cls(self)) \
-                                    for name, cls in self.streams.items()])
+        registry = {}
+        for cls in self.streams:
+            cls.create(self, registry)
+        self.streams = registry
 
     def get_cfg(self, env):
         return {
@@ -31,4 +39,4 @@ class Component(ikcms.ws_components.base.Component):
             raise exc.StreamNotFound(stream_name)
 
 
-streams = Component.create_cls
+component = Component.create_cls

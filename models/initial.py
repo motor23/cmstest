@@ -1,14 +1,17 @@
-from ikcms.ws_components.auth.base import encrypt_password
-from models.main import User
+import asyncio
+
+from .mappers import registry
+#from models.main import User
+import ws_admin
 
 
-def initialize(session):
-    print('Adding root user')
-    user = session.query(User).filter_by(login='root').first()
-    if user is None:
-        user = User()
-    user.login = 'root'
-    user.password = encrypt_password('root')
-    user.name = 'Administrator'
-    session.merge(user)
-    session.commit()
+def initialize(app, session):
+    ws_app = ws_admin.App(app.cfg)
+    async def awrapper():
+        session = await ws_app.db()
+        for mapper in registry.create_schema_mappers:
+            await mapper.schema_initialize(session)
+        await session.commit()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(awrapper())
+

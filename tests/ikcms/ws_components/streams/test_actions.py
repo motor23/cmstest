@@ -7,17 +7,17 @@ from datetime import date
 from sqlalchemy import sql
 #from sqlalchemy.testing.assertions import AssertsCompiledSQL
 
-from ws_admin.components.streams import actions
-from ws_admin.components.streams import exc
+from ikcms.ws_components.streams import actions
+from ikcms.ws_components.streams import exc
 
 from ikcms import orm
 from ikcms.utils.asynctests import asynctest
 import ikcms.ws_components.db
 
-from ws_admin.components.streams.stream import Stream
-from ws_admin.components.streams.forms import list_fields
-from ws_admin.components.streams.forms import filter_fields
-from ws_admin.components.streams.forms import item_fields
+from ikcms.ws_components.streams.stream import Stream
+from ikcms.ws_components.streams.forms import list_fields
+from ikcms.ws_components.streams.forms import filter_fields
+from ikcms.ws_components.streams.forms import item_fields
 from ikcms.forms.widgets import Widget
 
 from tests.models import create_models1, create_models2, create_metadata
@@ -171,7 +171,9 @@ class ActionsTestCase(TestCase):
             max_limit = 50
             name = 'test_stream'
             title = 'test_stream_title'
-            mapper = registry['db1']['Test']
+            mapper_name = 'Test'
+            db_id = 'db1'
+            permissions = {'test_role': 'rwxcd'}
 
             list_fields = [
                 l_id,
@@ -197,8 +199,10 @@ class ActionsTestCase(TestCase):
                     raise raise_kwarg
                 return super().get_item_form(env, item, kwargs)
 
+            def check_perms(self, user, perms): pass
 
-        stream = TestStream(MagicMock())
+
+        stream = TestStream(MagicMock(app=app))
         env = MagicMock()
         env.app = app
 

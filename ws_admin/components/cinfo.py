@@ -1,5 +1,5 @@
 import ikcms.ws_components.base
-from ikcms.ws_components.auth.base import restrict
+from ikcms.ws_components.auth import restrict
 
 
 class Component(ikcms.ws_components.base.Component):
