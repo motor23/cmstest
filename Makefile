@@ -10,7 +10,7 @@ static-test:
 	npm --prefix admin/static run test:js
 
 test:
-	PYTHONPATH=third-party nosetests tests
+	PYTHONPATH=third-party nosetests $(TESTS)
 
 lint:
 	PYTHONPATH=third-party pylint ikcms admin ws_admin models tests

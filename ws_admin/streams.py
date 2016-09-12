@@ -1,14 +1,14 @@
-from ikcms.ws_components.streams import Stream
+from ikcms.ws_components.streams import streams
 from ikcms.ws_components.streams.forms import list_fields
 from ikcms.ws_components.streams.forms import filter_fields
 from ikcms.ws_components.streams.forms import item_fields
 
 from models.mappers import registry
 
-streams = []
+registry = []
 
 
-class Docs(Stream):
+class Docs(streams.Stream):
     name = 'docs'
     title = 'Документы'
     mapper_name = 'Doc'
@@ -26,4 +26,4 @@ class Docs(Stream):
     ]
 
 
-streams.append(Docs)
+registry.append(Docs)

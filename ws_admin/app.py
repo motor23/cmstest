@@ -8,7 +8,7 @@ import ikcms.ws_components.streams
 from . import components
 
 from .menu import menu
-from .streams import streams
+from . import streams
 
 class App(ikcms.ws_apps.composite.App):
 
@@ -16,7 +16,7 @@ class App(ikcms.ws_apps.composite.App):
         ikcms.ws_components.db.component(),
         ikcms.ws_components.cache.aioredis.component(),
         ikcms.ws_components.auth.component(),
-        ikcms.ws_components.streams.component(streams=streams),
+        ikcms.ws_components.streams.component(streams=streams.registry),
 
         components.cinfo(),
         components.menu(menu=menu),
