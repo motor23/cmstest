@@ -13,7 +13,7 @@ from ikcms import orm
 from ikcms.utils.asynctests import asynctest
 import ikcms.ws_components.db
 
-from ikcms.ws_components.streams.stream import Stream
+from ikcms.ws_components.streams.streams import Stream
 from ikcms.ws_components.streams.forms import list_fields
 from ikcms.ws_components.streams.forms import filter_fields
 from ikcms.ws_components.streams.forms import item_fields
@@ -371,7 +371,7 @@ class ActionsTestCase(TestCase):
             self.assertEqual(resp['item'], raw_item)
 
         for value in [-10, 0, 5, 500]:
-            with self.assertRaises(exc.StreamItemNotFound):
+            with self.assertRaises(exc.StreamItemNotFoundError):
                 await action.handle(env, {'item_id': value})
 
         with self.assertRaises(exc.MessageError):
@@ -570,7 +570,7 @@ class ActionsTestCase(TestCase):
         with self.assertRaises(exc.MessageError):
             resp = await action.handle(env, {'item_id': 'error type'})
 
-        with self.assertRaises(exc.StreamItemNotFound):
+        with self.assertRaises(exc.StreamItemNotFoundError):
             resp = await action.handle(
                 env,
                 {
@@ -619,7 +619,7 @@ class ActionsTestCase(TestCase):
             with self.assertRaises(exc.MessageError):
                 await action.handle(env, {'item_id': value})
 
-        with self.assertRaises(exc.StreamItemNotFound):
+        with self.assertRaises(exc.StreamItemNotFoundError):
             await action.handle(env, {'item_id': 500})
 
 
