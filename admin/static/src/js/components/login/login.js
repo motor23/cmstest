@@ -1,9 +1,12 @@
-import React from 'react';
-import {connect} from 'react-redux';
-import {loginWithPassword} from '../actions/auth';
+import React, {Component, PropTypes} from 'react';
 
 
-class Login extends React.Component {
+export class Login extends Component {
+    static propTypes = {
+        actions: React.PropTypes.object.isRequired,
+        api: React.PropTypes.object.isRequired
+    };
+
     constructor(props, context) {
         super(props, context);
         this.handleKeyPress = this.handleKeyPress.bind(this);
@@ -64,11 +67,3 @@ class Login extends React.Component {
         );
     }
 }
-
-
-const mapStateToProps = state => ({
-    error: state.user.error
-});
-
-
-export default connect(mapStateToProps)(Login);

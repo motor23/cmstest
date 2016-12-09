@@ -1,6 +1,7 @@
 const initialState = {
     isConnected: false,
-    shouldReloadPage: false
+    isLogged: false,
+
 };
 
 
