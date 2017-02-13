@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from ikcms.forms import exc
+from ikcms.forms import exceptions
 from ikcms.forms import fields
 
 
@@ -37,16 +37,16 @@ class BaseTestCase(TestCase):
                 self._to_python_message(raw_value, python_value),
             )
         for value in self.type_error_values:
-            with self.assertRaises(exc.RawValueTypeError) as e:
+            with self.assertRaises(exceptions.RawValueTypeError) as ctx:
                 field.to_python(value)
-            self.assertEqual(e.exception.field_name, field.name)
+            self.assertEqual(ctx.exception.kwargs['field_name'], field.name)
 
         for kwargs, allowed_values, denied_values in self.validation_tests:
             field = self.field(**dict(kwargs, ))()
             for value in allowed_values:
                 field.to_python(value)
             for value in denied_values:
-                with self.assertRaises(exc.ValidationError) as e:
+                with self.assertRaises(exceptions.ValidationError):
                     field.to_python(value)
 
     def test_to_python_default(self):
@@ -58,9 +58,9 @@ class BaseTestCase(TestCase):
 
     def test_raw_required(self):
         field = self.field()()
-        with self.assertRaises(exc.RawValueRequiredError) as e:
+        with self.assertRaises(exceptions.RawValueRequiredError) as ctx:
             field.to_python(fields.NOTSET)
-        self.assertEqual(e.exception.field_name, field.name)
+        self.assertEqual(ctx.exception.kwargs['field_name'], field.name)
 
     def test_from_python(self):
         field = self.field()()
@@ -99,18 +99,21 @@ class FieldTestCase(BaseTestCase):
             )
 
         for value in self.type_error_values:
-            with self.assertRaises(exc.RawValueTypeError) as e:
+            with self.assertRaises(exceptions.RawValueTypeError) as ctx:
                 field.to_python(self.test_dict(field.name, value))
-            self.assertEqual(e.exception.field_name, field.name)
+            self.assertEqual(ctx.exception.kwargs['field_name'], field.name)
 
         for kwargs, allowed_values, denied_values in self.validation_tests:
             field = self.field(**dict(kwargs, ))()
             for value in allowed_values:
                 field.to_python(self.test_dict(field.name, value))
             for value in denied_values:
-                with self.assertRaises(exc.ValidationError) as e:
+                with self.assertRaises(exceptions.ValidationError) as ctx:
                     field.to_python(self.test_dict(field.name, value))
-                self.assertEqual(list(e.exception.error.keys()), [field.name])
+                self.assertEqual(
+                    list(ctx.exception.kwargs['error'].keys()),
+                    [field.name],
+                )
 
 
     def test_to_python_default(self):
@@ -126,9 +129,9 @@ class FieldTestCase(BaseTestCase):
 
     def test_raw_required(self):
         field = self.field(raw_required=True)()
-        with self.assertRaises(exc.RawValueRequiredError) as e:
+        with self.assertRaises(exceptions.RawValueRequiredError) as ctx:
             field.to_python(self.test_dict())
-        self.assertEqual(e.exception.field_name, field.name)
+        self.assertEqual(ctx.exception.kwargs['field_name'], field.name)
 
     def test_from_python(self):
         field = self.field()()
@@ -364,8 +367,8 @@ class BlockTestCase(BaseTestCase):
 
     def test_raw_required(self):
         field = self.field(raw_required=True)()
-        with self.assertRaises(exc.RawValueRequiredError) as e:
+        with self.assertRaises(exceptions.RawValueRequiredError) as ctx:
             field.to_python({})
-        self.assertEqual(e.exception.field_name, field.name)
+        self.assertEqual(ctx.exception.kwargs['field_name'], field.name)
 
 

@@ -2,7 +2,7 @@ from datetime import date
 from unittest import TestCase
 from unittest.mock import MagicMock
 from ikcms.forms.convs import *
-from ikcms.forms import exc
+from ikcms.forms import exceptions
 from ikcms.forms import fields
 
 
@@ -26,19 +26,27 @@ class _BaseConvTestCase(TestCase):
                 self._to_python_message(python_value, raw_value),
             )
         for value in self.raw_type_error_values:
-            self.assertRaises(exc.RawValueTypeError, self.conv.to_python, value)
+            self.assertRaises(
+                exceptions.RawValueTypeError,
+                self.conv.to_python,
+                value,
+            )
 
         for value in self.validation_error_values:
-            self.assertRaises(exc.ValidationError, self.conv.to_python, value)
+            self.assertRaises(
+                exceptions.ValidationError,
+                self.conv.to_python,
+                value,
+            )
 
     def test_not_none(self):
         self.assertRaises(
-            exc.RawValueNoneNotAllowedError,
+                exceptions.RawValueNoneNotAllowedError,
             self.conv.to_python,
             None,
         )
         self.assertRaises(
-            exc.PythonValueNoneNotAllowedError,
+            exceptions.PythonValueNoneNotAllowedError,
             self.conv.from_python,
             None,
         )
@@ -63,7 +71,7 @@ class _BaseConvTestCase(TestCase):
             )
         for value in self.python_type_error_values:
             self.assertRaises(
-                exc.PythonValueTypeError,
+                exceptions.PythonValueTypeError,
                 self.conv.from_python,
                 value,
             )
