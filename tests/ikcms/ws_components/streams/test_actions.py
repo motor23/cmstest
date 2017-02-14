@@ -7,7 +7,7 @@ from sqlalchemy import sql
 #from sqlalchemy.testing.assertions import AssertsCompiledSQL
 
 from ikcms.ws_components.streams import actions
-from ikcms.ws_components.streams import exc
+from ikcms.ws_components.streams import exceptions
 
 from ikcms import orm
 from ikcms.utils.asynctests import asynctest
@@ -313,45 +313,67 @@ class ActionsTestCase(TestCase):
 
         error_page_values = [-10, 0, 5.6, 'aaaa', '20', None]
         for value in error_page_values:
-            with self.assertRaises(exc.MessageError):
+            with self.assertRaises(exceptions.ClientError) as ctx:
                 await action.handle(env, {
                     'page': value,
                 })
+            exc = ctx.exception
+            self.assertEqual(list(exc.kwargs['errors'].keys()), ['page'])
+
         error_page_size_values = [-10, 0, 5.6, 'aaa', '20', None]
         for value in error_page_size_values:
-            with self.assertRaises(exc.MessageError):
+            with self.assertRaises(exceptions.ClientError) as ctx:
                 await action.handle(env, {
                     'page': value,
                 })
+            exc = ctx.exception
+            self.assertEqual(list(exc.kwargs['errors'].keys()), ['page'])
 
-        with self.assertRaises(exc.MessageError):
+        with self.assertRaises(exceptions.ClientError) as ctx:
             await action.handle(env, {
                 'filters': 56,
             })
-        with self.assertRaises(exc.MessageError):
+        exc = ctx.exception
+        self.assertEqual(list(exc.kwargs['errors'].keys()), ['filters'])
+        with self.assertRaises(exceptions.ClientError) as ctx:
             await action.handle(env, {
                 'order': {},
             })
-        with self.assertRaises(exc.MessageError):
+        exc = ctx.exception
+        self.assertEqual(list(exc.kwargs['errors'].keys()), ['order'])
+        with self.assertRaises(exceptions.ClientError) as ctx:
             await action.handle(env, {
                 'page': 'xxx',
             })
-        with self.assertRaises(exc.MessageError):
+        exc = ctx.exception
+        self.assertEqual(list(exc.kwargs['errors'].keys()), ['page'])
+        with self.assertRaises(exceptions.ClientError) as ctx:
             await action.handle(env, {
                 'page_size': 'xxx',
             })
-        with self.assertRaises(exc.MessageError):
+        exc = ctx.exception
+        self.assertEqual(list(exc.kwargs['errors'].keys()), ['page_size'])
+        with self.assertRaises(exceptions.ClientError) as ctx:
             await action.handle(env, {
                 'page_size': -5,
             })
-        with self.assertRaises(exc.StreamFieldNotFound):
+        exc = ctx.exception
+        self.assertEqual(list(exc.kwargs['errors'].keys()), ['page_size'])
+        with self.assertRaises(exceptions.ClientError) as ctx:
             await action.handle(env, {
                 'order': '+error_field',
             })
-        with self.assertRaises(exc.MessageError):
+        exc = ctx.exception
+        self.assertEqual(
+            exc.kwargs,
+            {'stream_name': 'test_stream', 'field_name': 'error_field'},
+        )
+        with self.assertRaises(exceptions.ClientError) as ctx:
             await action.handle(env, {
                 'page_size': 100,
             })
+        exc = ctx.exception
+        self.assertEqual(list(exc.kwargs['errors'].keys()), ['page_size'])
 
         #XXX to do: test ValidationError
 
@@ -371,15 +393,18 @@ class ActionsTestCase(TestCase):
             self.assertEqual(resp['item'], raw_item)
 
         for value in [-10, 0, 5, 500]:
-            with self.assertRaises(exc.StreamItemNotFoundError):
+            with self.assertRaises(exceptions.ClientError):
                 await action.handle(env, {'item_id': value})
 
-        with self.assertRaises(exc.MessageError):
+        with self.assertRaises(exceptions.ClientError) as ctx:
             await action.handle(env, {})
+        exc = ctx.exception
+        self.assertEqual(list(exc.kwargs['errors']), ['item_id'])
 
         for value in [{}, None, [1, 2]]:
-            with self.assertRaises(exc.MessageError):
+            with self.assertRaises(exceptions.ClientError) as ctx:
                 await action.handle(env, {'item_id': value})
+            ctx.exception
 
 
     @asynctest
@@ -416,17 +441,21 @@ class ActionsTestCase(TestCase):
 
         #test kwargs
         test_exc = Exception('test')
-        with self.assertRaises(Exception) as e:
+        with self.assertRaises(Exception) as ctx:
             resp = await action.handle(
                 env,
                 {'kwargs': {'raise': test_exc}}
             )
-        self.assertEqual(e.exception, test_exc)
+        self.assertEqual(ctx.exception, test_exc)
 
 
         for value in [None, 'xxx', [], 10]:
-            with self.assertRaises(exc.MessageError):
+            with self.assertRaises(exceptions.ClientError) as ctx:
                 await action.handle(env, {'kwargs': value})
+            self.assertEqual(
+                list(ctx.exception.kwargs['errors']),
+                ['kwargs'],
+            )
 
     @asynctest
     async def test_create_item(self, db, stream, env):
@@ -480,26 +509,26 @@ class ActionsTestCase(TestCase):
         )
 
         # errors
-        with self.assertRaises(exc.MessageError):
+        with self.assertRaises(exceptions.ClientError):
             await action.handle(env, {})
 
-        with self.assertRaises(exc.MessageError):
+        with self.assertRaises(exceptions.ClientError):
             await action.handle(env, {'values': []})
 
-        with self.assertRaises(exc.MessageError):
+        with self.assertRaises(exceptions.ClientError):
             await action.handle(env, {'kwargs': None})
 
-        with self.assertRaises(exc.MessageError):
+        with self.assertRaises(exceptions.ClientError):
             resp = await action.handle(env, {'values': {'id': ''}})
 
         #test kwargs
         test_exc = Exception('test')
-        with self.assertRaises(Exception) as e:
+        with self.assertRaises(Exception) as ctx:
             resp = await action.handle(
                 env,
                 {'values': _item, 'kwargs': {'raise': test_exc}}
             )
-        self.assertEqual(e.exception, test_exc)
+        self.assertEqual(ctx.exception, test_exc)
 
     @asynctest
     async def test_update_item(self, db, stream, env):
@@ -561,16 +590,22 @@ class ActionsTestCase(TestCase):
         )
 
         # test errors
-        with self.assertRaises(exc.MessageError):
+        with self.assertRaises(exceptions.ClientError) as ctx:
             resp = await action.handle(env, {})
+        exc = ctx.exception
+        self.assertEqual(list(exc.kwargs['errors'].keys()), ['item_id'])
 
-        with self.assertRaises(exc.MessageError):
+        with self.assertRaises(exceptions.ClientError) as ctx:
             resp = await action.handle(env, {'item_id': 16})
+        exc = ctx.exception
+        self.assertEqual(list(exc.kwargs['errors'].keys()), ['values'])
 
-        with self.assertRaises(exc.MessageError):
+        with self.assertRaises(exceptions.ClientError) as ctx:
             resp = await action.handle(env, {'item_id': 'error type'})
+        exc = ctx.exception
+        self.assertEqual(list(exc.kwargs['errors'].keys()), ['item_id'])
 
-        with self.assertRaises(exc.StreamItemNotFoundError):
+        with self.assertRaises(exceptions.ClientError):
             resp = await action.handle(
                 env,
                 {
@@ -611,15 +646,15 @@ class ActionsTestCase(TestCase):
             [self.item1, self.item2, self.item4],
         )
 
-        with self.assertRaises(exc.MessageError):
+        with self.assertRaises(exceptions.ClientError):
             await action.handle(env, {})
 
         invalid_values = [None, 'aaa', [], {}, set()]
         for value in invalid_values:
-            with self.assertRaises(exc.MessageError):
+            with self.assertRaises(exceptions.ClientError):
                 await action.handle(env, {'item_id': value})
 
-        with self.assertRaises(exc.StreamItemNotFoundError):
+        with self.assertRaises(exceptions.ClientError):
             await action.handle(env, {'item_id': 500})
 
 

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 from ikcms.utils.asynctests import asynctest
 from ikcms.ws_components.streams import streams
-from ikcms.ws_components.streams import exc
+from ikcms.ws_components.streams import exceptions
 
 
 class BaseStreamTestCase(TestCase):
@@ -70,7 +70,7 @@ class BaseStreamTestCase(TestCase):
                 result = await stream.h_action(env, message)
                 self.assertEqual(result, '{}_handle'.format(action.name))
 
-            with self.assertRaises(exc.StreamActionNotFoundError):
+            with self.assertRaises(exceptions.StreamActionNotFoundError):
                 stream.h_action(MagicMock(), {'action': 'notexists'})
 
 
