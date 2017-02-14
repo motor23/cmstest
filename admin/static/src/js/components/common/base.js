@@ -1,7 +1,7 @@
 import React, {Component} from 'react'
 
 
-class Base extends Component {
+export class Base extends Component {
     render() {
         return (
             <div className="mdl-layout mdl-layout--fixed-header">

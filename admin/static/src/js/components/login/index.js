@@ -4,7 +4,7 @@ import React, {Component, PropTypes} from 'react';
 export class Login extends Component {
     static propTypes = {
         actions: React.PropTypes.object.isRequired,
-        api: React.PropTypes.object.isRequired
+        app: React.PropTypes.object.isRequired
     };
 
     constructor(props, context) {
@@ -30,7 +30,8 @@ export class Login extends Component {
     login() {
         const login = this.refs.login.value;
         const password = this.refs.password.value;
-        this.props.dispatch(loginWithPassword(login, password));
+        const {actions} = this.props;
+        actions.login({login: login, password: password});
     }
 
     render() {
@@ -44,14 +45,14 @@ export class Login extends Component {
                     <div className="slds-modal__content">
                         <form className="slds-form--horizontal" onKeyPress={this.handleKeyPress}>
                             <div className={'slds-form-element' + (error ? ' slds-has-error' : '')}>
-                                <label className="slds-form-element__label" for="login">Логин</label>
+                                <label className="slds-form-element__label" htmlFor="login">Логин</label>
                                 <div className="slds-form-element__control">
                                     <input className="slds-input" type="text" ref="login" id="login"/>
                                 </div>
                                 {error ? <div class="sld-form-element__error">{error}</div> : null}
                             </div>
                             <div className={'slds-form-element' + (error ? ' slds-has-error' : '')}>
-                                <label className="slds-form-element__label" for="login">Пароль</label>
+                                <label className="slds-form-element__label" htmlFor="login">Пароль</label>
                                 <div className="slds-form-element__control">
                                     <input className="slds-input" type="password" ref="password" id="password"/>
                                 </div>

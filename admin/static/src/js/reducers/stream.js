@@ -12,7 +12,7 @@ const initialState = {
 };
 
 
-export default function stream(state=initialState, action={}) {
+export function stream(state=initialState, action={}) {
     if (action.type === 'STREAM_UPDATE_REQUEST') {
         return {
             ...initialState,

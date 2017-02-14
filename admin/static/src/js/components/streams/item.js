@@ -1,7 +1,7 @@
-import React from 'react';
+import React, {Component, PropTypes} from 'react';
 
 
-class StreamItem extends React.Component {
+export class StreamItem extends React.Component {
     render() {
         return (
             <div>
@@ -10,6 +10,3 @@ class StreamItem extends React.Component {
         );
     }
 }
-
-
-export default StreamItem;

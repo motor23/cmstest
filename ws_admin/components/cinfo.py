@@ -7,6 +7,7 @@ class Component(ikcms.ws_components.base.Component):
 
     @restrict()
     async def h_cfg(self, env, message):
+        print('>>>>>>>>>>>>>>>>>>>', message)
         comp_names = self._get_components_names(self.app.components)
         names = message.get('components', comp_names)
         components = [self.app.get_component(name) for name in names]

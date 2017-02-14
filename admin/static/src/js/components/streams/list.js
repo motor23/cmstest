@@ -1,55 +1,9 @@
 import React, {Component, PropTypes} from 'react';
-import {connect} from 'react-redux';
-import {updateStreamList} from '../../actions/stream';
 import paginate from '../../util/paginate';
-import Spinner from '../spinner';
+import Spinner from '../common/spinner';
 
 
-class Paginator extends Component {
-    static propTypes = {
-        total: PropTypes.number.isRequired,
-        page: PropTypes.number.isRequired,
-        pageSize: PropTypes.number.isRequired,
-        change: PropTypes.func.isRequired
-    };
-
-    renderItem(n) {
-        const {page, change} = this.props;
-        if (n === page) {
-            return (
-                <span key={n} className="cms-paginator__item cms-paginator__item--current">
-                    {n}
-                </span>
-            );
-        }
-        if (n === null) {
-            return (
-                <span className="cms-paginator__item cms-paginator__item--ellipsis">
-                    &hellip;
-                </span>
-            );
-        }
-        return (
-            <span key={n} className="cms-paginator__item" onClick={() => change(n)}>
-                {n}
-            </span>
-        );
-    }
-
-    render() {
-        const {total, page, pageSize} = this.props;
-        const pages = paginate(total, pageSize, page, 1, 3);
-        console.log(pages)
-        return (
-            <div className="cms-paginator">
-                {pages.map(this.renderItem.bind(this))}
-            </div>
-        );
-    }
-}
-
-
-class StreamListRow extends Component {
+export class StreamListRow extends Component {
     render() {
         const {item} = this.props;
         return (
@@ -62,10 +16,10 @@ class StreamListRow extends Component {
 }
 
 
-class StreamList extends Component {
+export class StreamList extends Component {
     static propTypes = {
+        actions: PropTypes.object.isRequired,
         isLoading: PropTypes.bool.isRequired,
-        widgets: PropTypes.arrayOf(PropTypes.object).isRequired,
         filters: PropTypes.object.isRequired,
         errors: PropTypes.object.isRequired,
         items: PropTypes.arrayOf(PropTypes.object).isRequired,
@@ -75,8 +29,8 @@ class StreamList extends Component {
     };
 
     componentWillMount() {
-        const {stream, page, pageSize} = this.props;
-        this.props.dispatch(updateStreamList(stream, page, pageSize));
+        const {stream, page, pageSize, actions} = this.props;
+        actions.streamList({stream, page, pageSize});
     }
 
     changePage(page) {
@@ -111,21 +65,3 @@ class StreamList extends Component {
         );
     }
 }
-
-
-function mapStateToProps(state, props) {
-    return {
-        stream: props.params.stream,
-        isLoading: state.stream.isLoading,
-        title: state.stream.title,
-        items: state.stream.items,
-        filters: state.stream.filters,
-        errors: state.stream.errors,
-        total: state.stream.total,
-        pageSize: state.stream.pageSize,
-        page: state.stream.page
-    };
-}
-
-
-export default connect(mapStateToProps)(StreamList);

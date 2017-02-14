@@ -1,17 +1,31 @@
 import '../css/index.css';
 
-import {createElement} from 'react';
+import React from 'react';
 import {render} from 'react-dom';
-import {Provider, connect} from 'react-redux'
+import {Provider} from 'react-redux';
+import {BrowserRouter} from 'react-router';
+import AppContainer from './containers/AppContainer';
+import configureApi from './util/api';
 import configureStore from './util/store';
-import configureConnection from './util/connection';
-import {App} from './components';
+import * as reducers from './reducers';
 
-const container = document.getElementById('application');
-const connection = configureConnection(window.config.ws);
-const store = configureStore(undefined, {logging: true, connection: connection});
+const node = document.getElementById('application');
+const api = configureApi(window.config.ws);
+const store = configureStore(undefined, {reducers, api});
 
-connection.onerror = event => store.dispatch({type: 'APP_CONNECTION_CLOSED', payload: event});
-connection.onopen = event => store.dispatch({type: 'APP_CONNECTION_OPENED', payload: event});
+api.onFailure = event => store.dispatch({type: 'CONNECTION_CLOSED', payload: event});
+api.onSuccess = event => store.dispatch({type: 'CONNECTION_OPENED', payload: event});
+api.connect();
 
-render(createElement(Provider, {store}, createElement(App)), container);
+window.api = api;
+window.store = store;
+window.React = React;
+window.render = render;
+
+render(
+    <Provider store={store}>
+        <BrowserRouter>
+            <AppContainer/>
+        </BrowserRouter>
+    </Provider>
+, node);

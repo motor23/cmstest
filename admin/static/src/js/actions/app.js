@@ -10,30 +10,24 @@ export const CONFIGURE_FAILURE = 'CONFIGURE_FAILURE';
 
 
 export function login({token, login, password}) {
-    return (dispatch, state, api) => ({
+    return ({dispatch, state, api}) => ({
         type: 'LOGIN',
         payload: api.call('auth.login', {token, login, password})
-            .then(response => response)
-            .catch(error => error)
     });
 }
 
 
 export function logout({token}) {
-    return (dispatch, state, api) => ({
+    return ({dispatch, state, api}) => ({
         type: 'LOGOUT',
         payload: api.call('auth.logout', {token})
-            .then(response => response)
-            .catch(error => error)
     });
 }
 
 
 export function configure() {
-    return (dispatch, state, api) => ({
+    return ({dispatch, state, api}) => ({
         type: 'CONFIGURE',
-        payload: api.call('cfg.cinfo')
-            .then(response => response)
-            .catch(error => errro)
+        payload: api.call('cinfo.cfg', {})
     });
 }

@@ -1,12 +1,3 @@
-import user from './user';
-import conf from './conf';
-import stream from './stream';
-import app from './app';
-
-
-export default {
-    user,
-    conf,
-    stream,
-    app
-};
+export * from './app';
+export * from './stream';
+export * from './routing';
