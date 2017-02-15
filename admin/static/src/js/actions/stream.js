@@ -7,7 +7,7 @@ export const STREAM_GET_FAILURE = 'STREAM_GET_FAILURE';
 
 
 export function streamList({stream, page, pageSize}) {
-    return (dispatch, state, api) => ({
+    return ({dispatch, state, api}) => ({
         type: 'STREAM_LIST',
         payload: api.call('streams.action', {action: 'list', stream: stream, page: page, page_size: pageSize, order: '+id'})
             .then(response => response)
@@ -17,7 +17,7 @@ export function streamList({stream, page, pageSize}) {
 
 
 export function streamGet({stream, itemId}) {
-    return (dispatch, state, api) => ({
+    return ({dispatch, state, api}) => ({
         type: 'STREAM_GET',
         payload: api.call('streams.action', {action: 'get', stream: stream, item_id: itemId})
             .then(response => response)

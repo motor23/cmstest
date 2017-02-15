@@ -1,6 +1,9 @@
 import React, {Component, PropTypes} from 'react';
+import {bindActionCreators} from 'redux';
+import {connect} from 'react-redux';
+import * as actions from '../actions';
 import {Link} from 'react-router';
-import Spinner from '../common/spinner';
+import Spinner from './common/spinner';
 
 
 export class StreamItem extends Component {
@@ -24,7 +27,7 @@ export class Card extends Component {
     render() {
         const {title, children} = this.props;
         const content = children.map(child =>
-            <StreamItem key={child.title} {...child}/>
+                <StreamItem key={child.title} {...child}/>
         );
         return (
             <div className="cms-card mdl-shadow--2dp">
@@ -36,7 +39,7 @@ export class Card extends Component {
 }
 
 
-export default class Dashboard extends Component {
+export class Dashboard extends Component {
     static propTypes = {
         dashboard: PropTypes.object.isRequired
     };
@@ -44,7 +47,7 @@ export default class Dashboard extends Component {
     render() {
         const {dashboard} = this.props;
         const content = dashboard.map(child =>
-            <Card key={child.title} {...child}/>
+                <Card key={child.title} {...child}/>
         );
         return (
             <div className="cms-dashboard">
@@ -54,3 +57,19 @@ export default class Dashboard extends Component {
     }
 }
 
+
+export function mapStateToProps(state) {
+    return {
+        dashboard: state.app.cfg.menu.dashboard
+    };
+}
+
+
+export function mapDispatchToProps(dispatch) {
+    return {
+        actions: bindActionCreators(actions, dispatch)
+    };
+}
+
+
+export default connect(mapStateToProps, mapDispatchToProps)(Dashboard)

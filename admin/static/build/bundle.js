@@ -58,19 +58,19 @@
 	
 	var _reactRouter = __webpack_require__(220);
 	
-	var _AppContainer = __webpack_require__(257);
+	var _App = __webpack_require__(262);
 	
-	var _AppContainer2 = _interopRequireDefault(_AppContainer);
+	var _App2 = _interopRequireDefault(_App);
 	
-	var _api = __webpack_require__(269);
+	var _api = __webpack_require__(273);
 	
 	var _api2 = _interopRequireDefault(_api);
 	
-	var _store = __webpack_require__(270);
+	var _store = __webpack_require__(274);
 	
 	var _store2 = _interopRequireDefault(_store);
 	
-	var _reducers = __webpack_require__(271);
+	var _reducers = __webpack_require__(275);
 	
 	var reducers = _interopRequireWildcard(_reducers);
 	
@@ -101,7 +101,7 @@
 	    _react2.default.createElement(
 	        _reactRouter.BrowserRouter,
 	        null,
-	        _react2.default.createElement(_AppContainer2.default, null)
+	        _react2.default.createElement(_App2.default, null)
 	    )
 	), node);
 
@@ -27937,46 +27937,7 @@
 	exports.default = createServerRenderContext;
 
 /***/ },
-/* 257 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	
-	var _redux = __webpack_require__(193);
-	
-	var _reactRedux = __webpack_require__(182);
-	
-	var _actions = __webpack_require__(258);
-	
-	var actions = _interopRequireWildcard(_actions);
-	
-	var _App = __webpack_require__(262);
-	
-	var _App2 = _interopRequireDefault(_App);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-	
-	function mapStateToProps(state) {
-	    return {
-	        app: state.app
-	    };
-	}
-	
-	function mapDispatchToProps(dispatch) {
-	    return {
-	        actions: (0, _redux.bindActionCreators)(actions, dispatch)
-	    };
-	}
-	
-	exports.default = (0, _reactRedux.connect)(mapStateToProps, mapDispatchToProps)(_App2.default);
-
-/***/ },
+/* 257 */,
 /* 258 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -28115,7 +28076,10 @@
 	        page = _ref.page,
 	        pageSize = _ref.pageSize;
 	
-	    return function (dispatch, state, api) {
+	    return function (_ref2) {
+	        var dispatch = _ref2.dispatch,
+	            state = _ref2.state,
+	            api = _ref2.api;
 	        return {
 	            type: 'STREAM_LIST',
 	            payload: api.call('streams.action', { action: 'list', stream: stream, page: page, page_size: pageSize, order: '+id' }).then(function (response) {
@@ -28127,11 +28091,14 @@
 	    };
 	}
 	
-	function streamGet(_ref2) {
-	    var stream = _ref2.stream,
-	        itemId = _ref2.itemId;
+	function streamGet(_ref3) {
+	    var stream = _ref3.stream,
+	        itemId = _ref3.itemId;
 	
-	    return function (dispatch, state, api) {
+	    return function (_ref4) {
+	        var dispatch = _ref4.dispatch,
+	            state = _ref4.state,
+	            api = _ref4.api;
 	        return {
 	            type: 'STREAM_GET',
 	            payload: api.call('streams.action', { action: 'get', stream: stream, item_id: itemId }).then(function (response) {
@@ -28152,24 +28119,46 @@
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+	exports.App = undefined;
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	exports.mapStateToProps = mapStateToProps;
+	exports.mapDispatchToProps = mapDispatchToProps;
 	
 	var _react = __webpack_require__(5);
 	
 	var _react2 = _interopRequireDefault(_react);
 	
+	var _redux = __webpack_require__(193);
+	
+	var _reactRedux = __webpack_require__(182);
+	
 	var _reactRouter = __webpack_require__(220);
+	
+	var _actions = __webpack_require__(258);
+	
+	var actions = _interopRequireWildcard(_actions);
 	
 	var _waiting = __webpack_require__(263);
 	
-	var _login = __webpack_require__(265);
+	var _Login = __webpack_require__(281);
 	
-	var _DashboardContainer = __webpack_require__(266);
+	var _Login2 = _interopRequireDefault(_Login);
 	
-	var _DashboardContainer2 = _interopRequireDefault(_DashboardContainer);
+	var _Dashboard = __webpack_require__(282);
 	
-	var _StreamContainer = __webpack_require__(268);
+	var _Dashboard2 = _interopRequireDefault(_Dashboard);
+	
+	var _StreamItem = __webpack_require__(279);
+	
+	var _StreamItem2 = _interopRequireDefault(_StreamItem);
+	
+	var _StreamList = __webpack_require__(280);
+	
+	var _StreamList2 = _interopRequireDefault(_StreamList);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -28179,7 +28168,7 @@
 	
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 	
-	var App = function (_Component) {
+	var App = exports.App = function (_Component) {
 	    _inherits(App, _Component);
 	
 	    function App() {
@@ -28191,17 +28180,18 @@
 	    _createClass(App, [{
 	        key: 'componentWillReceiveProps',
 	        value: function componentWillReceiveProps(nextProps) {
-	            if (nextProps.app.isLogged && !nextProps.app.isConfigured) {
+	            if (nextProps.isLogged && !nextProps.isConfigured) {
 	                this.props.actions.configure();
 	            }
 	        }
 	    }, {
 	        key: 'render',
 	        value: function render() {
-	            var _props$app = this.props.app,
-	                isConnected = _props$app.isConnected,
-	                isLogged = _props$app.isLogged,
-	                isConfigured = _props$app.isConfigured;
+	            var _props = this.props,
+	                isConnected = _props.isConnected,
+	                isLogged = _props.isLogged,
+	                isConfigured = _props.isConfigured,
+	                actions = _props.actions;
 	
 	
 	            if (!isConnected) {
@@ -28212,7 +28202,7 @@
 	                );
 	            }
 	            if (!isLogged) {
-	                return _react2.default.createElement(_login.Login, this.props);
+	                return _react2.default.createElement(_Login2.default, { actions: actions });
 	            }
 	            if (!isConfigured) {
 	                return _react2.default.createElement(
@@ -28258,8 +28248,9 @@
 	                _react2.default.createElement(
 	                    'div',
 	                    { className: 'mdl-layout__content mdl-color-text--grey-600' },
-	                    _react2.default.createElement(_reactRouter.Match, { exactly: true, pattern: '/', component: _DashboardContainer2.default }),
-	                    _react2.default.createElement(_reactRouter.Match, { pattern: '/streams/:stream', component: _StreamContainer.StreamContainer })
+	                    _react2.default.createElement(_reactRouter.Match, { exactly: true, pattern: '/', component: _Dashboard2.default }),
+	                    _react2.default.createElement(_reactRouter.Match, { excatly: true, pattern: '/streams/:stream', component: _StreamList2.default }),
+	                    _react2.default.createElement(_reactRouter.Match, { excatly: true, pattern: '/streams/:stream/:id', component: _StreamItem2.default })
 	                )
 	            );
 	        }
@@ -28270,9 +28261,25 @@
 	
 	App.propTypes = {
 	    actions: _react.PropTypes.object.isRequired,
-	    app: _react.PropTypes.object.isRequired
+	    isConnected: _react.PropTypes.bool.isRequired,
+	    isLogged: _react.PropTypes.bool.isRequired,
+	    isConfigured: _react.PropTypes.bool.isRequired
 	};
-	exports.default = App;
+	function mapStateToProps(state) {
+	    return {
+	        isConnected: state.app.isConnected,
+	        isLogged: state.app.isLogged,
+	        isConfigured: state.app.isConfigured
+	    };
+	}
+	
+	function mapDispatchToProps(dispatch) {
+	    return {
+	        actions: (0, _redux.bindActionCreators)(actions, dispatch)
+	    };
+	}
+	
+	exports.default = (0, _reactRedux.connect)(mapStateToProps, mapDispatchToProps)(App);
 
 /***/ },
 /* 263 */
@@ -28412,15 +28419,491 @@
 	exports.default = Spinner;
 
 /***/ },
-/* 265 */
-/***/ function(module, exports, __webpack_require__) {
+/* 265 */,
+/* 266 */,
+/* 267 */,
+/* 268 */,
+/* 269 */,
+/* 270 */,
+/* 271 */
+/***/ function(module, exports) {
 
 	"use strict";
 	
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	exports.Login = undefined;
+	
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+	
+	exports.default = paginate;
+	function paginate(total, limit, page) {
+	    var edge = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 3;
+	    var surround = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 5;
+	
+	    var totalPages = Math.ceil(total / limit);
+	    var currentPage = page;
+	    var leftEnd = Math.min(edge, totalPages);
+	    var surroundStart = Math.min(Math.max(1, currentPage - surround), totalPages + 1);
+	    var surroundEnd = Math.min(currentPage + surround, totalPages);
+	    var rightStart = Math.min(Math.max(1, totalPages - edge + 1), totalPages + 1);
+	    var ranges = [];
+	    ranges.push([1, leftEnd + 1]);
+	    if (surroundEnd >= surroundStart) {
+	        ranges.push([surroundStart, surroundEnd + 1]);
+	    }
+	    if (totalPages >= rightStart) {
+	        ranges.push([rightStart, totalPages + 1]);
+	    }
+	    ranges.sort(function (_ref, _ref2) {
+	        var _ref4 = _slicedToArray(_ref, 2),
+	            a1 = _ref4[0],
+	            a2 = _ref4[1];
+	
+	        var _ref3 = _slicedToArray(_ref2, 2),
+	            b1 = _ref3[0],
+	            b2 = _ref3[1];
+	
+	        if (a1 > b1) return 1;
+	        if (a1 < b1) return -1;
+	        if (b1 > b2) return 1;
+	        if (b1 < b2) return -1;
+	        return 0;
+	    });
+	    var pages = [];
+	    for (var i = ranges[0][0]; i < ranges[0][1]; i++) {
+	        pages.push(i);
+	    }
+	    for (var _i = 1; _i < ranges.length; _i++) {
+	        var last = pages[pages.length - 1];
+	        var start = ranges[_i][0];
+	        var end = ranges[_i][1];
+	        if (end <= last) {
+	            continue;
+	        }
+	        if (start <= last + 2) {
+	            for (var j = last + 1; j < end; j++) {
+	                pages.push(j);
+	            }
+	        } else {
+	            pages.push(null);
+	            for (var _j = start; _j < end; _j++) {
+	                pages.push(_j);
+	            }
+	        }
+	    }
+	    return pages;
+	}
+
+/***/ },
+/* 272 */,
+/* 273 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	exports.default = configureApi;
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var API = exports.API = function () {
+	    function API(url, onSuccess, onFailure) {
+	        _classCallCheck(this, API);
+	
+	        this.requestId = 0;
+	        this.executors = {};
+	        this.socket = null;
+	        this.url = url;
+	        this.onSuccess = onSuccess || function () {};
+	        this.onFailure = onFailure || function () {};
+	        this.successes = 0;
+	        this.retryTimer = null;
+	        this.retryCount = 0;
+	        this.retryCountMax = 10;
+	        this.retryDelay = 0; /* seconds */
+	        this.retryDelayMax = 30; /* seconds */
+	        this.retryDelayInitial = 1.5; /* seconds */
+	        this.retryDelayGrowth = 1.5;
+	        this.retryDelayJitter = 0.1;
+	    }
+	
+	    _createClass(API, [{
+	        key: 'connect',
+	        value: function connect() {
+	            if (this.socket === null) {
+	                this.socket = new WebSocket(this.url);
+	                this.socket.addEventListener('open', this.onOpen.bind(this));
+	                this.socket.addEventListener('close', this.onClose.bind(this));
+	                this.socket.addEventListener('message', this.onMessage.bind(this));
+	            }
+	        }
+	    }, {
+	        key: 'disconnect',
+	        value: function disconnect() {
+	            if (this.socket !== null) {
+	                this.socket.close();
+	            }
+	        }
+	    }, {
+	        key: 'call',
+	        value: function call(endpoint, payload) {
+	            var _this = this;
+	
+	            var requestId = this.requestId++;
+	            var message = { name: 'request', request_id: requestId.toString(), handler: endpoint, body: payload };
+	            return new Promise(function (resolve, reject) {
+	                _this.executors[requestId] = { resolve: resolve, reject: reject };
+	                _this.socket.send(JSON.stringify(message));
+	            });
+	        }
+	    }, {
+	        key: 'onMessage',
+	        value: function onMessage(event) {
+	            var _JSON$parse = JSON.parse(event.data),
+	                request_id = _JSON$parse.request_id,
+	                name = _JSON$parse.name,
+	                body = _JSON$parse.body;
+	
+	            var executor = this.executors[request_id];
+	            delete this.executors[request_id];
+	            if (executor && name === 'response') {
+	                executor.resolve(body);
+	                return;
+	            }
+	            if (executor && name === 'error') {
+	                executor.reject(body);
+	                return;
+	            }
+	            assert(false, 'Unknown message type: %s', name);
+	        }
+	    }, {
+	        key: 'onOpen',
+	        value: function onOpen(event) {
+	            this.successes += 1;
+	            this.retryCount = 0;
+	            this.retryDelay = this.retryDelayInitial;
+	            if (this.retryTimer) {
+	                clearTimeout(this.retryTimer);
+	                this.retryTimer = null;
+	            }
+	            this.onSuccess({ url: this.url, successes: this.successes });
+	        }
+	    }, {
+	        key: 'onClose',
+	        value: function onClose(event) {
+	            this.socket = null;
+	            this.retryDelay = Math.max(this.retryDelay * this.retryDelayGrowth, this.retryDelayMax);
+	            this.retryCount += 1;
+	            var reason = this.successes === 0 ? 'unreachable' : event.wasClean ? 'lost' : 'closed';
+	            var retry = this.retryCount < this.retryCountMax ? this.retryDelay : null;
+	            if (retry) {
+	                this.retryTimer = setTimeout(this.connect.bind(this), retry);
+	            }
+	            this.onFailure({ reason: reason, retry: retry });
+	        }
+	    }]);
+	
+	    return API;
+	}();
+	
+	function configureApi(url, onSuccess, onFailure) {
+	    var cls = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : API;
+	
+	    return new cls(url, onSuccess, onFailure);
+	}
+
+/***/ },
+/* 274 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	
+	exports.default = configureStore;
+	
+	var _redux = __webpack_require__(193);
+	
+	var injectDependencies = function injectDependencies(dependencies) {
+	    return function (store) {
+	        return function (next) {
+	            return function (action) {
+	                if (typeof action === 'function') {
+	                    var dispatch = store.dispatch,
+	                        getState = store.getState;
+	
+	                    return dispatch(action(_extends({ dispatch: dispatch, getState: getState }, dependencies)));
+	                }
+	                return next(action);
+	            };
+	        };
+	    };
+	};
+	
+	var logActions = function logActions(store) {
+	    return function (next) {
+	        return function (action) {
+	            console.groupCollapsed(action.type);
+	            console.log('Payload: ', action.payload);
+	            console.log('Meta: ', action.meta);
+	            console.log('State: ', store.getState());
+	            console.groupEnd();
+	            return next(action);
+	        };
+	    };
+	};
+	
+	var resolvePromises = function resolvePromises(store) {
+	    return function (next) {
+	        return function (action) {
+	            var PENDING_TYPE = action.type + '_PENDING';
+	            var SUCCESS_TYPE = action.type + '_SUCCESS';
+	            var FAILURE_TYPE = action.type + '_FAILURE';
+	            var dispatch = store.dispatch;
+	            var type = action.type,
+	                payload = action.payload;
+	
+	            if (payload && typeof payload.then === 'function') {
+	                var fullfill = function fullfill(value) {
+	                    return dispatch({ type: SUCCESS_TYPE, payload: value });
+	                };
+	                var reject = function reject(reason) {
+	                    return dispatch({ type: FAILURE_TYPE, payload: reason });
+	                };
+	                next({ type: PENDING_TYPE, payload: payload });
+	                return payload.then(fullfill, reject);
+	            }
+	            return next(action);
+	        };
+	    };
+	};
+	
+	function configureStore(initialState, _ref) {
+	    var reducers = _ref.reducers,
+	        api = _ref.api;
+	
+	    var reducer = (0, _redux.combineReducers)(reducers);
+	    var middleware = (0, _redux.applyMiddleware)(injectDependencies({ api: api }), resolvePromises, logActions);
+	    return (0, _redux.createStore)(reducer, initialState, middleware);
+	};
+
+/***/ },
+/* 275 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _app = __webpack_require__(276);
+	
+	Object.keys(_app).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _app[key];
+	    }
+	  });
+	});
+	
+	var _stream = __webpack_require__(277);
+	
+	Object.keys(_stream).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _stream[key];
+	    }
+	  });
+	});
+	
+	var _routing = __webpack_require__(278);
+	
+	Object.keys(_routing).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _routing[key];
+	    }
+	  });
+	});
+
+/***/ },
+/* 276 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	
+	exports.app = app;
+	var initialState = {
+	    isConnected: false,
+	    isLogged: false,
+	    isConfigured: false,
+	    shouldReloadPage: false,
+	    location: {}
+	};
+	
+	function app() {
+	    var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
+	    var action = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	
+	    switch (action.type) {
+	        case 'CONNECTION_OPENED':
+	            return _extends({}, initialState, {
+	                isConnected: true
+	            });
+	        case 'CONNECTION_CLOSED':
+	            return _extends({}, initialState, {
+	                isConnected: false,
+	                shouldReloadPage: action.payload.shouldReloadPage ? true : false
+	            });
+	        case 'LOGIN_SUCCESS':
+	            return _extends({}, initialState, {
+	                isConnected: true,
+	                isLogged: true
+	            });
+	        case 'LOGIN_FAILURE':
+	            return _extends({}, initialState, {
+	                isConnected: true,
+	                isLogged: false
+	            });
+	        case 'LOGOUT_SUCCESS':
+	            return _extends({}, initialState, {
+	                isLogged: false
+	            });
+	        case 'CONFIGURE_SUCCESS':
+	            return _extends({}, initialState, {
+	                isLogged: true,
+	                isConnected: true,
+	                isConfigured: true,
+	                cfg: action.payload.cfg
+	            });
+	        case 'PUSH':
+	            return _extends({}, state, {
+	                location: action.payload
+	            });
+	    }
+	    return state;
+	}
+
+/***/ },
+/* 277 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	
+	exports.stream = stream;
+	var initialState = {
+	    isLoading: true,
+	    title: null,
+	    stream: null,
+	    items: [],
+	    filters: {},
+	    errors: {},
+	    total: 0,
+	    pageSize: 20,
+	    page: 1,
+	    order: '+id'
+	};
+	
+	function stream() {
+	    var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
+	    var action = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	
+	    if (action.type === 'STREAM_LIST_PENDING') {
+	        return _extends({}, initialState, {
+	            isLoading: true
+	        });
+	    }
+	
+	    if (action.type === 'STREAM_LIST_SUCCESS') {
+	        return _extends({}, state, {
+	            isLoading: false,
+	            title: action.payload.title,
+	            stream: action.payload.stream,
+	            items: action.payload.items,
+	            filters: action.payload.filters,
+	            errors: action.payload.errors,
+	            total: action.payload.total,
+	            pageSize: action.payload.page_size,
+	            page: action.payload.page
+	        });
+	    }
+	
+	    if (action.type === 'STREAM_LIST_FAILURE') {
+	        return _extends({}, initialState, {
+	            isLoading: false
+	        });
+	    }
+	
+	    return state;
+	}
+
+/***/ },
+/* 278 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.routing = routing;
+	var initialState = {
+	    hash: '',
+	    key: '',
+	    pathname: '',
+	    search: ''
+	};
+	
+	function routing() {
+	    var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
+	    var action = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	
+	    switch (action.type) {
+	        case 'PUSH':
+	        case 'REPLACE':
+	            return action.payload;
+	    }
+	    return state;
+	}
+
+/***/ },
+/* 279 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
@@ -28436,7 +28919,380 @@
 	
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 	
-	var Login = exports.Login = function (_Component) {
+	var StreamItem = function (_React$Component) {
+	    _inherits(StreamItem, _React$Component);
+	
+	    function StreamItem() {
+	        _classCallCheck(this, StreamItem);
+	
+	        return _possibleConstructorReturn(this, (StreamItem.__proto__ || Object.getPrototypeOf(StreamItem)).apply(this, arguments));
+	    }
+	
+	    _createClass(StreamItem, [{
+	        key: 'render',
+	        value: function render() {
+	            return _react2.default.createElement(
+	                'div',
+	                null,
+	                _react2.default.createElement(
+	                    'div',
+	                    null,
+	                    'Item: ',
+	                    this.props.params.id
+	                )
+	            );
+	        }
+	    }]);
+	
+	    return StreamItem;
+	}(_react2.default.Component);
+	
+	exports.default = StreamItem;
+
+/***/ },
+/* 280 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.StreamList = exports.StreamListRow = exports.Paginator = undefined;
+	
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	exports.mapStateToProps = mapStateToProps;
+	exports.mapDispatchToProps = mapDispatchToProps;
+	
+	var _react = __webpack_require__(5);
+	
+	var _react2 = _interopRequireDefault(_react);
+	
+	var _redux = __webpack_require__(193);
+	
+	var _reactRedux = __webpack_require__(182);
+	
+	var _actions = __webpack_require__(258);
+	
+	var actions = _interopRequireWildcard(_actions);
+	
+	var _paginate = __webpack_require__(271);
+	
+	var _paginate2 = _interopRequireDefault(_paginate);
+	
+	var _spinner = __webpack_require__(264);
+	
+	var _spinner2 = _interopRequireDefault(_spinner);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Paginator = exports.Paginator = function (_Component) {
+	    _inherits(Paginator, _Component);
+	
+	    function Paginator() {
+	        _classCallCheck(this, Paginator);
+	
+	        return _possibleConstructorReturn(this, (Paginator.__proto__ || Object.getPrototypeOf(Paginator)).apply(this, arguments));
+	    }
+	
+	    _createClass(Paginator, [{
+	        key: 'renderItem',
+	        value: function renderItem(n) {
+	            var _props = this.props,
+	                page = _props.page,
+	                change = _props.change;
+	
+	            if (n === page) {
+	                return _react2.default.createElement(
+	                    'span',
+	                    { key: n, className: 'cms-paginator__item cms-paginator__item--current' },
+	                    n
+	                );
+	            }
+	            if (n === null) {
+	                return _react2.default.createElement(
+	                    'span',
+	                    { className: 'cms-paginator__item cms-paginator__item--ellipsis' },
+	                    '\u2026'
+	                );
+	            }
+	            return _react2.default.createElement(
+	                'span',
+	                { key: n, className: 'cms-paginator__item', onClick: function onClick() {
+	                        return change(n);
+	                    } },
+	                n
+	            );
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	            var _props2 = this.props,
+	                total = _props2.total,
+	                page = _props2.page,
+	                pageSize = _props2.pageSize;
+	
+	            var pages = (0, _paginate2.default)(total, pageSize, page, 1, 3);
+	            return _react2.default.createElement(
+	                'div',
+	                { className: 'cms-paginator' },
+	                pages.map(this.renderItem.bind(this))
+	            );
+	        }
+	    }]);
+	
+	    return Paginator;
+	}(_react.Component);
+	
+	Paginator.propTypes = {
+	    total: _react.PropTypes.number.isRequired,
+	    page: _react.PropTypes.number.isRequired,
+	    pageSize: _react.PropTypes.number.isRequired,
+	    change: _react.PropTypes.func.isRequired
+	};
+	
+	var StreamListRow = exports.StreamListRow = function (_Component2) {
+	    _inherits(StreamListRow, _Component2);
+	
+	    function StreamListRow() {
+	        _classCallCheck(this, StreamListRow);
+	
+	        return _possibleConstructorReturn(this, (StreamListRow.__proto__ || Object.getPrototypeOf(StreamListRow)).apply(this, arguments));
+	    }
+	
+	    _createClass(StreamListRow, [{
+	        key: 'render',
+	        value: function render() {
+	            var item = this.props.item;
+	
+	            return _react2.default.createElement(
+	                'tr',
+	                null,
+	                _react2.default.createElement(
+	                    'td',
+	                    null,
+	                    item.id
+	                ),
+	                _react2.default.createElement(
+	                    'td',
+	                    null,
+	                    item.title.substring(0, 100)
+	                )
+	            );
+	        }
+	    }]);
+	
+	    return StreamListRow;
+	}(_react.Component);
+	
+	var StreamList = exports.StreamList = function (_Component3) {
+	    _inherits(StreamList, _Component3);
+	
+	    function StreamList(props) {
+	        _classCallCheck(this, StreamList);
+	
+	        var _this3 = _possibleConstructorReturn(this, (StreamList.__proto__ || Object.getPrototypeOf(StreamList)).call(this, props));
+	
+	        _this3.onKeyPress = _this3.onKeyPress.bind(_this3);
+	        return _this3;
+	    }
+	
+	    _createClass(StreamList, [{
+	        key: 'componentWillMount',
+	        value: function componentWillMount() {
+	            var _props3 = this.props,
+	                stream = _props3.stream,
+	                page = _props3.page,
+	                pageSize = _props3.pageSize,
+	                actions = _props3.actions;
+	
+	            actions.streamList({ stream: stream, page: page, pageSize: pageSize });
+	        }
+	    }, {
+	        key: 'componentDidMount',
+	        value: function componentDidMount() {
+	            window.addEventListener('keydown', this.onKeyPress, true);
+	        }
+	    }, {
+	        key: 'componentWillUnmount',
+	        value: function componentWillUnmount() {
+	            window.removeEventListener('keydown', this.onKeyPress, true);
+	        }
+	    }, {
+	        key: 'onKeyPress',
+	        value: function onKeyPress(event) {
+	            if (event.keyCode == 37) {
+	                this.changePageToPrev();
+	            }
+	            if (event.keyCode == 39) {
+	                this.changePageToNext();
+	            }
+	        }
+	    }, {
+	        key: 'changePageToPrev',
+	        value: function changePageToPrev() {
+	            var page = this.props.page;
+	
+	            if (page > 1) {
+	                this.changePage(page - 1);
+	            }
+	        }
+	    }, {
+	        key: 'changePageToNext',
+	        value: function changePageToNext() {
+	            var _props4 = this.props,
+	                page = _props4.page,
+	                total = _props4.total,
+	                pageSize = _props4.pageSize;
+	
+	            if (page < total / pageSize) {
+	                this.changePage(page + 1);
+	            }
+	        }
+	    }, {
+	        key: 'changePage',
+	        value: function changePage(page) {
+	            var _props5 = this.props,
+	                stream = _props5.stream,
+	                pageSize = _props5.pageSize,
+	                actions = _props5.actions;
+	
+	            actions.streamList({ stream: stream, page: page, pageSize: pageSize });
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	            var _props6 = this.props,
+	                isLoading = _props6.isLoading,
+	                title = _props6.title,
+	                items = _props6.items,
+	                total = _props6.total,
+	                pageSize = _props6.pageSize,
+	                page = _props6.page;
+	
+	            var content = items.map(function (item) {
+	                return _react2.default.createElement(StreamListRow, { key: item.id, item: item });
+	            });
+	            if (isLoading) {
+	                return _react2.default.createElement(_spinner2.default, null);
+	            }
+	            return _react2.default.createElement(
+	                'div',
+	                { className: 'cms-stream' },
+	                _react2.default.createElement(
+	                    'div',
+	                    { className: 'slds-page-header' },
+	                    _react2.default.createElement(
+	                        'div',
+	                        { className: 'slds-page-header__title' },
+	                        title
+	                    )
+	                ),
+	                _react2.default.createElement(
+	                    'table',
+	                    { className: 'slds-table slds-table--bordered' },
+	                    _react2.default.createElement(
+	                        'thead',
+	                        null,
+	                        _react2.default.createElement(
+	                            'tr',
+	                            { className: 'slds-text-heading--label' },
+	                            _react2.default.createElement(
+	                                'th',
+	                                null,
+	                                'ID'
+	                            ),
+	                            _react2.default.createElement(
+	                                'th',
+	                                null,
+	                                '\u0417\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A'
+	                            )
+	                        )
+	                    ),
+	                    _react2.default.createElement(
+	                        'tbody',
+	                        null,
+	                        content
+	                    )
+	                ),
+	                _react2.default.createElement(Paginator, { total: total, page: page, pageSize: pageSize, change: this.changePage.bind(this) })
+	            );
+	        }
+	    }]);
+	
+	    return StreamList;
+	}(_react.Component);
+	
+	StreamList.propTypes = {
+	    actions: _react.PropTypes.object.isRequired,
+	    isLoading: _react.PropTypes.bool.isRequired,
+	    filters: _react.PropTypes.object.isRequired,
+	    errors: _react.PropTypes.object.isRequired,
+	    items: _react.PropTypes.arrayOf(_react.PropTypes.object).isRequired,
+	    total: _react.PropTypes.number.isRequired,
+	    pageSize: _react.PropTypes.number.isRequired,
+	    page: _react.PropTypes.number.isRequired,
+	    order: _react.PropTypes.string.isRequired
+	};
+	function mapStateToProps(state, ownProps) {
+	    return {
+	        stream: ownProps.params.stream,
+	        isLoading: state.stream.isLoading,
+	        title: state.stream.title,
+	        items: state.stream.items,
+	        filters: state.stream.filters,
+	        errors: state.stream.errors,
+	        total: state.stream.total,
+	        pageSize: state.stream.pageSize,
+	        page: state.stream.page,
+	        order: state.stream.order
+	    };
+	}
+	
+	function mapDispatchToProps(dispatch, ownProps) {
+	    return _extends({}, ownProps, {
+	        actions: (0, _redux.bindActionCreators)(actions, dispatch)
+	    });
+	}
+	
+	exports.default = (0, _reactRedux.connect)(mapStateToProps, mapDispatchToProps)(StreamList);
+
+/***/ },
+/* 281 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _react = __webpack_require__(5);
+	
+	var _react2 = _interopRequireDefault(_react);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Login = function (_Component) {
 	    _inherits(Login, _Component);
 	
 	    function Login(props, context) {
@@ -28558,12 +29414,12 @@
 	}(_react.Component);
 	
 	Login.propTypes = {
-	    actions: _react2.default.PropTypes.object.isRequired,
-	    app: _react2.default.PropTypes.object.isRequired
+	    actions: _react2.default.PropTypes.object.isRequired
 	};
+	exports.default = Login;
 
 /***/ },
-/* 266 */
+/* 282 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -28571,6 +29427,18 @@
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+	exports.Dashboard = exports.Card = exports.StreamItem = undefined;
+	
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	exports.mapStateToProps = mapStateToProps;
+	exports.mapDispatchToProps = mapDispatchToProps;
+	
+	var _react = __webpack_require__(5);
+	
+	var _react2 = _interopRequireDefault(_react);
 	
 	var _redux = __webpack_require__(193);
 	
@@ -28580,52 +29448,13 @@
 	
 	var actions = _interopRequireWildcard(_actions);
 	
-	var _dashboard = __webpack_require__(267);
-	
-	var _dashboard2 = _interopRequireDefault(_dashboard);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-	
-	function mapStateToProps(state) {
-	    return {
-	        dashboard: state.app.cfg.menu.dashboard
-	    };
-	}
-	
-	function mapDispatchToProps(dispatch) {
-	    return {
-	        actions: (0, _redux.bindActionCreators)(actions, dispatch)
-	    };
-	}
-	
-	exports.default = (0, _reactRedux.connect)(mapStateToProps, mapDispatchToProps)(_dashboard2.default);
-
-/***/ },
-/* 267 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.Card = exports.StreamItem = undefined;
-	
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	var _react = __webpack_require__(5);
-	
-	var _react2 = _interopRequireDefault(_react);
-	
 	var _reactRouter = __webpack_require__(220);
 	
 	var _spinner = __webpack_require__(264);
 	
 	var _spinner2 = _interopRequireDefault(_spinner);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -28706,7 +29535,7 @@
 	    return Card;
 	}(_react.Component);
 	
-	var Dashboard = function (_Component3) {
+	var Dashboard = exports.Dashboard = function (_Component3) {
 	    _inherits(Dashboard, _Component3);
 	
 	    function Dashboard() {
@@ -28737,412 +29566,19 @@
 	Dashboard.propTypes = {
 	    dashboard: _react.PropTypes.object.isRequired
 	};
-	exports.default = Dashboard;
-
-/***/ },
-/* 268 */
-/***/ function(module, exports) {
-
-	"use strict";
-
-/***/ },
-/* 269 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	exports.default = configureApi;
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	var API = exports.API = function () {
-	    function API(url, onSuccess, onFailure) {
-	        _classCallCheck(this, API);
-	
-	        this.requestId = 0;
-	        this.executors = {};
-	        this.socket = null;
-	        this.url = url;
-	        this.onSuccess = onSuccess || function () {};
-	        this.onFailure = onFailure || function () {};
-	        this.successes = 0;
-	        this.retryTimer = null;
-	        this.retryCount = 0;
-	        this.retryCountMax = 10;
-	        this.retryDelay = 0; /* seconds */
-	        this.retryDelayMax = 30; /* seconds */
-	        this.retryDelayInitial = 1.5; /* seconds */
-	        this.retryDelayGrowth = 1.5;
-	        this.retryDelayJitter = 0.1;
-	    }
-	
-	    _createClass(API, [{
-	        key: 'connect',
-	        value: function connect() {
-	            if (this.socket === null) {
-	                this.socket = new WebSocket(this.url);
-	                this.socket.addEventListener('open', this.onOpen.bind(this));
-	                this.socket.addEventListener('close', this.onClose.bind(this));
-	                this.socket.addEventListener('message', this.onMessage.bind(this));
-	            }
-	        }
-	    }, {
-	        key: 'disconnect',
-	        value: function disconnect() {
-	            if (this.socket !== null) {
-	                this.socket.close();
-	            }
-	        }
-	    }, {
-	        key: 'call',
-	        value: function call(endpoint, payload) {
-	            var _this = this;
-	
-	            var requestId = this.requestId_++;
-	            var message = { name: 'request', request_id: requestId.toString(), handler: endpoint, body: payload };
-	            return new Promise(function (resolve, reject) {
-	                _this.executors[requestId] = { resolve: resolve, reject: reject };
-	                _this.socket.send(JSON.stringify(message));
-	            });
-	        }
-	    }, {
-	        key: 'onMessage',
-	        value: function onMessage(event) {
-	            var _JSON$parse = JSON.parse(event.data),
-	                request_id = _JSON$parse.request_id,
-	                name = _JSON$parse.name,
-	                body = _JSON$parse.body;
-	
-	            var executor = this.executors[request_id];
-	            delete this.executors[request_id];
-	            if (executor && name === 'response') {
-	                executor.resolve(body);
-	                return;
-	            }
-	            if (executor && name === 'error') {
-	                executor.reject(body);
-	                return;
-	            }
-	            assert(false, 'Unknown message type: %s', name);
-	        }
-	    }, {
-	        key: 'onOpen',
-	        value: function onOpen(event) {
-	            this.successes += 1;
-	            this.retryCount = 0;
-	            this.retryDelay = this.retryDelayInitial;
-	            if (this.retryTimer) {
-	                clearTimeout(this.retryTimer);
-	                this.retryTimer = null;
-	            }
-	            this.onSuccess({ url: this.url, successes: this.successes });
-	        }
-	    }, {
-	        key: 'onClose',
-	        value: function onClose(event) {
-	            this.socket = null;
-	            this.retryDelay = Math.max(this.retryDelay * this.retryDelayGrowth, this.retryDelayMax);
-	            this.retryCount += 1;
-	            var reason = this.successes === 0 ? 'unreachable' : event.wasClean ? 'lost' : 'closed';
-	            var retry = this.retryCount < this.retryCountMax ? this.retryDelay : null;
-	            if (retry) {
-	                this.retryTimer = setTimeout(this.connect.bind(this), retry);
-	            }
-	            this.onFailure({ reason: reason, retry: retry });
-	        }
-	    }]);
-	
-	    return API;
-	}();
-	
-	function configureApi(url, onSuccess, onFailure) {
-	    var cls = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : API;
-	
-	    return new cls(url, onSuccess, onFailure);
-	}
-
-/***/ },
-/* 270 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-	
-	exports.default = configureStore;
-	
-	var _redux = __webpack_require__(193);
-	
-	var injectDependencies = function injectDependencies(dependencies) {
-	    return function (store) {
-	        return function (next) {
-	            return function (action) {
-	                if (typeof action === 'function') {
-	                    var dispatch = store.dispatch,
-	                        getState = store.getState;
-	
-	                    return dispatch(action(_extends({ dispatch: dispatch, getState: getState }, dependencies)));
-	                }
-	                return next(action);
-	            };
-	        };
+	function mapStateToProps(state) {
+	    return {
+	        dashboard: state.app.cfg.menu.dashboard
 	    };
-	};
+	}
 	
-	var logActions = function logActions(store) {
-	    return function (next) {
-	        return function (action) {
-	            console.groupCollapsed(action.type);
-	            console.log('Payload: ', action.payload);
-	            console.log('Meta: ', action.meta);
-	            console.log('State: ', store.getState());
-	            console.groupEnd();
-	            return next(action);
-	        };
+	function mapDispatchToProps(dispatch) {
+	    return {
+	        actions: (0, _redux.bindActionCreators)(actions, dispatch)
 	    };
-	};
-	
-	var resolvePromises = function resolvePromises(store) {
-	    return function (next) {
-	        return function (action) {
-	            var PENDING_TYPE = action.type + '_PENDING';
-	            var SUCCESS_TYPE = action.type + '_SUCCESS';
-	            var FAILURE_TYPE = action.type + '_FAILURE';
-	            var dispatch = store.dispatch;
-	            var type = action.type,
-	                payload = action.payload;
-	
-	            if (payload && typeof payload.then === 'function') {
-	                var fullfill = function fullfill(value) {
-	                    return dispatch({ type: SUCCESS_TYPE, payload: value });
-	                };
-	                var reject = function reject(reason) {
-	                    return dispatch({ type: FAILURE_TYPE, payload: reason });
-	                };
-	                next({ type: PENDING_TYPE, payload: payload });
-	                return payload.then(fullfill, reject);
-	            }
-	            return next(action);
-	        };
-	    };
-	};
-	
-	function configureStore(initialState, _ref) {
-	    var reducers = _ref.reducers,
-	        api = _ref.api;
-	
-	    var reducer = (0, _redux.combineReducers)(reducers);
-	    var middleware = (0, _redux.applyMiddleware)(injectDependencies({ api: api }), resolvePromises, logActions);
-	    return (0, _redux.createStore)(reducer, initialState, middleware);
-	};
-
-/***/ },
-/* 271 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	
-	var _app = __webpack_require__(272);
-	
-	Object.keys(_app).forEach(function (key) {
-	  if (key === "default" || key === "__esModule") return;
-	  Object.defineProperty(exports, key, {
-	    enumerable: true,
-	    get: function get() {
-	      return _app[key];
-	    }
-	  });
-	});
-	
-	var _stream = __webpack_require__(273);
-	
-	Object.keys(_stream).forEach(function (key) {
-	  if (key === "default" || key === "__esModule") return;
-	  Object.defineProperty(exports, key, {
-	    enumerable: true,
-	    get: function get() {
-	      return _stream[key];
-	    }
-	  });
-	});
-	
-	var _routing = __webpack_require__(274);
-	
-	Object.keys(_routing).forEach(function (key) {
-	  if (key === "default" || key === "__esModule") return;
-	  Object.defineProperty(exports, key, {
-	    enumerable: true,
-	    get: function get() {
-	      return _routing[key];
-	    }
-	  });
-	});
-
-/***/ },
-/* 272 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-	
-	exports.app = app;
-	var initialState = {
-	    isConnected: false,
-	    isLogged: false,
-	    isConfigured: false,
-	    shouldReloadPage: false,
-	    location: {}
-	};
-	
-	function app() {
-	    var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
-	    var action = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-	
-	    switch (action.type) {
-	        case 'CONNECTION_OPENED':
-	            return _extends({}, initialState, {
-	                isConnected: true
-	            });
-	        case 'CONNECTION_CLOSED':
-	            return _extends({}, initialState, {
-	                isConnected: false,
-	                shouldReloadPage: action.payload.shouldReloadPage ? true : false
-	            });
-	        case 'LOGIN_SUCCESS':
-	            return _extends({}, initialState, {
-	                isConnected: true,
-	                isLogged: true
-	            });
-	        case 'LOGIN_FAILURE':
-	            return _extends({}, initialState, {
-	                isConnected: true,
-	                isLogged: false
-	            });
-	        case 'LOGOUT_SUCCESS':
-	            return _extends({}, initialState, {
-	                isLogged: false
-	            });
-	        case 'CONFIGURE_SUCCESS':
-	            return _extends({}, initialState, {
-	                isLogged: true,
-	                isConnected: true,
-	                isConfigured: true,
-	                cfg: action.payload.cfg
-	            });
-	        case 'PUSH':
-	            return _extends({}, state, {
-	                location: action.payload
-	            });
-	    }
-	    return state;
 	}
-
-/***/ },
-/* 273 */
-/***/ function(module, exports) {
-
-	'use strict';
 	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-	
-	exports.stream = stream;
-	var initialState = {
-	    isLoading: true,
-	    title: null,
-	    stream: null,
-	    items: [],
-	    filters: {},
-	    errors: {},
-	    total: 0,
-	    pageSize: 20,
-	    page: 1,
-	    order: '+id'
-	};
-	
-	function stream() {
-	    var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
-	    var action = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-	
-	    if (action.type === 'STREAM_UPDATE_REQUEST') {
-	        return _extends({}, initialState, {
-	            isLoading: true
-	        });
-	    }
-	
-	    if (action.type === 'STREAM_UPDATE_SUCCESS') {
-	        return _extends({}, state, {
-	            isLoading: false,
-	            title: action.payload.title,
-	            stream: action.payload.stream,
-	            items: action.payload.items,
-	            filters: action.payload.filters,
-	            errors: action.payload.errors,
-	            total: action.payload.total,
-	            pageSize: action.payload.page_size,
-	            page: action.payload.page
-	        });
-	    }
-	
-	    if (action.type === 'STREAM_UPDATE_FAILURE') {
-	        return _extends({}, initialState, {
-	            isLoading: false
-	        });
-	    }
-	
-	    return state;
-	}
-
-/***/ },
-/* 274 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.routing = routing;
-	var initialState = {
-	    hash: '',
-	    key: '',
-	    pathname: '',
-	    search: ''
-	};
-	
-	function routing() {
-	    var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
-	    var action = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-	
-	    switch (action.type) {
-	        case 'PUSH':
-	        case 'REPLACE':
-	            return action.payload;
-	    }
-	    return state;
-	}
+	exports.default = (0, _reactRedux.connect)(mapStateToProps, mapDispatchToProps)(Dashboard);
 
 /***/ }
 /******/ ]);

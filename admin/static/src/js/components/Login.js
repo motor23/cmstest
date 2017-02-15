@@ -1,10 +1,9 @@
 import React, {Component, PropTypes} from 'react';
 
 
-export class Login extends Component {
+export default class Login extends Component {
     static propTypes = {
         actions: React.PropTypes.object.isRequired,
-        app: React.PropTypes.object.isRequired
     };
 
     constructor(props, context) {

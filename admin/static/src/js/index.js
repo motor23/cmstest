@@ -4,7 +4,7 @@ import React from 'react';
 import {render} from 'react-dom';
 import {Provider} from 'react-redux';
 import {BrowserRouter} from 'react-router';
-import AppContainer from './containers/AppContainer';
+import AppContainer from './components/App';
 import configureApi from './util/api';
 import configureStore from './util/store';
 import * as reducers from './reducers';

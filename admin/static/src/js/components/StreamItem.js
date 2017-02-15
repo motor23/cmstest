@@ -1,7 +1,7 @@
 import React, {Component, PropTypes} from 'react';
 
 
-export class StreamItem extends React.Component {
+export default class StreamItem extends React.Component {
     render() {
         return (
             <div>

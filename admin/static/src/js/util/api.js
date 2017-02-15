@@ -33,7 +33,7 @@ export class API {
     }
 
     call(endpoint, payload) {
-        const requestId = this.requestId_++;
+        const requestId = this.requestId++;
         const message = {name: 'request', request_id: requestId.toString(), handler: endpoint, body: payload};
         return new Promise((resolve, reject) => {
             this.executors[requestId] = {resolve, reject};

@@ -13,14 +13,14 @@ const initialState = {
 
 
 export function stream(state=initialState, action={}) {
-    if (action.type === 'STREAM_UPDATE_REQUEST') {
+    if (action.type === 'STREAM_LIST_PENDING') {
         return {
             ...initialState,
             isLoading: true
         };
     }
 
-    if (action.type === 'STREAM_UPDATE_SUCCESS') {
+    if (action.type === 'STREAM_LIST_SUCCESS') {
         return {
             ...state,
             isLoading: false,
@@ -35,7 +35,7 @@ export function stream(state=initialState, action={}) {
         };
     }
 
-    if (action.type === 'STREAM_UPDATE_FAILURE') {
+    if (action.type === 'STREAM_LIST_FAILURE') {
         return {
             ...initialState,
             isLoading: false
