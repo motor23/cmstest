@@ -16,6 +16,7 @@
     padding: 0 16px 0 25px;
     margin-bottom: -16px;
     display: flex;
+    position: relative;
 }
 
 
@@ -29,6 +30,9 @@
     display: flex;
 }
 
+.cms-nav__title {
+    cursor: pointer;
+}
 
 .cms-nav__item a {
     opacity: 0.65;
@@ -39,6 +43,21 @@
 
 .cms-nav__item a.active {
     opacity: 1.0;
+}
+
+.cms-nav__item .cms-nav {
+    display: block;
+    visibility: hidden;
+    position: absolute;
+    top: 50px;
+}
+
+.cms-nav__item .cms-nav__item {
+    background: rgb(47, 54, 169);
+}
+
+.cms-nav__item:hover .cms-nav {
+    visibility: visible;
 }
 
 

@@ -3,8 +3,10 @@ import {bindActionCreators} from 'redux';
 import {connect} from 'react-redux';
 import {Match, Link} from 'react-router';
 import * as actions from './../actions';
-import {Waiting} from './waiting';
 
+
+import {Waiting} from './waiting';
+import Menu from './Menu';
 import LoginContainer from './Login';
 import DashboardContainer from './Dashboard';
 import StreamItemContainer from './StreamItem';
@@ -26,7 +28,7 @@ export class App extends Component {
     }
 
     render() {
-        const {isConnected, isLogged, isConfigured, actions} = this.props;
+        const {isConnected, isLogged, isConfigured, menu, actions} = this.props;
 
         if (!isConnected) {
             return <Waiting>Подключение к серверу</Waiting>;
@@ -42,14 +44,7 @@ export class App extends Component {
             <div className="mdl-layout mdl-layout--fixed-header">
                 <div className="mdl-layout__header">
                     <div className="mdl-layout__header-row">
-                        <div className="cms-nav">
-                            <div className="cms-nav__item">
-                                <Link to="/">Начало</Link>
-                            </div>
-                            <div className="cms-nav__item">
-                                <Link to="streams/docs/">Документы</Link>
-                            </div>
-                        </div>
+                        <Menu children={menu}/>
                     </div>
                 </div>
                 <div className="mdl-layout__content mdl-color-text--grey-600">
@@ -67,7 +62,8 @@ export function mapStateToProps(state) {
     return {
         isConnected: state.app.isConnected,
         isLogged: state.app.isLogged,
-        isConfigured: state.app.isConfigured
+        isConfigured: state.app.isConfigured,
+        menu: state.app.menu
     };
 }
 

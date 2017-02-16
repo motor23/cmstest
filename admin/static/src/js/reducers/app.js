@@ -3,7 +3,8 @@ const initialState = {
     isLogged: false,
     isConfigured: false,
     shouldReloadPage: false,
-    location: {}
+    menu: [],
+    dashboard: []
 };
 
 
@@ -43,7 +44,9 @@ export function app(state=initialState, action={}) {
                 isLogged: true,
                 isConnected: true,
                 isConfigured: true,
-                cfg: action.payload.cfg
+                cfg: action.payload.cfg, /* deprecated */
+                menu: action.payload.cfg.menu.main,
+                dashboard: action.payload.cfg.menu.dashboard
             };
         case 'PUSH':
             return {
