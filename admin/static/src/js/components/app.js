@@ -1,7 +1,7 @@
 import React, {Component, PropTypes} from 'react';
 import {bindActionCreators} from 'redux';
 import {connect} from 'react-redux';
-import {Match, Link} from 'react-router';
+import {BrowserRouter, Switch, Route, Link} from 'react-router-dom';
 import * as actions from './../actions';
 
 
@@ -11,6 +11,31 @@ import LoginContainer from './Login';
 import DashboardContainer from './Dashboard';
 import StreamItemContainer from './StreamItem';
 import StreamListContainer from './StreamList';
+
+
+export class Connection extends Component {
+    static propTypes = {
+        status: PropTypes.oneOf(['CONNECTING', 'CONNECTED', 'DISCONNECTED'])
+    };
+
+    getConnectionStatusText(code) {
+        return code === 'CONNECTING' ? 'Подключение к' :
+               code === 'CONNECTED' ? 'Подключен к' :
+               code === 'DISCONNECTED' ? 'Отключен от' : '';
+    }
+
+    render() {
+        const {status} = this.props;
+        const connectionClass = status.toLowerCase();
+        const connectionStatus = this.getConnectionStatusText(status);
+        return (
+            <div className={'ikcms-connection ikcms-connection_status_' + connectionClass}>
+                <span className="ikcms-connection__status">{connectionStatus}&nbsp;</span>
+                <span className="ikcms-connection__url">{window.config.ws} (websocket)</span>
+            </div>
+        );
+    }
+}
 
 
 export class App extends Component {
@@ -28,7 +53,7 @@ export class App extends Component {
     }
 
     render() {
-        const {isConnected, isLogged, isConfigured, menu, actions} = this.props;
+        const {isConnected, isLogged, isConfigured, menu, status, actions} = this.props;
 
         if (!isConnected) {
             return <Waiting>Подключение к серверу</Waiting>;
@@ -41,18 +66,21 @@ export class App extends Component {
         }
 
         return (
-            <div className="mdl-layout mdl-layout--fixed-header">
-                <div className="mdl-layout__header">
-                    <div className="mdl-layout__header-row">
-                        <Menu children={menu}/>
+            <BrowserRouter>
+                <div className="ikcms">
+                    <Connection status={status}/>
+                    <Menu children={menu}/>
+                    <div className="ikcms-view">
+                        <div className="mdl-layout__content mdl-color-text--grey-600">
+                            <Switch>
+                                <Route exact path="/" component={DashboardContainer}/>
+                                <Route exact path="/streams/:stream/:id" component={StreamItemContainer}/>
+                                <Route exact path="/streams/:stream" component={StreamListContainer}/>
+                            </Switch>
+                        </div>
                     </div>
                 </div>
-                <div className="mdl-layout__content mdl-color-text--grey-600">
-                    <Match exactly pattern="/" component={DashboardContainer}/>
-                    <Match excatly pattern="/streams/:stream" component={StreamListContainer}/>
-                    <Match excatly pattern="/streams/:stream/:id" component={StreamItemContainer}/>
-                </div>
-            </div>
+            </BrowserRouter>
         );
     }
 }
@@ -60,6 +88,7 @@ export class App extends Component {
 
 export function mapStateToProps(state) {
     return {
+        status: state.app.status,
         isConnected: state.app.isConnected,
         isLogged: state.app.isLogged,
         isConfigured: state.app.isConfigured,

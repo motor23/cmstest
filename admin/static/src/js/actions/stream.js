@@ -10,17 +10,26 @@ export function streamList({stream, page, pageSize}) {
     return ({dispatch, state, api}) => ({
         type: 'STREAM_LIST',
         payload: api.call('streams.action', {action: 'list', stream: stream, page: page, page_size: pageSize, order: '+id'})
-            .then(response => response)
-            .catch(error => error)
     });
 }
 
 
-export function streamGet({stream, itemId}) {
+export function fetchStreamItem({stream, id}) {
     return ({dispatch, state, api}) => ({
-        type: 'STREAM_GET',
-        payload: api.call('streams.action', {action: 'get', stream: stream, item_id: itemId})
-            .then(response => response)
-            .catch(error => error)
+        type: 'STREAM_ITEM_FETCH',
+        payload: api.call('streams.action', {action: 'get_item', stream: stream, item_id: parseInt(id)})
     });
+}
+
+
+export function updateStreamItem({stream, id, values}) {
+    return ({dispatch, state, api}) => ({
+        type: 'STREAM_ITEM_UPDATE',
+        payload: api.call('stream.action', {action: 'update', stream: stream, item_id: id, values: values})
+    })
+}
+
+
+export function deleteStreamItem({id}) {
+
 }

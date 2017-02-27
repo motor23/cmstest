@@ -1,4 +1,5 @@
 const initialState = {
+    status: 'CONNECTING',
     isConnected: false,
     isLogged: false,
     isConfigured: false,
@@ -12,35 +13,36 @@ export function app(state=initialState, action={}) {
     switch (action.type) {
         case 'CONNECTION_OPENED':
             return {
-                ...initialState,
-                isConnected: true
+                ...state,
+                isConnected: true,
+                status: 'CONNECTED'
             };
         case 'CONNECTION_CLOSED':
             return {
-                ...initialState,
+                ...state,
                 isConnected: false,
-                shouldReloadPage: action.payload.shouldReloadPage ? true : false
+                status: 'CONNECTING'
             };
         case 'LOGIN_SUCCESS':
             return {
-                ...initialState,
+                ...state,
                 isConnected: true,
                 isLogged: true
             };
         case 'LOGIN_FAILURE':
             return {
-                ...initialState,
+                ...state,
                 isConnected: true,
                 isLogged: false
             };
         case 'LOGOUT_SUCCESS':
             return {
-                ...initialState,
+                ...state,
                 isLogged: false
             };
         case 'CONFIGURE_SUCCESS':
             return {
-                ...initialState,
+                ...state,
                 isLogged: true,
                 isConnected: true,
                 isConfigured: true,

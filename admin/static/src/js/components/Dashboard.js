@@ -2,7 +2,7 @@ import React, {Component, PropTypes} from 'react';
 import {bindActionCreators} from 'redux';
 import {connect} from 'react-redux';
 import * as actions from '../actions';
-import {Link} from 'react-router';
+import {Link} from 'react-router-dom';
 import Spinner from './common/spinner';
 
 

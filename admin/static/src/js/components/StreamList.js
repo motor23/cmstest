@@ -1,4 +1,5 @@
 import React, {Component, PropTypes} from 'react';
+import {Link} from 'react-router-dom';
 import {bindActionCreators} from 'redux';
 import {connect} from 'react-redux';
 import * as actions from '../actions';
@@ -25,7 +26,7 @@ export class Paginator extends Component {
         }
         if (n === null) {
             return (
-                <span className="cms-paginator__item cms-paginator__item--ellipsis">
+                <span key="ellipsis" className="cms-paginator__item cms-paginator__item--ellipsis">
                     &hellip;
                 </span>
             );
@@ -51,11 +52,11 @@ export class Paginator extends Component {
 
 export class StreamListRow extends Component {
     render() {
-        const {item} = this.props;
+        const {item, stream} = this.props;
         return (
             <tr>
-                <td>{item.id}</td>
-                <td>{item.title.substring(0, 100)}</td>
+                <td><Link to={`/streams/${stream}/${item.id}/`}>{item.id}</Link></td>
+                <td><Link to={`/streams/${stream}/${item.id}/`}>{item.title.substring(0, 100)}</Link></td>
             </tr>
         );
     }
@@ -67,7 +68,6 @@ export class StreamList extends Component {
         actions: PropTypes.object.isRequired,
         isLoading: PropTypes.bool.isRequired,
         filters: PropTypes.object.isRequired,
-        errors: PropTypes.object.isRequired,
         items: PropTypes.arrayOf(PropTypes.object).isRequired,
         total: PropTypes.number.isRequired,
         pageSize: PropTypes.number.isRequired,
@@ -83,6 +83,13 @@ export class StreamList extends Component {
     componentWillMount() {
         const {stream, page, pageSize, actions} = this.props;
         actions.streamList({stream, page, pageSize});
+    }
+
+    componentWillReceiveProps(nextProps) {
+        const {stream, actions} = this.props;
+        if (nextProps.stream !== stream) {
+            actions.streamList({stream: nextProps.stream, page: 1, pageSize: nextProps.pageSize});
+        }
     }
 
     componentDidMount() {
@@ -122,8 +129,8 @@ export class StreamList extends Component {
     }
 
     render() {
-        const {isLoading, title, items, total, pageSize, page} = this.props;
-        const content = items.map(item => <StreamListRow key={item.id} item={item}/>);
+        const {isLoading, title, items, total, pageSize, page, stream} = this.props;
+        const content = items.map(item => <StreamListRow key={item.id} item={item} stream={stream}/>);
         if (isLoading) {
             return <Spinner/>;
         }
@@ -152,12 +159,11 @@ export class StreamList extends Component {
 
 export function mapStateToProps(state, ownProps) {
     return {
-        stream: ownProps.params.stream,
+        stream: ownProps.match.params.stream,
         isLoading: state.stream.isLoading,
         title: state.stream.title,
         items: state.stream.items,
         filters: state.stream.filters,
-        errors: state.stream.errors,
         total: state.stream.total,
         pageSize: state.stream.pageSize,
         page: state.stream.page,
@@ -168,7 +174,6 @@ export function mapStateToProps(state, ownProps) {
 
 export function mapDispatchToProps(dispatch, ownProps) {
     return {
-        ...ownProps,
         actions: bindActionCreators(actions, dispatch)
     };
 }

@@ -1,62 +1,86 @@
-.mdl-layout {
-    /*align-items: center;*/
-    /*justify-content: center;*/
-    background: #efefef;
+/* Container */
+.ikcms {
 }
 
-
-.mdl-layout__content {
-    padding: 24px;
-    flex: none;
-}
-
-
-.cms-nav {
-    height: 70px;
-    padding: 0 16px 0 25px;
-    margin-bottom: -16px;
-    display: flex;
+.ikcms-view {
     position: relative;
+    top: 100px;
+    padding: 0 24px;
+}
+
+/* Connection status */
+.ikcms-connection {
+    z-index: 1000;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 30px;
+    padding: 5px 24px;
 }
 
 
-.cms-nav__item {
-    font-weight: 500;
-    line-height: 64px;
-    padding: 0 16px;
-    color: #ffffff;
-    box-sizing: border-box;
-    border-bottom: 3px solid transparent;
+.ikcms-connection.ikcms-connection_status_connected {
+    background: rgb(75, 202, 129); /* $color-background-success */
+}
+
+
+.ikcms-connection.ikcms-connection_status_disconnected {
+    background: rgb(212, 80, 76); /* $color-background-error */
+}
+
+
+/* Navigation */
+.ikcms-nav {
+    z-index: 10000;
+    position: fixed;
+    top: 30px;
     display: flex;
+    width: 100%;
+    height: 34px;
+    background: rgb(168, 183, 199);
 }
 
-.cms-nav__title {
+
+.ikcms-nav__item {
+    display: flex;
+    padding: 6px 0 6px 24px;
+    font-weight: 500;
+    font-size: 14px;
+    color: #ffffff;
+    border-bottom: 3px solid transparent;
+}
+
+.ikcms-nav__title {
     cursor: pointer;
 }
 
-.cms-nav__item a {
+.ikcms-nav__item a {
     opacity: 0.65;
     color: #ffffff;
     text-decoration: none;
 }
 
 
-.cms-nav__item a.active {
+.ikcms-nav__item a.active {
     opacity: 1.0;
 }
 
-.cms-nav__item .cms-nav {
-    display: block;
+.ikcms-nav__item .ikcms-nav {
     visibility: hidden;
     position: absolute;
-    top: 50px;
+    top: 34px;
+    width: auto;
+    display: block;
 }
 
-.cms-nav__item .cms-nav__item {
-    background: rgb(47, 54, 169);
+.ikcms-nav__item .ikcms-nav__item {
+    background: rgb(168, 183, 199);
+
+    padding: 4px 14px;
 }
 
-.cms-nav__item:hover .cms-nav {
+.ikcms-nav__item:hover .ikcms-nav {
     visibility: visible;
 }
 

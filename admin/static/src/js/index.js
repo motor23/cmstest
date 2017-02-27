@@ -3,7 +3,6 @@ import '../css/index.css';
 import React from 'react';
 import {render} from 'react-dom';
 import {Provider} from 'react-redux';
-import {BrowserRouter} from 'react-router';
 import AppContainer from './components/App';
 import configureApi from './util/api';
 import configureStore from './util/store';
@@ -24,8 +23,6 @@ window.render = render;
 
 render(
     <Provider store={store}>
-        <BrowserRouter>
-            <AppContainer/>
-        </BrowserRouter>
+        <AppContainer/>
     </Provider>
 , node);
