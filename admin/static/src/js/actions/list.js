@@ -13,23 +13,3 @@ export function streamList({stream, page, pageSize}) {
     });
 }
 
-
-export function fetchStreamItem({stream, id}) {
-    return ({dispatch, state, api}) => ({
-        type: 'STREAM_ITEM_FETCH',
-        payload: api.call('streams.action', {action: 'get_item', stream: stream, item_id: parseInt(id)})
-    });
-}
-
-
-export function updateStreamItem({stream, id, values}) {
-    return ({dispatch, state, api}) => ({
-        type: 'STREAM_ITEM_UPDATE',
-        payload: api.call('stream.action', {action: 'update', stream: stream, item_id: id, values: values})
-    })
-}
-
-
-export function deleteStreamItem({id}) {
-
-}

@@ -13,7 +13,6 @@ const injectDependencies = dependencies => store => next => action => {
 const logActions = store => next => action => {
     console.groupCollapsed(action.type);
     console.log('Payload: ', action.payload);
-    console.log('Meta: ', action.meta);
     console.log('State: ', store.getState());
     console.groupEnd();
     return next(action);

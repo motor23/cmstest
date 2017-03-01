@@ -66,7 +66,7 @@ export class StreamListRow extends Component {
 export class StreamList extends Component {
     static propTypes = {
         actions: PropTypes.object.isRequired,
-        isLoading: PropTypes.bool.isRequired,
+        loading: PropTypes.bool.isRequired,
         filters: PropTypes.object.isRequired,
         items: PropTypes.arrayOf(PropTypes.object).isRequired,
         total: PropTypes.number.isRequired,
@@ -129,9 +129,9 @@ export class StreamList extends Component {
     }
 
     render() {
-        const {isLoading, title, items, total, pageSize, page, stream} = this.props;
+        const {loading, title, items, total, pageSize, page, stream} = this.props;
         const content = items.map(item => <StreamListRow key={item.id} item={item} stream={stream}/>);
-        if (isLoading) {
+        if (loading) {
             return <Spinner/>;
         }
         return (
@@ -160,14 +160,14 @@ export class StreamList extends Component {
 export function mapStateToProps(state, ownProps) {
     return {
         stream: ownProps.match.params.stream,
-        isLoading: state.stream.isLoading,
-        title: state.stream.title,
-        items: state.stream.items,
-        filters: state.stream.filters,
-        total: state.stream.total,
-        pageSize: state.stream.pageSize,
-        page: state.stream.page,
-        order: state.stream.order
+        loading: state.list.loading,
+        title: state.list.title,
+        items: state.list.items,
+        filters: state.list.filters,
+        total: state.list.total,
+        pageSize: state.list.pageSize,
+        page: state.list.page,
+        order: state.list.order
     };
 }
 

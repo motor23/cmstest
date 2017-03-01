@@ -27482,14 +27482,26 @@
 	  });
 	});
 	
-	var _stream = __webpack_require__(260);
+	var _list = __webpack_require__(583);
 	
-	Object.keys(_stream).forEach(function (key) {
+	Object.keys(_list).forEach(function (key) {
 	  if (key === "default" || key === "__esModule") return;
 	  Object.defineProperty(exports, key, {
 	    enumerable: true,
 	    get: function get() {
-	      return _stream[key];
+	      return _list[key];
+	    }
+	  });
+	});
+	
+	var _item = __webpack_require__(585);
+	
+	Object.keys(_item).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _item[key];
 	    }
 	  });
 	});
@@ -27559,77 +27571,7 @@
 	}
 
 /***/ },
-/* 260 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.streamList = streamList;
-	exports.fetchStreamItem = fetchStreamItem;
-	exports.updateStreamItem = updateStreamItem;
-	exports.deleteStreamItem = deleteStreamItem;
-	var STREAM_LIST_PENDING = exports.STREAM_LIST_PENDING = 'STREAM_LIST_PENDING';
-	var STREAM_LIST_SUCCESS = exports.STREAM_LIST_SUCCESS = 'STREAM_LIST_SUCCESS';
-	var STREAM_LIST_FAILURE = exports.STREAM_LIST_FAILURE = 'STREAM_LIST_FAULURE';
-	var STREAM_GET_PENDING = exports.STREAM_GET_PENDING = 'STREAM_GET_PENDING';
-	var STREAM_GET_SUCCESS = exports.STREAM_GET_SUCCESS = 'STREAM_GET_SUCCESS';
-	var STREAM_GET_FAILURE = exports.STREAM_GET_FAILURE = 'STREAM_GET_FAILURE';
-	
-	function streamList(_ref) {
-	    var stream = _ref.stream,
-	        page = _ref.page,
-	        pageSize = _ref.pageSize;
-	
-	    return function (_ref2) {
-	        var dispatch = _ref2.dispatch,
-	            state = _ref2.state,
-	            api = _ref2.api;
-	        return {
-	            type: 'STREAM_LIST',
-	            payload: api.call('streams.action', { action: 'list', stream: stream, page: page, page_size: pageSize, order: '+id' })
-	        };
-	    };
-	}
-	
-	function fetchStreamItem(_ref3) {
-	    var stream = _ref3.stream,
-	        id = _ref3.id;
-	
-	    return function (_ref4) {
-	        var dispatch = _ref4.dispatch,
-	            state = _ref4.state,
-	            api = _ref4.api;
-	        return {
-	            type: 'STREAM_ITEM_FETCH',
-	            payload: api.call('streams.action', { action: 'get_item', stream: stream, item_id: parseInt(id) })
-	        };
-	    };
-	}
-	
-	function updateStreamItem(_ref5) {
-	    var stream = _ref5.stream,
-	        id = _ref5.id,
-	        values = _ref5.values;
-	
-	    return function (_ref6) {
-	        var dispatch = _ref6.dispatch,
-	            state = _ref6.state,
-	            api = _ref6.api;
-	        return {
-	            type: 'STREAM_ITEM_UPDATE',
-	            payload: api.call('stream.action', { action: 'update', stream: stream, item_id: id, values: values })
-	        };
-	    };
-	}
-	
-	function deleteStreamItem(_ref7) {
-	    var id = _ref7.id;
-	}
-
-/***/ },
+/* 260 */,
 /* 261 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -43263,6 +43205,8 @@
 	});
 	exports.StreamItem = undefined;
 	
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
 	exports.mapStateToProps = mapStateToProps;
@@ -43290,38 +43234,163 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 	
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 	
-	var StreamItem = exports.StreamItem = function (_Component) {
-	    _inherits(StreamItem, _Component);
+	var Field = function (_Component) {
+	    _inherits(Field, _Component);
+	
+	    function Field() {
+	        _classCallCheck(this, Field);
+	
+	        var _this = _possibleConstructorReturn(this, (Field.__proto__ || Object.getPrototypeOf(Field)).call(this));
+	
+	        _this.onChange = _this.onChange.bind(_this);
+	        return _this;
+	    }
+	
+	    _createClass(Field, [{
+	        key: 'onChange',
+	        value: function onChange(event) {
+	            var _props = this.props,
+	                onChange = _props.onChange,
+	                name = _props.name;
+	
+	            var value = event.target.value;
+	            onChange(name, value);
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	            var _props2 = this.props,
+	                label = _props2.label,
+	                values = _props2.values;
+	
+	            return _react2.default.createElement(
+	                'div',
+	                null,
+	                _react2.default.createElement(
+	                    'label',
+	                    null,
+	                    label
+	                ),
+	                _react2.default.createElement('input', { type: 'input', value: values, onChange: this.onChange })
+	            );
+	        }
+	    }]);
+	
+	    return Field;
+	}(_react.Component);
+	
+	Field.propTypes = {
+	    onChange: _react.PropTypes.func.isRequired,
+	    name: _react.PropTypes.string.isRequired,
+	    widget: _react.PropTypes.string.isRequired,
+	    errors: _react.PropTypes.object.isRequired,
+	    values: _react.PropTypes.any.isRequired,
+	    fields: _react.PropTypes.array.isRequired
+	};
+	
+	var Form = function (_Component2) {
+	    _inherits(Form, _Component2);
+	
+	    function Form() {
+	        _classCallCheck(this, Form);
+	
+	        var _this2 = _possibleConstructorReturn(this, (Form.__proto__ || Object.getPrototypeOf(Form)).call(this));
+	
+	        _this2.onUpdate = _this2.onUpdate.bind(_this2);
+	        return _this2;
+	    }
+	
+	    _createClass(Form, [{
+	        key: 'onUpdate',
+	        value: function onUpdate(name, value) {
+	            var _props3 = this.props,
+	                values = _props3.values,
+	                onChange = _props3.onChange;
+	
+	            onChange(_extends({}, values, _defineProperty({}, name, value)));
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
+	            var _this3 = this;
+	
+	            var _props4 = this.props,
+	                fields = _props4.fields,
+	                values = _props4.values;
+	
+	            return _react2.default.createElement(
+	                'div',
+	                null,
+	                fields.map(function (field) {
+	                    return _react2.default.createElement(Field, {
+	                        onChange: _this3.onUpdate,
+	                        name: field.name,
+	                        label: field.label,
+	                        widget: field.widget,
+	                        errors: {},
+	                        values: values[field.name],
+	                        fields: []
+	                    });
+	                })
+	            );
+	        }
+	    }]);
+	
+	    return Form;
+	}(_react.Component);
+	
+	Form.propTypes = {
+	    fields: _react.PropTypes.array.isRequired,
+	    values: _react.PropTypes.object.isRequired
+	};
+	
+	var StreamItem = exports.StreamItem = function (_Component3) {
+	    _inherits(StreamItem, _Component3);
 	
 	    function StreamItem() {
 	        _classCallCheck(this, StreamItem);
 	
-	        return _possibleConstructorReturn(this, (StreamItem.__proto__ || Object.getPrototypeOf(StreamItem)).apply(this, arguments));
+	        var _this4 = _possibleConstructorReturn(this, (StreamItem.__proto__ || Object.getPrototypeOf(StreamItem)).call(this));
+	
+	        _this4.onChange = _this4.onChange.bind(_this4);
+	        return _this4;
 	    }
 	
 	    _createClass(StreamItem, [{
+	        key: 'onChange',
+	        value: function onChange(values) {
+	            var _props5 = this.props,
+	                actions = _props5.actions,
+	                id = _props5.id,
+	                stream = _props5.stream;
+	
+	            actions.updateItem({ id: id, stream: stream, values: values });
+	        }
+	    }, {
 	        key: 'componentWillMount',
 	        value: function componentWillMount() {
-	            var _props = this.props,
-	                actions = _props.actions,
-	                id = _props.id,
-	                stream = _props.stream;
+	            var _props6 = this.props,
+	                actions = _props6.actions,
+	                id = _props6.id,
+	                stream = _props6.stream;
 	
-	            actions.fetchStreamItem({ id: id, stream: stream });
+	            actions.fetchItem({ id: id, stream: stream });
 	        }
 	    }, {
 	        key: 'componentWillReceiveProps',
 	        value: function componentWillReceiveProps(nextProps) {
-	            var _props2 = this.props,
-	                actions = _props2.actions,
-	                id = _props2.id,
-	                stream = _props2.stream;
+	            var _props7 = this.props,
+	                actions = _props7.actions,
+	                id = _props7.id,
+	                stream = _props7.stream;
 	
 	            if (nextProps.id !== id || nextProps.stream !== stream) {
 	                actions.fetchStreamItem({ id: nextProps.id, stream: nextProps.stream });
@@ -43330,16 +43399,11 @@
 	    }, {
 	        key: 'render',
 	        value: function render() {
-	            return _react2.default.createElement(
-	                'div',
-	                null,
-	                _react2.default.createElement(
-	                    'div',
-	                    null,
-	                    'Item: ',
-	                    this.props.id
-	                )
-	            );
+	            var _props8 = this.props,
+	                values = _props8.values,
+	                fields = _props8.fields;
+	
+	            return _react2.default.createElement(Form, { fields: fields, values: values, errors: {}, onChange: this.onChange });
 	        }
 	    }]);
 	
@@ -43348,12 +43412,16 @@
 	
 	StreamItem.propTypes = {
 	    id: _react.PropTypes.string.isRequired,
-	    stream: _react.PropTypes.string.isRequired
+	    stream: _react.PropTypes.string.isRequired,
+	    fields: _react.PropTypes.array.isRequired,
+	    values: _react.PropTypes.object.isRequired
 	};
 	function mapStateToProps(state, ownProps) {
 	    return {
 	        id: ownProps.match.params.id,
-	        stream: ownProps.match.params.stream
+	        stream: ownProps.match.params.stream,
+	        fields: state.item.fields,
+	        values: state.item.values
 	    };
 	}
 	
@@ -43611,7 +43679,7 @@
 	        key: 'render',
 	        value: function render() {
 	            var _props8 = this.props,
-	                isLoading = _props8.isLoading,
+	                loading = _props8.loading,
 	                title = _props8.title,
 	                items = _props8.items,
 	                total = _props8.total,
@@ -43622,7 +43690,7 @@
 	            var content = items.map(function (item) {
 	                return _react2.default.createElement(StreamListRow, { key: item.id, item: item, stream: stream });
 	            });
-	            if (isLoading) {
+	            if (loading) {
 	                return _react2.default.createElement(_spinner2.default, null);
 	            }
 	            return _react2.default.createElement(
@@ -43674,7 +43742,7 @@
 	
 	StreamList.propTypes = {
 	    actions: _react.PropTypes.object.isRequired,
-	    isLoading: _react.PropTypes.bool.isRequired,
+	    loading: _react.PropTypes.bool.isRequired,
 	    filters: _react.PropTypes.object.isRequired,
 	    items: _react.PropTypes.arrayOf(_react.PropTypes.object).isRequired,
 	    total: _react.PropTypes.number.isRequired,
@@ -43685,14 +43753,14 @@
 	function mapStateToProps(state, ownProps) {
 	    return {
 	        stream: ownProps.match.params.stream,
-	        isLoading: state.stream.isLoading,
-	        title: state.stream.title,
-	        items: state.stream.items,
-	        filters: state.stream.filters,
-	        total: state.stream.total,
-	        pageSize: state.stream.pageSize,
-	        page: state.stream.page,
-	        order: state.stream.order
+	        loading: state.list.loading,
+	        title: state.list.title,
+	        items: state.list.items,
+	        filters: state.list.filters,
+	        total: state.list.total,
+	        pageSize: state.list.pageSize,
+	        page: state.list.page,
+	        order: state.list.order
 	    };
 	}
 	
@@ -43934,7 +44002,6 @@
 	        return function (action) {
 	            console.groupCollapsed(action.type);
 	            console.log('Payload: ', action.payload);
-	            console.log('Meta: ', action.meta);
 	            console.log('State: ', store.getState());
 	            console.groupEnd();
 	            return next(action);
@@ -43998,14 +44065,26 @@
 	  });
 	});
 	
-	var _stream = __webpack_require__(384);
+	var _list = __webpack_require__(584);
 	
-	Object.keys(_stream).forEach(function (key) {
+	Object.keys(_list).forEach(function (key) {
 	  if (key === "default" || key === "__esModule") return;
 	  Object.defineProperty(exports, key, {
 	    enumerable: true,
 	    get: function get() {
-	      return _stream[key];
+	      return _list[key];
+	    }
+	  });
+	});
+	
+	var _item = __webpack_require__(586);
+	
+	Object.keys(_item).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _item[key];
 	    }
 	  });
 	});
@@ -44080,7 +44159,239 @@
 	}
 
 /***/ },
-/* 384 */
+/* 384 */,
+/* 385 */,
+/* 386 */,
+/* 387 */,
+/* 388 */,
+/* 389 */,
+/* 390 */,
+/* 391 */,
+/* 392 */,
+/* 393 */,
+/* 394 */,
+/* 395 */,
+/* 396 */,
+/* 397 */,
+/* 398 */,
+/* 399 */,
+/* 400 */,
+/* 401 */,
+/* 402 */,
+/* 403 */,
+/* 404 */,
+/* 405 */,
+/* 406 */,
+/* 407 */,
+/* 408 */,
+/* 409 */,
+/* 410 */,
+/* 411 */,
+/* 412 */,
+/* 413 */,
+/* 414 */,
+/* 415 */,
+/* 416 */,
+/* 417 */,
+/* 418 */,
+/* 419 */,
+/* 420 */,
+/* 421 */,
+/* 422 */,
+/* 423 */,
+/* 424 */,
+/* 425 */,
+/* 426 */,
+/* 427 */,
+/* 428 */,
+/* 429 */,
+/* 430 */,
+/* 431 */,
+/* 432 */,
+/* 433 */,
+/* 434 */,
+/* 435 */,
+/* 436 */,
+/* 437 */,
+/* 438 */,
+/* 439 */,
+/* 440 */,
+/* 441 */,
+/* 442 */,
+/* 443 */,
+/* 444 */,
+/* 445 */,
+/* 446 */,
+/* 447 */,
+/* 448 */,
+/* 449 */,
+/* 450 */,
+/* 451 */,
+/* 452 */,
+/* 453 */,
+/* 454 */,
+/* 455 */,
+/* 456 */,
+/* 457 */,
+/* 458 */,
+/* 459 */,
+/* 460 */,
+/* 461 */,
+/* 462 */,
+/* 463 */,
+/* 464 */,
+/* 465 */,
+/* 466 */,
+/* 467 */,
+/* 468 */,
+/* 469 */,
+/* 470 */,
+/* 471 */,
+/* 472 */,
+/* 473 */,
+/* 474 */,
+/* 475 */,
+/* 476 */,
+/* 477 */,
+/* 478 */,
+/* 479 */,
+/* 480 */,
+/* 481 */,
+/* 482 */,
+/* 483 */,
+/* 484 */,
+/* 485 */,
+/* 486 */,
+/* 487 */,
+/* 488 */,
+/* 489 */,
+/* 490 */,
+/* 491 */,
+/* 492 */,
+/* 493 */,
+/* 494 */,
+/* 495 */,
+/* 496 */,
+/* 497 */,
+/* 498 */,
+/* 499 */,
+/* 500 */,
+/* 501 */,
+/* 502 */,
+/* 503 */,
+/* 504 */,
+/* 505 */,
+/* 506 */,
+/* 507 */,
+/* 508 */,
+/* 509 */,
+/* 510 */,
+/* 511 */,
+/* 512 */,
+/* 513 */,
+/* 514 */,
+/* 515 */,
+/* 516 */,
+/* 517 */,
+/* 518 */,
+/* 519 */,
+/* 520 */,
+/* 521 */,
+/* 522 */,
+/* 523 */,
+/* 524 */,
+/* 525 */,
+/* 526 */,
+/* 527 */,
+/* 528 */,
+/* 529 */,
+/* 530 */,
+/* 531 */,
+/* 532 */,
+/* 533 */,
+/* 534 */,
+/* 535 */,
+/* 536 */,
+/* 537 */,
+/* 538 */,
+/* 539 */,
+/* 540 */,
+/* 541 */,
+/* 542 */,
+/* 543 */,
+/* 544 */,
+/* 545 */,
+/* 546 */,
+/* 547 */,
+/* 548 */,
+/* 549 */,
+/* 550 */,
+/* 551 */,
+/* 552 */,
+/* 553 */,
+/* 554 */,
+/* 555 */,
+/* 556 */,
+/* 557 */,
+/* 558 */,
+/* 559 */,
+/* 560 */,
+/* 561 */,
+/* 562 */,
+/* 563 */,
+/* 564 */,
+/* 565 */,
+/* 566 */,
+/* 567 */,
+/* 568 */,
+/* 569 */,
+/* 570 */,
+/* 571 */,
+/* 572 */,
+/* 573 */,
+/* 574 */,
+/* 575 */,
+/* 576 */,
+/* 577 */,
+/* 578 */,
+/* 579 */,
+/* 580 */,
+/* 581 */,
+/* 582 */,
+/* 583 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.streamList = streamList;
+	var STREAM_LIST_PENDING = exports.STREAM_LIST_PENDING = 'STREAM_LIST_PENDING';
+	var STREAM_LIST_SUCCESS = exports.STREAM_LIST_SUCCESS = 'STREAM_LIST_SUCCESS';
+	var STREAM_LIST_FAILURE = exports.STREAM_LIST_FAILURE = 'STREAM_LIST_FAULURE';
+	var STREAM_GET_PENDING = exports.STREAM_GET_PENDING = 'STREAM_GET_PENDING';
+	var STREAM_GET_SUCCESS = exports.STREAM_GET_SUCCESS = 'STREAM_GET_SUCCESS';
+	var STREAM_GET_FAILURE = exports.STREAM_GET_FAILURE = 'STREAM_GET_FAILURE';
+	
+	function streamList(_ref) {
+	    var stream = _ref.stream,
+	        page = _ref.page,
+	        pageSize = _ref.pageSize;
+	
+	    return function (_ref2) {
+	        var dispatch = _ref2.dispatch,
+	            state = _ref2.state,
+	            api = _ref2.api;
+	        return {
+	            type: 'STREAM_LIST',
+	            payload: api.call('streams.action', { action: 'list', stream: stream, page: page, page_size: pageSize, order: '+id' })
+	        };
+	    };
+	}
+
+/***/ },
+/* 584 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -44091,7 +44402,7 @@
 	
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 	
-	exports.stream = stream;
+	exports.list = list;
 	var initialState = {
 	    isLoading: true,
 	    title: null,
@@ -44105,33 +44416,151 @@
 	    order: '+id'
 	};
 	
-	function stream() {
+	function list() {
 	    var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
-	    var action = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	
-	    if (action.type === 'STREAM_LIST_PENDING') {
+	    var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+	        type = _ref.type,
+	        payload = _ref.payload;
+	
+	    if (type === 'STREAM_LIST_PENDING') {
 	        return _extends({}, initialState, {
 	            isLoading: true
 	        });
 	    }
 	
-	    if (action.type === 'STREAM_LIST_SUCCESS') {
+	    if (type === 'STREAM_LIST_SUCCESS') {
 	        return _extends({}, state, {
 	            isLoading: false,
-	            title: action.payload.title,
-	            stream: action.payload.stream,
-	            items: action.payload.items,
-	            filters: action.payload.filters,
-	            errors: action.payload.errors,
-	            total: action.payload.total,
-	            pageSize: action.payload.page_size,
-	            page: action.payload.page
+	            title: payload.title,
+	            stream: payload.stream,
+	            items: payload.items,
+	            filters: payload.filters,
+	            errors: payload.errors,
+	            total: payload.total,
+	            pageSize: payload.page_size,
+	            page: payload.page
 	        });
 	    }
 	
-	    if (action.type === 'STREAM_LIST_FAILURE') {
-	        return _extends({}, initialState, {
-	            isLoading: false
+	    return state;
+	}
+
+/***/ },
+/* 585 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.fetchItem = fetchItem;
+	exports.updateItem = updateItem;
+	var ITEM_FETCH = exports.ITEM_FETCH = 'ITEM_FETCH';
+	var ITEM_FETCH_REQUEST = exports.ITEM_FETCH_REQUEST = 'ITEM_FETCH_REQUEST';
+	var ITEM_FETCH_SUCCESS = exports.ITEM_FETCH_SUCCESS = 'ITEM_FETCH_SUCCESS';
+	var ITEM_FETCH_FAILURE = exports.ITEM_FETCH_FAILURE = 'ITEM_FETCH_FAILURE';
+	
+	var ITEM_UPDATE = exports.ITEM_UPDATE = 'ITEM_UPDATE';
+	var ITEM_UPDATE_REQUEST = exports.ITEM_UPDATE_REQUEST = 'ITEM_UPDATE_REQUEST';
+	var ITEM_UPDATE_SUCCESS = exports.ITEM_UPDATE_SUCCESS = 'ITEM_UPDATE_SUCCESS';
+	var ITEM_UPDATE_FAILURE = exports.ITEM_UPDATE_FAILURE = 'ITEM_UPDATE_FAILURE';
+	
+	var ITEM_CREATE = exports.ITEM_CREATE = 'ITEM_CREATE';
+	var ITEM_CREATE_REQUEST = exports.ITEM_CREATE_REQUEST = 'ITEM_CREATE_REQUEST';
+	var ITEM_CREATE_SUCCESS = exports.ITEM_CREATE_SUCCESS = 'ITEM_CREATE_SUCCESS';
+	var ITEM_CREATE_FAILURE = exports.ITEM_CREATE_FAILURE = 'ITEM_CREATE_FAILURE';
+	
+	var ITEM_DELETE = exports.ITEM_DELETE = 'ITEM_DELETE';
+	var ITEM_DELETE_REQUEST = exports.ITEM_DELETE_REQUEST = 'ITEM_DELETE_REQUEST';
+	var ITEM_DELETE_SUCCESS = exports.ITEM_DELETE_SUCCESS = 'ITEM_DELETE_SUCCESS';
+	var ITEM_DELETE_FAILURE = exports.ITEM_DELETE_FAILURE = 'ITEM_DELETE_FAILURE';
+	
+	function fetchItem(_ref) {
+	    var stream = _ref.stream,
+	        id = _ref.id;
+	
+	    return function (_ref2) {
+	        var dispatch = _ref2.dispatch,
+	            state = _ref2.state,
+	            api = _ref2.api;
+	        return {
+	            type: ITEM_FETCH,
+	            payload: api.call('streams.action', { action: 'get_item', stream: stream, item_id: parseInt(id) })
+	        };
+	    };
+	}
+	
+	function updateItem(_ref3) {
+	    var stream = _ref3.stream,
+	        id = _ref3.id,
+	        values = _ref3.values;
+	
+	    return function (_ref4) {
+	        var dispatch = _ref4.dispatch,
+	            state = _ref4.state,
+	            api = _ref4.api;
+	        return {
+	            type: ITEM_UPDATE,
+	            payload: api.call('streams.action', { action: 'update_item', stream: stream, item_id: parseInt(id), values: values })
+	        };
+	    };
+	}
+
+/***/ },
+/* 586 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+	
+	exports.item = item;
+	var initialState = {
+	    loading: true,
+	    errors: {},
+	    id: null,
+	    stream: null,
+	    fields: [],
+	    values: {}
+	};
+	
+	function item() {
+	    var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
+	
+	    var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+	        type = _ref.type,
+	        payload = _ref.payload;
+	
+	    if (type === 'ITEM_FETCH_PENDING') {
+	        return _extends({}, state, {
+	            loading: true
+	        });
+	    }
+	
+	    if (type === 'ITEM_FETCH_SUCCESS') {
+	        return _extends({}, state, {
+	            loading: false,
+	            errors: payload.errors,
+	            id: payload.item_id,
+	            stream: payload.stream,
+	            fields: payload.item_fields,
+	            values: payload.item
+	        });
+	    }
+	
+	    if (type === 'ITEM_UPDATE_SUCCESS') {
+	        var values = state.values;
+	        var newValues = payload.values;
+	        return _extends({}, state, {
+	            errors: payload.errors,
+	            id: payload.item_id,
+	            values: _extends({}, values, newValues)
 	        });
 	    }
 	
